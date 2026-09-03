@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createWorkCaseDraft, listActiveWorkCases, requestWorkCasePlan } from './api';
+import { createWorkCaseDraft, listActiveWorkCases, recordWorkCaseSubmission, requestWorkCasePlan } from './api';
 import { useState } from 'react';
 import type { WorkCaseRisk, WorkCaseStatus } from './types';
 import './WorkCasesPage.css';
@@ -32,6 +32,8 @@ export default function WorkCasesPage() {
   const [title, setTitle] = useState('');
   const [sourceRef, setSourceRef] = useState('');
   const [planDigest, setPlanDigest] = useState('');
+  const [unitId, setUnitId] = useState('');
+  const [submissionDigest, setSubmissionDigest] = useState('');
   const queryClient = useQueryClient();
   const casesQuery = useQuery({
     queryKey: ['work-cases', 'active'],
@@ -58,6 +60,14 @@ export default function WorkCasesPage() {
       if (!result.ok || !result.data) throw new Error(result.error || '方案确认请求失败');
       return result.data;
     },
+  });
+  const submissionMutation = useMutation({
+    mutationFn: async (caseId: string) => {
+      const result = await recordWorkCaseSubmission(caseId, { unit_id: unitId, digest: submissionDigest, valid: true });
+      if (!result.ok || !result.data) throw new Error(result.error || '材料摘要提交失败');
+      return result.data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['work-cases', 'active'] }),
   });
 
   if (casesQuery.isLoading) {
@@ -115,6 +125,12 @@ export default function WorkCasesPage() {
                   {planMutation.isSuccess && <span>方案已进入待确认队列</span>}
                 </div>
               )}
+              <div className="work-case-submission">
+                <input aria-label="提交单位" value={unitId} onChange={(event) => setUnitId(event.target.value)} placeholder="单位 ID" />
+                <input aria-label="材料摘要" value={submissionDigest} onChange={(event) => setSubmissionDigest(event.target.value)} placeholder="sha256:材料摘要" />
+                <button type="button" onClick={() => submissionMutation.mutate(workCase.id)} disabled={!unitId || !submissionDigest || submissionMutation.isPending}>提交材料摘要</button>
+                {submissionMutation.isSuccess && <span>材料摘要已记录</span>}
+              </div>
               <footer>截止：{formatDueAt(workCase.due_at)}</footer>
             </article>
           ))}
