@@ -104,4 +104,21 @@ describe('WorkCasesPage', () => {
     expect(fetchMock).toHaveBeenCalledWith('/api/work-cases/CASE-001/plan-requests', expect.objectContaining({ method: 'POST' }));
     expect(await screen.findByText('方案已进入待确认队列')).toBeInTheDocument();
   });
+
+  it('submits only submission metadata to the evidence endpoint', async () => {
+    const fetchMock = setupMockFetch({ '/api/work-cases?scope=active': { items: [] } });
+    fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === '/api/work-cases?scope=active') return { ok: true, status: 200, json: async () => ({ items: [{ id: 'CASE-001', title: '调查', status: 'executing', risk: 'low', next_action: '收集材料', plan_confirmed: true, valid_submission_count: 0, submission_version_count: 0 }] }) };
+      return { ok: true, status: 200, json: async () => ({ id: 'CASE-001', status: 'submission_recorded' }) };
+    });
+    const user = userEvent.setup();
+    renderWorkCasesPage();
+    await user.type(await screen.findByLabelText('提交单位'), 'unit-a');
+    await user.type(screen.getByLabelText('材料摘要'), 'sha256:reply-v1');
+    await user.click(screen.getByRole('button', { name: '提交材料摘要' }));
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/work-cases/CASE-001/submissions', expect.objectContaining({ method: 'POST' }));
+    expect(await screen.findByText('材料摘要已记录')).toBeInTheDocument();
+  });
 });
