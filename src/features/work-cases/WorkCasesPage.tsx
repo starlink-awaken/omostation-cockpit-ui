@@ -74,6 +74,11 @@ export default function WorkCasesPage() {
               </div>
               <h3>{workCase.title}</h3>
               <p className="work-case-next-action">下一步：{workCase.next_action}</p>
+              <p className="work-case-facts">
+                {workCase.plan_confirmed ? '方案已确认' : '方案待确认'}
+                {' · '}
+                有效回收 {workCase.valid_submission_count} · 提交版本 {workCase.submission_version_count}
+              </p>
               <footer>截止：{formatDueAt(workCase.due_at)}</footer>
             </article>
           ))}

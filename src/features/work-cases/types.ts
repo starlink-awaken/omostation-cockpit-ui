@@ -17,6 +17,9 @@ export interface WorkCaseSummary {
   due_at?: string;
   risk: WorkCaseRisk;
   next_action: string;
+  plan_confirmed: boolean;
+  valid_submission_count: number;
+  submission_version_count: number;
 }
 
 export interface WorkCaseListResponse {
