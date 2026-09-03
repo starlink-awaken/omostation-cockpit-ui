@@ -33,6 +33,9 @@ describe('WorkCasesPage', () => {
             due_at: '2026-09-10T09:00:00Z',
             risk: 'high',
             next_action: '确认调查对象与发送批次',
+            plan_confirmed: true,
+            valid_submission_count: 4,
+            submission_version_count: 6,
           },
         ],
       },
@@ -44,6 +47,8 @@ describe('WorkCasesPage', () => {
     expect(screen.getByText('2026 年数据调查')).toBeInTheDocument();
     expect(screen.getByText(/确认调查对象与发送批次/)).toBeInTheDocument();
     expect(screen.getByText('待确认')).toBeInTheDocument();
+    expect(screen.getByText(/方案已确认/)).toBeInTheDocument();
+    expect(screen.getByText(/有效回收 4 · 提交版本 6/)).toBeInTheDocument();
   });
 
   it('shows an unavailable state instead of fabricated cases when the API is unreachable', async () => {

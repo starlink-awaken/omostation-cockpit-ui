@@ -9,6 +9,7 @@
 .work-case-card-topline { display: flex; justify-content: space-between; gap: 8px; }
 .work-case-card h3 { margin: 0; font-size: 16px; }
 .work-case-next-action { margin: 0; color: var(--antd-text-secondary); line-height: 1.55; }
+.work-case-facts { margin: 0; color: var(--antd-text-secondary); font-size: 12px; }
 .work-case-card footer { color: var(--antd-text-secondary); font-size: 12px; }
 .work-cases-state { border: 1px dashed var(--antd-border-color, rgba(255,255,255,.18)); border-radius: 10px; padding: 20px; color: var(--antd-text-secondary); }
 .work-cases-error { border-color: rgba(239, 68, 68, .5); color: var(--antd-error, #ef4444); }
