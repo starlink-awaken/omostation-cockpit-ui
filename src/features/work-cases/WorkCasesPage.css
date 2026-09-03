@@ -5,6 +5,9 @@
 .work-cases-count, .work-case-status, .work-case-risk { border-radius: 999px; padding: 4px 9px; font-size: 12px; font-weight: 600; }
 .work-cases-count { background: rgba(59, 130, 246, .12); color: var(--antd-primary); white-space: nowrap; }
 .work-cases-list { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.work-case-draft-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) auto; gap: 10px; align-items: end; }
+.work-case-draft-form label { display: grid; gap: 4px; font-size: 12px; color: var(--antd-text-secondary); }
+.work-case-draft-form input { min-width: 0; padding: 8px; }
 .work-case-card { border: 1px solid var(--antd-border-color, rgba(255,255,255,.12)); border-radius: 12px; background: var(--antd-component-background, rgba(255,255,255,.03)); padding: 18px; display: grid; gap: 12px; }
 .work-case-card-topline { display: flex; justify-content: space-between; gap: 8px; }
 .work-case-card h3 { margin: 0; font-size: 16px; }

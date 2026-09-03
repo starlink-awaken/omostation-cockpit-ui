@@ -1,5 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
-import { listActiveWorkCases } from './api';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { createWorkCaseDraft, listActiveWorkCases } from './api';
+import { useState } from 'react';
 import type { WorkCaseRisk, WorkCaseStatus } from './types';
 import './WorkCasesPage.css';
 
@@ -27,6 +28,10 @@ function formatDueAt(value?: string) {
 }
 
 export default function WorkCasesPage() {
+  const [caseId, setCaseId] = useState('');
+  const [title, setTitle] = useState('');
+  const [sourceRef, setSourceRef] = useState('');
+  const queryClient = useQueryClient();
   const casesQuery = useQuery({
     queryKey: ['work-cases', 'active'],
     queryFn: async () => {
@@ -37,6 +42,14 @@ export default function WorkCasesPage() {
       return result.data.items;
     },
     retry: false,
+  });
+  const draftMutation = useMutation({
+    mutationFn: async () => {
+      const result = await createWorkCaseDraft({ case_id: caseId, title, source_ref: sourceRef });
+      if (!result.ok || !result.data) throw new Error(result.error || '案件草稿创建失败');
+      return result.data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['work-cases', 'active'] }),
   });
 
   if (casesQuery.isLoading) {
@@ -61,6 +74,14 @@ export default function WorkCasesPage() {
         </div>
         <span className="work-cases-count">{cases.length} 个进行中</span>
       </div>
+      <form className="work-case-draft-form" onSubmit={(event) => { event.preventDefault(); draftMutation.mutate(); }}>
+        <label>案件编号<input aria-label="案件编号" value={caseId} onChange={(event) => setCaseId(event.target.value)} required /></label>
+        <label>案件标题<input aria-label="案件标题" value={title} onChange={(event) => setTitle(event.target.value)} required /></label>
+        <label>OA 来源引用<input aria-label="OA 来源引用" value={sourceRef} onChange={(event) => setSourceRef(event.target.value)} required /></label>
+        <button type="submit" disabled={draftMutation.isPending}>创建案件草稿</button>
+        {draftMutation.isSuccess && <span>案件草稿 {draftMutation.data.id} 已创建</span>}
+        {draftMutation.isError && <span role="alert">{draftMutation.error.message}</span>}
+      </form>
 
       {cases.length === 0 ? (
         <div className="work-cases-state">当前没有进行中的案件。</div>

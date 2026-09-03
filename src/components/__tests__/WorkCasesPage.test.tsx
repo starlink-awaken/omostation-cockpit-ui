@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { screen } from '@testing-library/react';
 import { render } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { setupMockFetch, setupMockFetchError } from './route-test-helpers';
 import WorkCasesPage from '../../features/work-cases/WorkCasesPage';
@@ -67,5 +68,24 @@ describe('WorkCasesPage', () => {
       label: '案件',
       group: '工作案件',
     }));
+  });
+
+  it('creates only a case draft through the controlled draft endpoint', async () => {
+    const fetchMock = setupMockFetch({ '/api/work-cases?scope=active': { items: [] } });
+    fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === '/api/work-cases/drafts') return { ok: true, status: 200, json: async () => ({ id: 'CASE-001', status: 'draft' }) };
+      return { ok: true, status: 200, json: async () => ({ items: [] }) };
+    });
+    const user = userEvent.setup();
+    renderWorkCasesPage();
+
+    await user.type(await screen.findByLabelText('案件编号'), 'CASE-001');
+    await user.type(await screen.findByLabelText('案件标题'), '数据调查');
+    await user.type(screen.getByLabelText('OA 来源引用'), 'oa://task-1');
+    await user.click(screen.getByRole('button', { name: '创建案件草稿' }));
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/work-cases/drafts', expect.objectContaining({ method: 'POST' }));
+    expect(await screen.findByText('案件草稿 CASE-001 已创建')).toBeInTheDocument();
   });
 });
