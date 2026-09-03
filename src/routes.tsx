@@ -15,6 +15,8 @@ import { lazy } from 'react';
 // eslint-disable-next-line react-refresh/only-export-components
 const HomePage = lazy(() => import('./components/HomePage'));
 // eslint-disable-next-line react-refresh/only-export-components
+const WorkCasesPage = lazy(() => import('./features/work-cases/WorkCasesPage'));
+// eslint-disable-next-line react-refresh/only-export-components
 const CockpitGuideView = lazy(() => import('./components/CockpitGuideView'));
 // eslint-disable-next-line react-refresh/only-export-components
 const SystemMapView = lazy(() => import('./components/SystemMapView'));
@@ -148,6 +150,7 @@ export interface RouteConfig {
 export const ROUTES: RouteConfig[] = [
   // ── 总览与导航 ──
   { id: 'Home', path: '/', label: '首页', subtitle: '系统健康总览、实时告警、关键指标趋势。', group: '总览与导航', component: HomePage, icon: 'LayoutDashboard', purpose: '健康、告警、任务、指标趋势的日常总览。', whenToUse: '每天先看这里。' },
+  { id: 'WorkCases', path: '/cases', label: '案件', subtitle: '按案件组织任务、材料、确认、回执和归档。', group: '工作案件', component: WorkCasesPage, icon: 'ClipboardList', purpose: '处理正式工作案件，而不是在工具页面间跳转。', whenToUse: '收到 OA 任务或需要推进一项正式工作时。' },
   { id: 'Guide', path: '/guide', label: '驾驶舱指南', subtitle: '快速了解驾驶舱功能与操作方式。', group: '总览与导航', component: CockpitGuideView, icon: 'Compass', purpose: '把页面、工作带和推荐入口梳成上手总览。', whenToUse: '第一次进入或迷路时。' },
   { id: 'SystemMap', path: '/system-map', label: '系统地图', subtitle: '全局系统结构与依赖关系可视化。', group: '总览与导航', component: SystemMapView, icon: 'Network', purpose: '按页面、项目、能力域和使用路径解释整个 Cockpit。', whenToUse: '想知道 cockpit 还缺什么时。' },
   { id: 'Capabilities', path: '/capabilities', label: '能力全景', subtitle: '全生态 MCP 工具 / BOS 服务 / CLI 命令一览。', group: '总览与导航', component: CapabilityExplorer, icon: 'Layers', purpose: '浏览全生态能力：MCP 工具、BOS 服务、CLI 命令、工作流。', whenToUse: '找现成能力而不是重造轮子。' },
