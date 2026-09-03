@@ -61,6 +61,32 @@ describe('WorkCasesPage', () => {
     expect(screen.queryByText('2026 年数据调查')).not.toBeInTheDocument();
   });
 
+  it('shows pending external action metadata without presenting approval or execution controls', async () => {
+    setupMockFetch({
+      '/api/work-cases?scope=active': {
+        items: [{
+          id: 'CASE-001', title: '2026 年数据调查', status: 'awaiting_confirmation', risk: 'high',
+          next_action: '确认调查对象与发送批次', plan_confirmed: true,
+          valid_submission_count: 4, submission_version_count: 6,
+        }],
+      },
+      '/api/work-cases/CASE-001/external-actions': {
+        items: [{
+          id: 'work-case-action:action-1', status: 'pending', action_type: 'email_send',
+          recipient_count: 2, attachment_count: 1,
+          action_snapshot_digest: 'sha256:snapshot', created_at: '2026-09-03T10:00:00Z',
+        }],
+      },
+    });
+
+    renderWorkCasesPage();
+
+    expect(await screen.findByRole('heading', { name: '对外动作待确认' })).toBeInTheDocument();
+    expect(screen.getByText('邮件发送 · 2 个对象 · 1 个附件')).toBeInTheDocument();
+    expect(screen.getByText('sha256:snapshot')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /批准外部动作|执行外部动作|发送/ })).not.toBeInTheDocument();
+  });
+
   it('registers a visible work-case route in the primary work navigation', () => {
     expect(ROUTES).toContainEqual(expect.objectContaining({
       id: 'WorkCases',

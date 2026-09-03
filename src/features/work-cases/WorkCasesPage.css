@@ -13,6 +13,15 @@
 .work-case-card h3 { margin: 0; font-size: 16px; }
 .work-case-next-action { margin: 0; color: var(--antd-text-secondary); line-height: 1.55; }
 .work-case-facts { margin: 0; color: var(--antd-text-secondary); font-size: 12px; }
+.work-case-action-queue { display: grid; gap: 8px; border-left: 3px solid var(--antd-warning, #d97706); background: rgba(245, 158, 11, .06); padding: 12px; }
+.work-case-action-queue-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.work-case-action-queue h4, .work-case-action-queue p { margin: 0; }
+.work-case-action-queue-heading span { border: 1px solid currentColor; border-radius: 999px; color: var(--antd-text-secondary); font-size: 11px; padding: 2px 7px; }
+.work-case-action-queue ul { display: grid; gap: 6px; list-style: none; margin: 0; padding: 0; }
+.work-case-action-queue li { display: grid; gap: 4px; font-size: 12px; }
+.work-case-action-queue code { color: var(--antd-text-secondary); font-size: 11px; overflow-wrap: anywhere; }
+.work-case-action-queue-note { color: var(--antd-text-secondary); font-size: 12px; }
+.work-case-action-queue-error { border-left-color: var(--antd-error, #ef4444); }
 .work-case-card footer { color: var(--antd-text-secondary); font-size: 12px; }
 .work-cases-state { border: 1px dashed var(--antd-border-color, rgba(255,255,255,.18)); border-radius: 10px; padding: 20px; color: var(--antd-text-secondary); }
 .work-cases-error { border-color: rgba(239, 68, 68, .5); color: var(--antd-error, #ef4444); }

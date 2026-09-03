@@ -25,3 +25,17 @@ export interface WorkCaseSummary {
 export interface WorkCaseListResponse {
   items: WorkCaseSummary[];
 }
+
+export interface WorkCaseExternalAction {
+  id: string;
+  status: 'pending';
+  action_type: string;
+  recipient_count: number;
+  attachment_count: number;
+  action_snapshot_digest: string;
+  created_at: string;
+}
+
+export interface WorkCaseExternalActionListResponse {
+  items: WorkCaseExternalAction[];
+}

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createWorkCaseDraft, listActiveWorkCases, recordWorkCaseSubmission, requestWorkCasePlan } from './api';
+import { createWorkCaseDraft, listActiveWorkCases, listWorkCaseExternalActions, recordWorkCaseSubmission, requestWorkCasePlan } from './api';
 import { useState } from 'react';
 import type { WorkCaseRisk, WorkCaseStatus } from './types';
 import './WorkCasesPage.css';
@@ -21,10 +21,54 @@ const RISK_LABELS: Record<WorkCaseRisk, string> = {
   high: '高风险',
 };
 
+const ACTION_TYPE_LABELS: Record<string, string> = {
+  email_send: '邮件发送',
+};
+
 function formatDueAt(value?: string) {
   if (!value) return '未设置截止时间';
   const parsed = new Date(value);
   return Number.isNaN(parsed.valueOf()) ? value : parsed.toLocaleString('zh-CN', { hour12: false });
+}
+
+function WorkCaseExternalActionQueue({ caseId }: { caseId: string }) {
+  const actionsQuery = useQuery({
+    queryKey: ['work-case-external-actions', caseId],
+    queryFn: async () => {
+      const result = await listWorkCaseExternalActions(caseId);
+      if (!result.ok || !result.data) throw new Error(result.error || '对外动作队列不可用');
+      return result.data.items;
+    },
+    retry: false,
+  });
+
+  if (actionsQuery.isLoading) return <div className="work-case-action-queue" role="status">正在读取待确认动作…</div>;
+  if (actionsQuery.isError) {
+    return <div className="work-case-action-queue work-case-action-queue-error" role="alert">对外动作队列暂不可用；请改用人工操作卡，系统未显示模拟待办。</div>;
+  }
+
+  const actions = actionsQuery.data ?? [];
+  return (
+    <section className="work-case-action-queue" aria-labelledby={`external-actions-${caseId}`}>
+      <div className="work-case-action-queue-heading">
+        <h4 id={`external-actions-${caseId}`}>对外动作待确认</h4>
+        <span>只读</span>
+      </div>
+      {actions.length === 0 ? (
+        <p>当前没有待确认的对外动作。</p>
+      ) : (
+        <ul>
+          {actions.map((action) => (
+            <li key={action.id}>
+              <strong>{ACTION_TYPE_LABELS[action.action_type] ?? action.action_type} · {action.recipient_count} 个对象 · {action.attachment_count} 个附件</strong>
+              <code>{action.action_snapshot_digest}</code>
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="work-case-action-queue-note">需要最终确认；此处不能批准、发送或执行。</p>
+    </section>
+  );
 }
 
 export default function WorkCasesPage() {
@@ -131,6 +175,7 @@ export default function WorkCasesPage() {
                 <button type="button" onClick={() => submissionMutation.mutate(workCase.id)} disabled={!unitId || !submissionDigest || submissionMutation.isPending}>提交材料摘要</button>
                 {submissionMutation.isSuccess && <span>材料摘要已记录</span>}
               </div>
+              <WorkCaseExternalActionQueue caseId={workCase.id} />
               <footer>截止：{formatDueAt(workCase.due_at)}</footer>
             </article>
           ))}
