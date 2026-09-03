@@ -1,0 +1,20 @@
+.work-cases-page { display: grid; gap: 18px; }
+.work-cases-heading { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
+.work-cases-heading h2 { margin: 0; font-size: 22px; }
+.work-cases-heading p { margin: 6px 0 0; color: var(--antd-text-secondary); }
+.work-cases-count, .work-case-status, .work-case-risk { border-radius: 999px; padding: 4px 9px; font-size: 12px; font-weight: 600; }
+.work-cases-count { background: rgba(59, 130, 246, .12); color: var(--antd-primary); white-space: nowrap; }
+.work-cases-list { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.work-case-card { border: 1px solid var(--antd-border-color, rgba(255,255,255,.12)); border-radius: 12px; background: var(--antd-component-background, rgba(255,255,255,.03)); padding: 18px; display: grid; gap: 12px; }
+.work-case-card-topline { display: flex; justify-content: space-between; gap: 8px; }
+.work-case-card h3 { margin: 0; font-size: 16px; }
+.work-case-next-action { margin: 0; color: var(--antd-text-secondary); line-height: 1.55; }
+.work-case-card footer { color: var(--antd-text-secondary); font-size: 12px; }
+.work-cases-state { border: 1px dashed var(--antd-border-color, rgba(255,255,255,.18)); border-radius: 10px; padding: 20px; color: var(--antd-text-secondary); }
+.work-cases-error { border-color: rgba(239, 68, 68, .5); color: var(--antd-error, #ef4444); }
+.status-awaiting_confirmation { background: rgba(245, 158, 11, .14); color: var(--antd-warning); }
+.status-blocked { background: rgba(239, 68, 68, .14); color: var(--antd-error); }
+.status-executing { background: rgba(59, 130, 246, .14); color: var(--antd-primary); }
+.risk-low { color: var(--antd-success); }
+.risk-medium { color: var(--antd-warning); }
+.risk-high { color: var(--antd-error); }
