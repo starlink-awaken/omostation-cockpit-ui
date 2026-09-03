@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createWorkCaseDraft, listActiveWorkCases } from './api';
+import { createWorkCaseDraft, listActiveWorkCases, requestWorkCasePlan } from './api';
 import { useState } from 'react';
 import type { WorkCaseRisk, WorkCaseStatus } from './types';
 import './WorkCasesPage.css';
@@ -31,6 +31,7 @@ export default function WorkCasesPage() {
   const [caseId, setCaseId] = useState('');
   const [title, setTitle] = useState('');
   const [sourceRef, setSourceRef] = useState('');
+  const [planDigest, setPlanDigest] = useState('');
   const queryClient = useQueryClient();
   const casesQuery = useQuery({
     queryKey: ['work-cases', 'active'],
@@ -50,6 +51,13 @@ export default function WorkCasesPage() {
       return result.data;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['work-cases', 'active'] }),
+  });
+  const planMutation = useMutation({
+    mutationFn: async (caseId: string) => {
+      const result = await requestWorkCasePlan(caseId, planDigest);
+      if (!result.ok || !result.data) throw new Error(result.error || '方案确认请求失败');
+      return result.data;
+    },
   });
 
   if (casesQuery.isLoading) {
@@ -100,6 +108,13 @@ export default function WorkCasesPage() {
                 {' · '}
                 有效回收 {workCase.valid_submission_count} · 提交版本 {workCase.submission_version_count}
               </p>
+              {!workCase.plan_confirmed && (
+                <div className="work-case-plan-request">
+                  <input aria-label="方案摘要" value={planDigest} onChange={(event) => setPlanDigest(event.target.value)} placeholder="sha256:方案摘要" />
+                  <button type="button" onClick={() => planMutation.mutate(workCase.id)} disabled={!planDigest || planMutation.isPending}>提交方案确认请求</button>
+                  {planMutation.isSuccess && <span>方案已进入待确认队列</span>}
+                </div>
+              )}
               <footer>截止：{formatDueAt(workCase.due_at)}</footer>
             </article>
           ))}
