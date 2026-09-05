@@ -342,3 +342,6 @@ export function DashboardPage({ initialSubTab = 'monitor', initialQuery }: Dashb
     </div>
   );
 }
+
+export default DashboardPage;
+
