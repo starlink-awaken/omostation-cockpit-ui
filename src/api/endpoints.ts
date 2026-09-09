@@ -637,3 +637,14 @@ export const API_ENDPOINTS = {
   outcomes: OUTCOMES_ENDPOINTS,
   journeys: JOURNEYS_ENDPOINTS,
 } as const;
+
+// ── Scene v3 Lifecycle ──
+export const SCENE_ENDPOINTS = {
+  list: '/api/scene-lifecycle/list',
+  status: (sceneId: string) => `/api/scene-lifecycle/status/${sceneId}`,
+  execute: '/api/scene-lifecycle/execute',
+  promote: '/api/scene-lifecycle/promote',
+  demote: '/api/scene-lifecycle/demote',
+  graph: '/api/scene-lifecycle/graph',
+  metrics: (sceneId: string, window = 30) => `/api/scene-lifecycle/metrics/${sceneId}?window=${window}`,
+} as const;

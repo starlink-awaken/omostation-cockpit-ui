@@ -76,6 +76,11 @@ const GovernanceSelfCheck = lazy(() => import('./components/governance/Governanc
 const SwarmDashboard = lazy(() => import('./components/SwarmDashboard'));
 // eslint-disable-next-line react-refresh/only-export-components
 const DecisionInboxView = lazy(() => import('./components/DecisionInboxView'));
+// Scene v3 views
+const SceneOverviewView = lazy(() => import('./components/scene/SceneOverviewView'));
+const SceneDetailView = lazy(() => import('./components/scene/SceneDetailView'));
+const SceneGraphView = lazy(() => import('./components/scene/SceneGraphView'));
+const CalibrationCenterView = lazy(() => import('./components/scene/CalibrationCenterView'));
 // eslint-disable-next-line react-refresh/only-export-components
 const PilotReviewView = lazy(() => import('./components/PilotReviewView'));
 // eslint-disable-next-line react-refresh/only-export-components
@@ -200,6 +205,11 @@ export const ROUTES: RouteConfig[] = [
   { id: 'Kems', path: '/kems', label: 'KEMS 质量治理', subtitle: '以质量指标、哈希和证据引用驱动 OCR 复核与知识准入。', group: '知识与研究', domain: 'registry', component: KemsWorkbench, icon: 'FileText', purpose: '以质量指标、哈希和证据引用驱动 OCR 复核与知识准入。', whenToUse: '做知识质量治理时。' },
   { id: 'SceneCards', path: '/scene-cards', label: '场景卡评审', subtitle: '评审 Workflow Mesh 场景候选，完整性不足时保持提案态。', group: '知识与研究', domain: 'swarm', component: SceneCardReviewView, icon: 'FileText', purpose: '评审 Workflow Mesh 场景候选并保持 proposal-only 边界。', whenToUse: '把业务机会转成可验证场景时。' },
   { id: 'DecisionInbox', path: '/decision-inbox', label: '决策收件箱', subtitle: '场景卡驱动的决策生命周期管理 — 摄入→审批→完成。', group: '知识与研究', domain: 'swarm', component: DecisionInboxView, icon: 'Inbox', purpose: '场景卡驱动的决策生命周期管理。', whenToUse: '处理待审批决策时。' },
+  // ── Scene v3 新增页面 ──
+  { id: 'SceneOverview', path: '/scenes', label: '场景总览', subtitle: '所有场景卡状态、生命周期分布、健康度。', group: '知识与研究', domain: 'swarm', component: SceneOverviewView, icon: 'LayoutGrid', purpose: '查看所有场景卡的状态分布和健康度。', whenToUse: '需要总览所有场景卡时。' },
+  { id: 'SceneDetail', path: '/scenes/:id', label: '场景详情', subtitle: '单场景的 journey 状态机、校准曲线、执行历史。', group: '知识与研究', domain: 'swarm', component: SceneDetailView, icon: 'FileText', purpose: '查看单个场景卡的详细信息。', whenToUse: '需要深入了解某个场景卡时。' },
+  { id: 'SceneGraphView', path: '/scene-graph', label: '场景图', subtitle: 'reactflow DAG 可视化场景间拓扑关系。', group: '知识与研究', domain: 'swarm', component: SceneGraphView, icon: 'GitBranch', purpose: '可视化场景间的 DAG 拓扑关系。', whenToUse: '需要理解场景间依赖时。' },
+  { id: 'CalibrationCenter', path: '/calibration', label: '校准中心', subtitle: '所有场景的校准分数、升级/降级队列。', group: '知识与研究', domain: 'swarm', component: CalibrationCenterView, icon: 'TrendingUp', purpose: '查看场景校准分数和生命周期变更队列。', whenToUse: '需要评估场景信任等级时。' },
   { id: 'ExternalResources', path: '/external-resources', label: '外部能力目录', subtitle: '查看外部知识、数据、方法、工具和渠道的动态发现与健康状态。', group: '知识与研究', domain: 'registry', component: ExternalResourceCatalogView, icon: 'Database', purpose: '查看动态发现的外部知识、数据、方法、工具和渠道。', whenToUse: '判断外部能力是否存在、健康和可触达时。' },
 
   // ── Agent 与链路 (Swarm & Execution Domain) ──
