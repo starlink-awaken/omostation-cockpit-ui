@@ -98,7 +98,20 @@ const SCENE_LIFECYCLE = {
   graph: '/api/scene-lifecycle/graph',
   metrics: (sceneId: string, window = 30) =>
     `/api/scene-lifecycle/metrics/${encodeURIComponent(sceneId)}?window=${window}`,
+  escalations: '/api/scene-lifecycle/escalations',
+  adjudicate: '/api/scene-lifecycle/adjudicate',
 } as const;
+
+// ── Escalation types ──
+
+export interface SceneEscalation {
+  run_id: string;
+  scene_id: string;
+  journey_id?: string;
+  confidence?: number;
+  ts?: string;
+  trace_steps?: number;
+}
 
 // ── Queries ──
 
@@ -139,6 +152,17 @@ export function useSceneGraph() {
   });
 }
 
+export function useEscalationQueue() {
+  return useQuery({
+    queryKey: ['scene-lifecycle-escalations'],
+    queryFn: () =>
+      apiFetch<{ ok: boolean; count: number; escalations: SceneEscalation[] }>(
+        SCENE_LIFECYCLE.escalations,
+      ),
+    staleTime: 10_000,
+  });
+}
+
 // ── Mutations ──
 
 export function useExecuteScene() {
@@ -147,6 +171,24 @@ export function useExecuteScene() {
     mutationFn: (input: { scene_id: string; signal?: Record<string, unknown>; dry_run?: boolean }) =>
       apiPost(SCENE_LIFECYCLE.execute, input),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['scene-lifecycle-list'] }),
+  });
+}
+
+export function useAdjudicateScene() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: {
+      scene_id: string;
+      run_id: string;
+      decision: 'accept' | 'reject';
+      notes?: string;
+      review_seconds?: number;
+      saved_seconds?: number;
+    }) => apiPost(SCENE_LIFECYCLE.adjudicate, input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['scene-lifecycle-escalations'] });
+      qc.invalidateQueries({ queryKey: ['scene-lifecycle-metrics'] });
+    },
   });
 }
 

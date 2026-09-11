@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useSceneList } from '../../api/hooks/sceneLifecycle';
+import { useEscalationQueue, useSceneList } from '../../api/hooks/sceneLifecycle';
 
 const LIFECYCLE_STYLES: Record<string, string> = {
   draft: 'bg-gray-100 text-gray-600 border-gray-200',
@@ -15,6 +15,8 @@ const DOMAINS = ['work', 'health', 'research', 'knowledge', 'governance'];
 export default function SceneOverviewView() {
   const [domain, setDomain] = useState<string | undefined>();
   const { data, isLoading, error } = useSceneList(domain);
+  const { data: escalations } = useEscalationQueue();
+  const pendingCount = escalations?.count ?? 0;
 
   if (isLoading) {
     return <div className="p-6 text-sm text-gray-500">加载场景卡中…</div>;
@@ -51,6 +53,14 @@ export default function SceneOverviewView() {
           ))}
         </select>
       </div>
+
+      {/* Pending escalations banner */}
+      {pendingCount > 0 && (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
+          ⏳ {pendingCount} 个场景等待人工裁决 —
+          <Link to="/calibration" className="ml-1 underline">前往校准中心处理</Link>
+        </div>
+      )}
 
       {/* Lifecycle distribution */}
       <div className="grid grid-cols-5 gap-3">
