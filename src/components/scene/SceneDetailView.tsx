@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
+  useAdjudicateScene,
+  useEscalationQueue,
   useExecuteScene,
   useSceneMetrics,
   useSceneStatus,
@@ -16,8 +18,16 @@ export default function SceneDetailView() {
   const { data: metrics } = useSceneMetrics(sceneId);
   const execute = useExecuteScene();
   const transition = useTransitionScene();
+  const adjudicate = useAdjudicateScene();
+  const { data: escalations } = useEscalationQueue();
   const [targetLevel, setTargetLevel] = useState('');
   const [execResult, setExecResult] = useState<string | null>(null);
+  const [reviewSec, setReviewSec] = useState('30');
+  const [savedSec, setSavedSec] = useState('600');
+
+  const pendingEscalations = (escalations?.escalations ?? []).filter(
+    (e) => e.scene_id === sceneId,
+  );
 
   if (isLoading) return <div className="p-6 text-sm text-gray-500">加载中…</div>;
   if (error) return <div className="p-6 text-sm text-red-600">加载失败: {(error as Error).message}</div>;
@@ -130,6 +140,72 @@ export default function SceneDetailView() {
               ))
             )}
           </div>
+        </div>
+      )}
+
+      {/* Pending escalations (human adjudication) */}
+      {pendingEscalations.length > 0 && (
+        <div className="space-y-3 rounded-lg border border-amber-300 bg-amber-50 p-4">
+          <h2 className="font-semibold text-amber-800">
+            ⏳ 待人工裁决 ({pendingEscalations.length})
+          </h2>
+          {pendingEscalations.map((esc) => (
+            <div key={esc.run_id} className="rounded border border-amber-200 bg-white p-3 text-sm">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-mono text-xs text-gray-500">{esc.run_id}</span>
+                <span className="text-xs text-gray-500">
+                  confidence: {esc.confidence?.toFixed(2) ?? '—'} · {esc.trace_steps ?? '?'} steps
+                </span>
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <input
+                  type="number"
+                  value={reviewSec}
+                  onChange={(e) => setReviewSec(e.target.value)}
+                  className="w-20 rounded border px-2 py-1 text-xs"
+                  title="人工审查用时 (秒)"
+                  aria-label="审查秒数"
+                />
+                <input
+                  type="number"
+                  value={savedSec}
+                  onChange={(e) => setSavedSec(e.target.value)}
+                  className="w-20 rounded border px-2 py-1 text-xs"
+                  title="估计节省时间 (秒)"
+                  aria-label="节省秒数"
+                />
+                <button
+                  onClick={() =>
+                    adjudicate.mutateAsync({
+                      scene_id: sceneId,
+                      run_id: esc.run_id,
+                      decision: 'accept',
+                      review_seconds: Number(reviewSec) || undefined,
+                      saved_seconds: Number(savedSec) || undefined,
+                    })
+                  }
+                  disabled={adjudicate.isPending}
+                  className="rounded bg-green-600 px-3 py-1 text-xs text-white hover:bg-green-700 disabled:opacity-50"
+                >
+                  ✓ Accept
+                </button>
+                <button
+                  onClick={() =>
+                    adjudicate.mutateAsync({
+                      scene_id: sceneId,
+                      run_id: esc.run_id,
+                      decision: 'reject',
+                      notes: 'Rejected via cockpit UI',
+                    })
+                  }
+                  disabled={adjudicate.isPending}
+                  className="rounded bg-red-600 px-3 py-1 text-xs text-white hover:bg-red-700 disabled:opacity-50"
+                >
+                  ✗ Reject
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
