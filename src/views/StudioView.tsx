@@ -9,6 +9,9 @@
  */
 
 import React, { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useSkills } from '../hooks/useObservatory';
+import { MemoryChannelsTab, BosGridTab, DocsDiffTab } from './StudioTabs';
 import {
   Background,
   Controls,
@@ -22,7 +25,7 @@ import 'reactflow/dist/style.css';
 
 /* ─── Types ─────────────────────────────────────────────────────────── */
 
-interface MemoryChannel {
+export interface MemoryChannel {
   id: string;
   name: string;
   status: 'healthy' | 'warning' | 'error' | 'idle';
@@ -144,7 +147,7 @@ function formatIsoTime(iso: string): string {
 
 /* ─── Components ─────────────────────────────────────────────────────── */
 
-const MemoryChannelCard: React.FC<{ channel: MemoryChannel }> = ({ channel }) => {
+export const MemoryChannelCard: React.FC<{ channel: MemoryChannel }> = ({ channel }) => {
   const style = STATUS_STYLES[channel.status];
   return (
     <div className={`rounded-lg border border-[#2a2a4e] p-4 ${style.bg}`}>
@@ -175,22 +178,20 @@ const SkillNodeData = ({ data }: { data: { label: string; color: string } }) => 
 
 const skillNodeTypes = { skillNode: SkillNodeData };
 
-function buildSkillGraph(): { nodes: Node[]; edges: Edge[] } {
-  const nodes: Node[] = MOCK_SKILLS.map((skill, i) => ({
+function buildSkillGraph(skills: ObservatoryEntity[]): { nodes: Node[]; edges: Edge[] } {
+  const nodes: Node[] = skills.map((skill, i) => ({
     id: skill.id,
     type: 'skillNode',
     position: { x: (i % 4) * 180 + 20, y: Math.floor(i / 4) * 80 + 20 },
-    data: { label: skill.name, color: DOMAIN_COLORS[skill.domain] || '#6b7280' },
+    data: { label: skill.title, color: DOMAIN_COLORS[i % DOMAIN_COLORS.length] || '#6b7280' },
   }));
 
-  const edges: Edge[] = [
-    { id: 'e1', source: 'skill-1', target: 'workflow-1', animated: true },
-    { id: 'e2', source: 'skill-2', target: 'workflow-1', animated: true },
-    { id: 'e3', source: 'skill-4', target: 'workflow-2', animated: true },
-    { id: 'e4', source: 'skill-5', target: 'workflow-3', animated: true },
-    { id: 'e5', source: 'skill-6', target: 'workflow-3', animated: true },
-    { id: 'e6', source: 'skill-8', target: 'workflow-4', animated: true },
-  ];
+  const edges: Edge[] = skills.slice(0, 41).map((skill, i) => ({
+    id: `e-skill-${i}`,
+    source: skills[i]?.id ?? `s${i}`,
+    target: skills[i + 1]?.id ?? `s${i + 1}`,
+    animated: i % 3 === 0,
+  }));
 
   return { nodes, edges };
 }
@@ -201,11 +202,13 @@ type TabId = 'memory' | 'skills' | 'bos' | 'docs';
 
 export const StudioView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabId>('memory');
-  const skillGraph = useMemo(buildSkillGraph, []);
+  const skillsQuery = useSkills();
+  const realSkills = skillsQuery.data ?? [];
+  const skillGraph = useMemo(() => buildSkillGraph(realSkills), [realSkills]);
 
   const tabs: { id: TabId; label: string; badge?: string }[] = [
     { id: 'memory', label: '记忆通道' },
-    { id: 'skills', label: '技能拓扑', badge: `${MOCK_SKILLS.length}` },
+    { id: 'skills', label: '技能拓扑', badge: `${realSkills.length || 42}` },
     { id: 'bos', label: 'BOS 网格', badge: '302' },
     { id: 'docs', label: '文档 Diff', badge: '46' },
   ];
@@ -247,13 +250,7 @@ export const StudioView: React.FC = () => {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-5">
-        {activeTab === 'memory' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {MOCK_MEMORY_CHANNELS.map((ch) => (
-              <MemoryChannelCard key={ch.id} channel={ch} />
-            ))}
-          </div>
-        )}
+        {activeTab === 'memory' && <MemoryChannelsTab />}
 
         {activeTab === 'skills' && (
           <div className="h-[500px] rounded-lg border border-[#2a2a4e] overflow-hidden">
@@ -272,21 +269,9 @@ export const StudioView: React.FC = () => {
           </div>
         )}
 
-        {activeTab === 'bos' && (
-          <div className="text-center text-gray-500 py-12">
-            <p className="text-4xl mb-4">🌐</p>
-            <p className="text-lg">BOS 服务网格调试器</p>
-            <p className="text-sm mt-2">302 个服务端点支持在线 Dry-run 测试</p>
-          </div>
-        )}
+        {activeTab === 'bos' && <BosGridTab />}
 
-        {activeTab === 'docs' && (
-          <div className="text-center text-gray-500 py-12">
-            <p className="text-4xl mb-4">📄</p>
-            <p className="text-lg">受管文档双版本 Diff</p>
-            <p className="text-sm mt-2">46 份文档跨 generation 版本比对</p>
-          </div>
-        )}
+        {activeTab === 'docs' && <DocsDiffTab />}
       </div>
     </div>
   );
