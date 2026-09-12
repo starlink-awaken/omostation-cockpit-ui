@@ -18,5 +18,12 @@ export default defineConfig([
     languageOptions: {
       globals: globals.browser,
     },
+    rules: {
+      // 测试统一走 vitest (bun:test 与 vitest 混用导致 test:unit Transform 失败, 2026-09-12)
+      'no-restricted-imports': [
+        'error',
+        { paths: [{ name: 'bun:test', message: 'Use vitest instead (bun:test breaks bun run test:unit).' }] },
+      ],
+    },
   },
 ])
