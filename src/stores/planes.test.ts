@@ -3,7 +3,7 @@
  *
  * 核心断言: 状态解耦互不污染 — 一个 store 的 set 不影响其他 store。
  */
-import { describe, expect, it, beforeEach } from 'bun:test';
+import { describe, expect, it, beforeEach } from 'vitest';
 import {
   useControlPlaneStore,
   useKnowledgePlaneStore,
@@ -13,7 +13,7 @@ import {
   useDeliveryPlaneStore,
   useCommandPaletteStore,
 } from './index';
-import { buildCommandItems, fuzzyFilter, useCommandPaletteStore } from './commandPaletteCore';
+import { buildCommandItems, fuzzyFilter } from './commandPaletteCore';
 
 const resetAll = () => {
   useControlPlaneStore.setState({
