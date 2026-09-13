@@ -1,5 +1,5 @@
 /**
- * DecisionGraphViewer.test.tsx — T5-05 UI 单测
+ * DecisionGraphViewer.test.tsx — T5-05 UI 单测 (i18n + a11y)
  */
 
 import React from "react";
@@ -30,7 +30,9 @@ const emptyData: DecisionGraphData = {
   nodes: [], edges: [], actors: {}, actions: {},
 };
 
-describe("DecisionGraphViewer", () => {
+// ── zh-CN (default) ──
+
+describe("DecisionGraphViewer (zh-CN)", () => {
   describe("Overview tab", () => {
     it("renders stat card labels", () => {
       render(<DecisionGraphViewer data={sampleData} />);
@@ -46,9 +48,7 @@ describe("DecisionGraphViewer", () => {
 
     it("renders entity lists", () => {
       render(<DecisionGraphViewer data={sampleData} />);
-      // "参与者" appears as stat card label and entity list title, use getAllByText
       expect(screen.getAllByText("参与者").length).toBeGreaterThanOrEqual(1);
-      // Action names appear in entity list and recent nodes table, use getAllByText
       expect(screen.getAllByText("detect_anomaly").length).toBeGreaterThanOrEqual(1);
     });
 
@@ -125,5 +125,181 @@ describe("DecisionGraphViewer", () => {
       fireEvent.click(screen.getByText("概览"));
       expect(screen.getByText("最近节点")).toBeTruthy();
     });
+  });
+});
+
+// ── i18n: English ──
+
+describe("DecisionGraphViewer (en-US)", () => {
+  it("renders English labels in overview", () => {
+    render(<DecisionGraphViewer data={sampleData} locale="en-US" />);
+    expect(screen.getByText("Decision Nodes")).toBeTruthy();
+    expect(screen.getByText("Causal Edges")).toBeTruthy();
+    expect(screen.getByText("Action Types")).toBeTruthy();
+  });
+
+  it("renders English tab labels", () => {
+    render(<DecisionGraphViewer data={sampleData} locale="en-US" />);
+    expect(screen.getByText("Overview")).toBeTruthy();
+    expect(screen.getByText("Nodes")).toBeTruthy();
+    expect(screen.getByText("Topology")).toBeTruthy();
+  });
+
+  it("renders English node count", () => {
+    render(<DecisionGraphViewer data={sampleData} locale="en-US" />);
+    fireEvent.click(screen.getByText("Nodes"));
+    expect(screen.getByText(/5 nodes total/)).toBeTruthy();
+  });
+
+  it("renders English search placeholder", () => {
+    render(<DecisionGraphViewer data={sampleData} locale="en-US" />);
+    fireEvent.click(screen.getByText("Nodes"));
+    expect(screen.getByPlaceholderText(/Search nodes/)).toBeTruthy();
+  });
+
+  it("renders English empty state", () => {
+    render(<DecisionGraphViewer data={sampleData} locale="en-US" />);
+    fireEvent.click(screen.getByText("Nodes"));
+    const searchInput = screen.getByPlaceholderText(/Search nodes/);
+    fireEvent.change(searchInput, { target: { value: "zzz_no_match" } });
+    expect(screen.getByText("No matching nodes")).toBeTruthy();
+  });
+
+  it("renders English topology summary", () => {
+    render(<DecisionGraphViewer data={sampleData} locale="en-US" />);
+    fireEvent.click(screen.getByText("Topology"));
+    expect(screen.getByText(/5 nodes.*4 causal edges/)).toBeTruthy();
+  });
+
+  it("renders English table headers", () => {
+    render(<DecisionGraphViewer data={sampleData} locale="en-US" />);
+    fireEvent.click(screen.getByText("Nodes"));
+    expect(screen.getByText("Time")).toBeTruthy();
+    expect(screen.getByText("Kind")).toBeTruthy();
+    expect(screen.getByText("Action")).toBeTruthy();
+  });
+
+  it("renders English kind labels", () => {
+    render(<DecisionGraphViewer data={sampleData} locale="en-US" />);
+    fireEvent.click(screen.getByText("Topology"));
+    expect(screen.getAllByText("Patrol").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Healing").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Decision").length).toBeGreaterThanOrEqual(1);
+  });
+});
+
+// ── a11y: ARIA roles and keyboard navigation ──
+
+describe("DecisionGraphViewer (a11y)", () => {
+  it("has proper tablist role", () => {
+    render(<DecisionGraphViewer data={sampleData} />);
+    const tablist = screen.getByRole("tablist");
+    expect(tablist).toBeTruthy();
+    expect(tablist.getAttribute("aria-label")).toBe("决策因果图可视化");
+  });
+
+  it("has tab roles with aria-selected", () => {
+    render(<DecisionGraphViewer data={sampleData} />);
+    const tabs = screen.getAllByRole("tab");
+    expect(tabs.length).toBe(3);
+    expect(tabs[0].getAttribute("aria-selected")).toBe("true");
+    expect(tabs[1].getAttribute("aria-selected")).toBe("false");
+    expect(tabs[2].getAttribute("aria-selected")).toBe("false");
+  });
+
+  it("has tabpanel roles with aria-labelledby", () => {
+    render(<DecisionGraphViewer data={sampleData} />);
+    const panels = screen.getAllByRole("tabpanel");
+    expect(panels.length).toBe(1);
+    expect(panels[0].getAttribute("aria-labelledby")).toBe("tab-overview");
+  });
+
+  it("supports ArrowRight to navigate tabs", () => {
+    render(<DecisionGraphViewer data={sampleData} />);
+    const tabs = screen.getAllByRole("tab");
+    fireEvent.keyDown(tabs[0], { key: "ArrowRight" });
+    const updatedTabs = screen.getAllByRole("tab");
+    expect(updatedTabs[1].getAttribute("aria-selected")).toBe("true");
+  });
+
+  it("supports ArrowLeft to navigate tabs", () => {
+    render(<DecisionGraphViewer data={sampleData} />);
+    const tabs = screen.getAllByRole("tab");
+    fireEvent.click(tabs[2]);
+    const updatedTabs = screen.getAllByRole("tab");
+    fireEvent.keyDown(updatedTabs[2], { key: "ArrowLeft" });
+    const finalTabs = screen.getAllByRole("tab");
+    expect(finalTabs[1].getAttribute("aria-selected")).toBe("true");
+  });
+
+  it("supports Home to jump to first tab", () => {
+    render(<DecisionGraphViewer data={sampleData} />);
+    const tabs = screen.getAllByRole("tab");
+    fireEvent.click(tabs[2]);
+    const updatedTabs = screen.getAllByRole("tab");
+    fireEvent.keyDown(updatedTabs[2], { key: "Home" });
+    const finalTabs = screen.getAllByRole("tab");
+    expect(finalTabs[0].getAttribute("aria-selected")).toBe("true");
+  });
+
+  it("supports End to jump to last tab", () => {
+    render(<DecisionGraphViewer data={sampleData} />);
+    const tabs = screen.getAllByRole("tab");
+    fireEvent.keyDown(tabs[0], { key: "End" });
+    const updatedTabs = screen.getAllByRole("tab");
+    expect(updatedTabs[2].getAttribute("aria-selected")).toBe("true");
+  });
+
+  it("has progressbar roles with aria attributes", () => {
+    render(<DecisionGraphViewer data={sampleData} />);
+    const bars = screen.getAllByRole("progressbar");
+    expect(bars.length).toBeGreaterThanOrEqual(1);
+    bars.forEach((bar) => {
+      expect(bar.getAttribute("aria-valuenow")).toBeTruthy();
+      expect(bar.getAttribute("aria-valuemin")).toBe("0");
+      expect(bar.getAttribute("aria-valuemax")).toBeTruthy();
+    });
+  });
+
+  it("has aria-live regions for dynamic content", () => {
+    render(<DecisionGraphViewer data={sampleData} />);
+    const all = document.querySelectorAll("[aria-live]");
+    expect(all.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("has region roles with aria-labels", () => {
+    render(<DecisionGraphViewer data={sampleData} />);
+    const regions = screen.getAllByRole("region");
+    expect(regions.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("has table headers with scope attribute", () => {
+    render(<DecisionGraphViewer data={sampleData} />);
+    fireEvent.click(screen.getByText("节点列表"));
+    const headers = screen.getAllByRole("columnheader");
+    expect(headers.length).toBe(6);
+    headers.forEach((h) => {
+      expect(h.getAttribute("scope")).toBe("col");
+    });
+  });
+
+  it("has SVG with aria-label for screen readers", () => {
+    render(<DecisionGraphViewer data={sampleData} />);
+    fireEvent.click(screen.getByText("因果拓扑"));
+    const svg = document.querySelector("svg[aria-label]");
+    expect(svg).toBeTruthy();
+  });
+
+  it("has focusable SVG nodes with aria-label", () => {
+    render(<DecisionGraphViewer data={sampleData} />);
+    fireEvent.click(screen.getByText("因果拓扑"));
+    const buttons = screen.getAllByRole("button");
+    expect(buttons.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("English locale has proper ARIA labels", () => {
+    render(<DecisionGraphViewer data={sampleData} locale="en-US" />);
+    const tablist = screen.getByRole("tablist");
+    expect(tablist.getAttribute("aria-label")).toBe("Decision Causal Graph");
   });
 });
