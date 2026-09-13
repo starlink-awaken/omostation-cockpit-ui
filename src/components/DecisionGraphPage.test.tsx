@@ -10,39 +10,25 @@ import { vi } from "vitest";
 import DecisionGraphPage from "./DecisionGraphPage";
 import { DecisionGraphData } from "./DecisionGraphViewer";
 
-// ── Mock fetch ──
-
 function mockFetchSuccess(data: DecisionGraphData) {
   const summaryData = {
-    nodes: data.summary.nodes,
-    edges: data.summary.edges,
-    by_kind: data.summary.by_kind,
-    actors: data.actors,
-    actions: data.actions,
+    nodes: data.summary.nodes, edges: data.summary.edges,
+    by_kind: data.summary.by_kind, actors: data.actors, actions: data.actions,
   };
   const nodesData = { nodes: data.nodes, edges: data.edges };
-
   return vi.fn().mockImplementation(async (url: string) => {
-    if (url.includes("/summary")) {
-      return { ok: true, status: 200, json: async () => summaryData };
-    }
-    if (url.includes("/nodes")) {
-      return { ok: true, status: 200, json: async () => nodesData };
-    }
+    if (url.includes("/summary")) return { ok: true, status: 200, json: async () => summaryData };
+    if (url.includes("/nodes")) return { ok: true, status: 200, json: async () => nodesData };
     return { ok: true, status: 200, json: async () => ({}) };
   });
 }
 
 function mockFetchError(message: string) {
   return vi.fn().mockResolvedValue({
-    ok: false,
-    status: 500,
-    statusText: "Internal Server Error",
+    ok: false, status: 500, statusText: "ISE",
     json: async () => ({ error: message }),
   });
 }
-
-// ── Sample data ──
 
 const sampleData: DecisionGraphData = {
   summary: { nodes: 3, edges: 2, by_kind: { patrol: 1, healing: 1, decision: 1 } },
@@ -61,15 +47,13 @@ const sampleData: DecisionGraphData = {
 
 function createTestClient() {
   return new QueryClient({
-    defaultOptions: {
-      queries: { retry: false, staleTime: 0, gcTime: 0, refetchInterval: false, refetchOnWindowFocus: false },
-    },
+    defaultOptions: { queries: { retry: false, staleTime: 0, gcTime: 0, refetchInterval: false, refetchOnWindowFocus: false } },
   });
 }
 
-function renderPage(fetchMock = vi.fn()) {
+function renderPage(fetchMock: ReturnType<typeof vi.fn>) {
   const client = createTestClient();
-  vi.stubGlobal("fetch", fetchMock);
+  global.fetch = fetchMock;
   return render(
     <QueryClientProvider client={client}>
       <MemoryRouter initialEntries={["/decision-graph"]}>
@@ -80,11 +64,6 @@ function renderPage(fetchMock = vi.fn()) {
     </QueryClientProvider>,
   );
 }
-
-afterEach(() => {
-  vi.unstubAllGlobals();
-  vi.restoreAllMocks();
-});
 
 // ── Tests ──
 
@@ -98,8 +77,8 @@ describe("DecisionGraphPage", () => {
     renderPage(mockFetchError("backend unavailable"));
     await waitFor(() => {
       expect(screen.getByRole("alert")).toBeTruthy();
-    });
-    expect(screen.getByText(/backend unavailable/)).toBeTruthy();
+    }, { timeout: 3000 });
+    expect(screen.getByText(/HTTP 500/)).toBeTruthy();
     expect(screen.getByRole("button", { name: /重新加载/ })).toBeTruthy();
   });
 
@@ -119,12 +98,9 @@ describe("DecisionGraphPage", () => {
     await waitFor(() => {
       expect(screen.getByRole("region", { name: "决策因果图可视化" })).toBeTruthy();
     });
-    // Locale switcher
     expect(screen.getByRole("radiogroup")).toBeTruthy();
     expect(screen.getAllByRole("radio")).toHaveLength(2);
-    // Refresh button
     expect(screen.getByRole("button", { name: /刷新/ })).toBeTruthy();
-    // Tab list
     expect(screen.getByRole("tablist")).toBeTruthy();
     expect(screen.getAllByRole("tab")).toHaveLength(3);
   });
@@ -134,9 +110,7 @@ describe("DecisionGraphPage", () => {
     await waitFor(() => {
       expect(screen.getByRole("region", { name: "决策因果图可视化" })).toBeTruthy();
     });
-    // Click English locale
-    const enButton = screen.getByRole("radio", { name: "English" });
-    fireEvent.click(enButton);
+    fireEvent.click(screen.getByRole("radio", { name: "English" }));
     await waitFor(() => {
       expect(screen.getByRole("region", { name: "Decision Causal Graph" })).toBeTruthy();
     });

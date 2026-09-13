@@ -137,6 +137,8 @@ const ResidentMonitor = lazy(() => import('./components/resident/ResidentMonitor
 const BcosDashboard = lazy(() => import('./components/bcos/BcosDashboard'));
 // eslint-disable-next-line react-refresh/only-export-components
 const PulseView = lazy(() => import('./components/p74/PulseView'));
+// eslint-disable-next-line react-refresh/only-export-components
+const DecisionGraphPage = lazy(() => import('./components/DecisionGraphPage'));
 
 export type SurfaceDomainType =
   | 'overview'
@@ -205,6 +207,7 @@ export const ROUTES: RouteConfig[] = [
   { id: 'Kems', path: '/kems', label: 'KEMS 质量治理', subtitle: '以质量指标、哈希和证据引用驱动 OCR 复核与知识准入。', group: '知识与研究', domain: 'registry', component: KemsWorkbench, icon: 'FileText', purpose: '以质量指标、哈希和证据引用驱动 OCR 复核与知识准入。', whenToUse: '做知识质量治理时。' },
   { id: 'SceneCards', path: '/scene-cards', label: '场景卡评审', subtitle: '评审 Workflow Mesh 场景候选，完整性不足时保持提案态。', group: '知识与研究', domain: 'swarm', component: SceneCardReviewView, icon: 'FileText', purpose: '评审 Workflow Mesh 场景候选并保持 proposal-only 边界。', whenToUse: '把业务机会转成可验证场景时。' },
   { id: 'DecisionInbox', path: '/decision-inbox', label: '决策收件箱', subtitle: '场景卡驱动的决策生命周期管理 — 摄入→审批→完成。', group: '知识与研究', domain: 'swarm', component: DecisionInboxView, icon: 'Inbox', purpose: '场景卡驱动的决策生命周期管理。', whenToUse: '处理待审批决策时。' },
+  { id: 'DecisionGraph', path: '/decision-graph', label: '决策因果图', subtitle: '决策因果拓扑可视化 — 节点、边、参与者、动作聚合。', group: '知识与研究', domain: 'swarm', component: DecisionGraphPage, icon: 'GitFork', purpose: '可视化决策因果拓扑，追踪节点上下游影响面。', whenToUse: '需要理解决策链路或影响范围时。' },
   // Scene v2 — lifecycle management
   { id: 'SceneOverview', path: '/scenes', label: '场景总览', subtitle: 'v3 场景卡生命周期分布、健康状态与域过滤。', group: '知识与研究', domain: 'swarm', component: SceneOverviewView, icon: 'LayoutGrid', purpose: '浏览所有 v3 场景卡的生命周期阶段和健康度。', whenToUse: '需要总览场景体系或找某个场景时。' },
   { id: 'SceneDetail', path: '/scenes/:id', label: '场景详情', subtitle: '单场景 journey、校准曲线、能力引用与拓扑。', group: '知识与研究', domain: 'swarm', component: SceneDetailView, icon: 'FileText', purpose: '深入查看单个场景卡的运行与校准数据。', whenToUse: '需要执行场景或查看其依赖时。', hidden: true },

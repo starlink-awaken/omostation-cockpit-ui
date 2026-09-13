@@ -5,7 +5,7 @@
  * 支持国际化 (zh-CN / en-US) + WCAG 2.1 AA 无障碍
  */
 
-import React, { useState, useMemo, useCallback, useRef, useContext, createContext } from "react";
+import React, { useState, useMemo, useCallback, useRef, useContext, createContext, useEffect } from "react";
 
 // ── i18n ──
 
@@ -483,6 +483,7 @@ const TAB_KEYS: TabKey[] = ["overview", "nodes", "topology"];
 export const DecisionGraphViewer: React.FC<Props> = ({ data, locale = "zh-CN" }) => {
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
   const [currentLocale, setCurrentLocale] = useState<Locale>(locale);
+  useEffect(() => { setCurrentLocale(locale); }, [locale]);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const t = dict[currentLocale];
 
