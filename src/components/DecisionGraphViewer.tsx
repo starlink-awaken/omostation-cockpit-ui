@@ -1,10 +1,75 @@
 /**
  * DecisionGraphViewer.tsx — 决策因果图可视化 (T5-05)
  *
- * 三 Tab：概览（统计 + 分布 + 最近节点）| 节点列表 | 因果拓扑图（SVG）
+ * 三 Tab：概览 | 节点列表 | 因果拓扑图（SVG）
+ * 支持国际化 (zh-CN / en-US) + WCAG 2.1 AA 无障碍
  */
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback, useRef, useContext, createContext } from "react";
+
+// ── i18n ──
+
+type Locale = "zh-CN" | "en-US";
+
+interface Translations {
+  title: string;
+  tabs: { overview: string; nodes: string; topology: string };
+  stats: { nodes: string; edges: string; actors: string; actions: string };
+  overview: { distribution: string; actors: string; actions: string; recent: string };
+  nodesTab: { search: string; empty: string; count: (n: number) => string };
+  topology: { legend_caused: string; legend_influenced: string; legend_patrol: string; legend_healing: string; legend_decision: string; hint: string; summary: (nodes: number, edges: number) => string };
+  table: { time: string; kind: string; action: string; decision: string; actor: string; id: string };
+  kinds: { patrol: string; healing: string; decision: string };
+}
+
+const dict: Record<Locale, Translations> = {
+  "zh-CN": {
+    title: "决策因果图可视化",
+    tabs: { overview: "概览", nodes: "节点列表", topology: "因果拓扑" },
+    stats: { nodes: "决策节点", edges: "因果边", actors: "参与者", actions: "动作类型" },
+    overview: { distribution: "按类型分布", actors: "参与者", actions: "动作", recent: "最近节点" },
+    nodesTab: { search: "搜索节点 (动作/执行者/类型)...", empty: "无匹配节点", count: (n) => `共 ${n} 个节点` },
+    topology: {
+      legend_caused: "因果", legend_influenced: "影响",
+      legend_patrol: "巡检", legend_healing: "自愈", legend_decision: "决策",
+      hint: "悬停节点高亮关联路径",
+      summary: (n, e) => `${n} 个节点，${e} 条因果边 · ${"悬停节点高亮关联路径"}`,
+    },
+    table: { time: "时间", kind: "类型", action: "动作", decision: "决策", actor: "执行者", id: "ID" },
+    kinds: { patrol: "巡检", healing: "自愈", decision: "决策" },
+  },
+  "en-US": {
+    title: "Decision Causal Graph",
+    tabs: { overview: "Overview", nodes: "Nodes", topology: "Topology" },
+    stats: { nodes: "Decision Nodes", edges: "Causal Edges", actors: "Actors", actions: "Action Types" },
+    overview: { distribution: "Distribution by Kind", actors: "Actors", actions: "Actions", recent: "Recent Nodes" },
+    nodesTab: { search: "Search nodes (action/actor/kind)...", empty: "No matching nodes", count: (n) => `${n} nodes total` },
+    topology: {
+      legend_caused: "Caused", legend_influenced: "Influenced",
+      legend_patrol: "Patrol", legend_healing: "Healing", legend_decision: "Decision",
+      hint: "Hover nodes to highlight connected paths",
+      summary: (n, e) => `${n} nodes, ${e} causal edges · Hover to highlight`,
+    },
+    table: { time: "Time", kind: "Kind", action: "Action", decision: "Decision", actor: "Actor", id: "ID" },
+    kinds: { patrol: "Patrol", healing: "Healing", decision: "Decision" },
+  },
+};
+
+interface LocaleContextValue {
+  locale: Locale;
+  t: Translations;
+  setLocale: (l: Locale) => void;
+}
+
+const LocaleContext = createContext<LocaleContextValue>({
+  locale: "zh-CN",
+  t: dict["zh-CN"],
+  setLocale: () => {},
+});
+
+export function useLocale(): LocaleContextValue {
+  return useContext(LocaleContext);
+}
 
 // ── Types ──
 
@@ -40,15 +105,10 @@ export interface DecisionGraphData {
 
 interface Props {
   data: DecisionGraphData;
+  locale?: Locale;
 }
 
 // ── Constants ──
-
-const KIND_LABELS: Record<string, string> = {
-  patrol: "巡检",
-  healing: "自愈",
-  decision: "决策",
-};
 
 const KIND_COLORS: Record<string, string> = {
   patrol: "#10b981",
@@ -70,9 +130,9 @@ function formatDate(ts: string): string {
 
 // ── Sub-components ──
 
-function StatCard({ label, value }: { label: string; value: number | string }) {
+function StatCard({ label, value, id }: { label: string; value: number | string; id?: string }) {
   return (
-    <div className="flex flex-col gap-1 rounded-lg border border-border-subtle bg-surface-1 p-3">
+    <div id={id} className="flex flex-col gap-1 rounded-lg border border-border-subtle bg-surface-1 p-3" role="group" aria-label={label}>
       <span className="text-xs text-text-tertiary">{label}</span>
       <span className="text-lg font-semibold text-text-primary">{value}</span>
     </div>
@@ -84,7 +144,7 @@ function DistributionBar({ label, count, total, color }: { label: string; count:
   return (
     <div className="flex items-center gap-2">
       <span className="w-12 shrink-0 text-xs text-text-secondary">{label}</span>
-      <div className="flex-1 h-2 rounded-full bg-surface-3 overflow-hidden">
+      <div className="flex-1 h-2 rounded-full bg-surface-3 overflow-hidden" role="progressbar" aria-valuenow={count} aria-valuemin={0} aria-valuemax={total} aria-label={`${label}: ${count} of ${total}`}>
         <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: color }} />
       </div>
       <span className="w-8 shrink-0 text-right text-xs font-mono text-text-secondary">{count}</span>
@@ -92,17 +152,17 @@ function DistributionBar({ label, count, total, color }: { label: string; count:
   );
 }
 
-function EntityList({ title, entries, maxItems = 5 }: { title: string; entries: Record<string, number>; maxItems?: number }) {
+function EntityList({ title, entries, maxItems = 5, id }: { title: string; entries: Record<string, number>; maxItems?: number; id?: string }) {
   const sorted = Object.entries(entries).sort(([, a], [, b]) => b - a).slice(0, maxItems);
   if (sorted.length === 0) return null;
   return (
-    <div className="space-y-1">
+    <div id={id} className="space-y-1" role="region" aria-label={title}>
       <h4 className="text-xs font-medium text-text-secondary">{title}</h4>
       <ul className="space-y-0.5">
         {sorted.map(([name, count]) => (
           <li key={name} className="flex items-center justify-between text-xs">
             <span className="font-mono text-text-primary">{name}</span>
-            <span className="text-text-tertiary">{count}</span>
+            <span className="text-text-tertiary" aria-label={`${name}: ${count}`}>{count}</span>
           </li>
         ))}
       </ul>
@@ -113,6 +173,7 @@ function EntityList({ title, entries, maxItems = 5 }: { title: string; entries: 
 // ── Tab: Overview ──
 
 function OverviewTab({ data }: { data: DecisionGraphData }) {
+  const { t } = useLocale();
   const { summary, nodes, actors, actions } = data;
   const recent = [...nodes].sort((a, b) => b.ts.localeCompare(a.ts)).slice(0, 10);
   const totalNodes = summary.nodes;
@@ -120,19 +181,19 @@ function OverviewTab({ data }: { data: DecisionGraphData }) {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <StatCard label="决策节点" value={summary.nodes} />
-        <StatCard label="因果边" value={summary.edges} />
-        <StatCard label="参与者" value={Object.keys(actors).length} />
-        <StatCard label="动作类型" value={Object.keys(actions).length} />
+        <StatCard label={t.stats.nodes} value={summary.nodes} id="stat-nodes" />
+        <StatCard label={t.stats.edges} value={summary.edges} id="stat-edges" />
+        <StatCard label={t.stats.actors} value={Object.keys(actors).length} id="stat-actors" />
+        <StatCard label={t.stats.actions} value={Object.keys(actions).length} id="stat-actions" />
       </div>
 
-      <div className="rounded-lg border border-border-subtle bg-surface-1 p-3">
-        <h4 className="text-xs font-medium text-text-secondary mb-2">按类型分布</h4>
+      <div className="rounded-lg border border-border-subtle bg-surface-1 p-3" role="region" aria-label={t.overview.distribution}>
+        <h4 className="text-xs font-medium text-text-secondary mb-2">{t.overview.distribution}</h4>
         <div className="space-y-1.5">
           {Object.entries(summary.by_kind).map(([kind, count]) => (
             <DistributionBar
               key={kind}
-              label={KIND_LABELS[kind] ?? kind}
+              label={t.kinds[kind] ?? kind}
               count={count}
               total={totalNodes}
               color={KIND_COLORS[kind] ?? "#9ca3af"}
@@ -143,25 +204,25 @@ function OverviewTab({ data }: { data: DecisionGraphData }) {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="rounded-lg border border-border-subtle bg-surface-1 p-3">
-          <EntityList title="参与者" entries={actors} maxItems={6} />
+          <EntityList title={t.overview.actors} entries={actors} maxItems={6} id="entity-actors" />
         </div>
         <div className="rounded-lg border border-border-subtle bg-surface-1 p-3">
-          <EntityList title="动作" entries={actions} maxItems={6} />
+          <EntityList title={t.overview.actions} entries={actions} maxItems={6} id="entity-actions" />
         </div>
       </div>
 
-      <div className="rounded-lg border border-border-subtle bg-surface-1 overflow-hidden">
+      <div className="rounded-lg border border-border-subtle bg-surface-1 overflow-hidden" role="region" aria-label={t.overview.recent}>
         <div className="px-3 py-2 border-b border-border-subtle">
-          <h4 className="text-xs font-medium text-text-secondary">最近节点</h4>
+          <h4 className="text-xs font-medium text-text-secondary">{t.overview.recent}</h4>
         </div>
         <div className="max-h-64 overflow-y-auto">
           <table className="w-full text-xs">
             <thead className="sticky top-0 bg-surface-2">
-              <tr className="text-text-tertiary">
-                <th className="px-3 py-1.5 text-left font-medium">时间</th>
-                <th className="px-3 py-1.5 text-left font-medium">类型</th>
-                <th className="px-3 py-1.5 text-left font-medium">动作</th>
-                <th className="px-3 py-1.5 text-left font-medium">执行者</th>
+              <tr>
+                <th scope="col" className="px-3 py-1.5 text-left font-medium text-text-tertiary">{t.table.time}</th>
+                <th scope="col" className="px-3 py-1.5 text-left font-medium text-text-tertiary">{t.table.kind}</th>
+                <th scope="col" className="px-3 py-1.5 text-left font-medium text-text-tertiary">{t.table.action}</th>
+                <th scope="col" className="px-3 py-1.5 text-left font-medium text-text-tertiary">{t.table.actor}</th>
               </tr>
             </thead>
             <tbody>
@@ -173,7 +234,7 @@ function OverviewTab({ data }: { data: DecisionGraphData }) {
                       className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium"
                       style={{ backgroundColor: KIND_COLORS[n.kind] + "22", color: KIND_COLORS[n.kind] }}
                     >
-                      {KIND_LABELS[n.kind] ?? n.kind}
+                      {t.kinds[n.kind] ?? n.kind}
                     </span>
                   </td>
                   <td className="px-3 py-1.5 font-mono text-text-primary">{n.action}</td>
@@ -191,6 +252,7 @@ function OverviewTab({ data }: { data: DecisionGraphData }) {
 // ── Tab: Nodes List ──
 
 function NodesListTab({ nodes }: { nodes: DecisionNode[] }) {
+  const { t } = useLocale();
   const [filter, setFilter] = useState("");
 
   const filtered = useMemo(() => {
@@ -207,24 +269,27 @@ function NodesListTab({ nodes }: { nodes: DecisionNode[] }) {
 
   return (
     <div className="space-y-3">
-      <input
-        type="text"
-        value={filter}
-        onChange={(e) => setFilter(e.target.value)}
-        placeholder="搜索节点 (动作/执行者/类型)..."
-        className="w-full rounded-md border border-border-subtle bg-surface-1 px-3 py-2 text-xs text-text-primary placeholder:text-text-tertiary focus:border-accent focus:outline-none"
-      />
+      <div className="relative">
+        <input
+          type="search"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          placeholder={t.nodesTab.search}
+          aria-label={t.nodesTab.search}
+          className="w-full rounded-md border border-border-subtle bg-surface-1 px-3 py-2 text-xs text-text-primary placeholder:text-text-tertiary focus:border-accent focus:outline-none"
+        />
+      </div>
       <div className="rounded-lg border border-border-subtle bg-surface-1 overflow-hidden">
-        <div className="max-h-96 overflow-y-auto">
+        <div className="max-h-96 overflow-y-auto" role="region" aria-label={t.table.action} aria-busy={false} tabIndex={0}>
           <table className="w-full text-xs">
             <thead className="sticky top-0 bg-surface-2">
-              <tr className="text-text-tertiary">
-                <th className="px-3 py-1.5 text-left font-medium">时间</th>
-                <th className="px-3 py-1.5 text-left font-medium">类型</th>
-                <th className="px-3 py-1.5 text-left font-medium">动作</th>
-                <th className="px-3 py-1.5 text-left font-medium">决策</th>
-                <th className="px-3 py-1.5 text-left font-medium">执行者</th>
-                <th className="px-3 py-1.5 text-left font-medium">ID</th>
+              <tr>
+                <th scope="col" className="px-3 py-1.5 text-left font-medium text-text-tertiary">{t.table.time}</th>
+                <th scope="col" className="px-3 py-1.5 text-left font-medium text-text-tertiary">{t.table.kind}</th>
+                <th scope="col" className="px-3 py-1.5 text-left font-medium text-text-tertiary">{t.table.action}</th>
+                <th scope="col" className="px-3 py-1.5 text-left font-medium text-text-tertiary">{t.table.decision}</th>
+                <th scope="col" className="px-3 py-1.5 text-left font-medium text-text-tertiary">{t.table.actor}</th>
+                <th scope="col" className="px-3 py-1.5 text-left font-medium text-text-tertiary">{t.table.id}</th>
               </tr>
             </thead>
             <tbody>
@@ -236,7 +301,7 @@ function NodesListTab({ nodes }: { nodes: DecisionNode[] }) {
                       className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium"
                       style={{ backgroundColor: KIND_COLORS[n.kind] + "22", color: KIND_COLORS[n.kind] }}
                     >
-                      {KIND_LABELS[n.kind] ?? n.kind}
+                      {t.kinds[n.kind] ?? n.kind}
                     </span>
                   </td>
                   <td className="px-3 py-1.5 font-mono text-text-primary">{n.action}</td>
@@ -247,8 +312,8 @@ function NodesListTab({ nodes }: { nodes: DecisionNode[] }) {
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-3 py-4 text-center text-text-tertiary">
-                    无匹配节点
+                  <td colSpan={6} className="px-3 py-4 text-center text-text-tertiary" role="status" aria-live="polite">
+                    {t.nodesTab.empty}
                   </td>
                 </tr>
               )}
@@ -256,9 +321,7 @@ function NodesListTab({ nodes }: { nodes: DecisionNode[] }) {
           </table>
         </div>
       </div>
-      <div className="text-xs text-text-tertiary">
-        共 {filtered.length} 个节点
-      </div>
+      <div className="text-xs text-text-tertiary" aria-live="polite">{t.nodesTab.count(filtered.length)}</div>
     </div>
   );
 }
@@ -266,6 +329,7 @@ function NodesListTab({ nodes }: { nodes: DecisionNode[] }) {
 // ── Tab: Causal Topology ──
 
 function GraphTopology({ nodes, edges }: { nodes: DecisionNode[]; edges: DecisionEdge[] }) {
+  const { t } = useLocale();
   const [hoverNode, setHoverNode] = useState<string | null>(null);
 
   const layout = useMemo(() => {
@@ -300,25 +364,25 @@ function GraphTopology({ nodes, edges }: { nodes: DecisionNode[]; edges: Decisio
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-3 text-xs text-text-secondary">
+      <div className="flex items-center gap-3 text-xs text-text-secondary" role="note" aria-label={t.topology.hint}>
         <span className="flex items-center gap-1">
-          <span className="inline-block w-3 h-0.5 bg-text-primary" /> 因果
+          <span className="inline-block w-3 h-0.5 bg-text-primary" /> {t.topology.legend_caused}
         </span>
         <span className="flex items-center gap-1">
-          <span className="inline-block w-3 border-t-2 border-dashed border-text-secondary" /> 影响
+          <span className="inline-block w-3 border-t-2 border-dashed border-text-secondary" /> {t.topology.legend_influenced}
         </span>
         <span className="flex items-center gap-1">
-          <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: KIND_COLORS.patrol }} /> 巡检
+          <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: KIND_COLORS.patrol }} /> {t.topology.legend_patrol}
         </span>
         <span className="flex items-center gap-1">
-          <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: KIND_COLORS.healing }} /> 自愈
+          <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: KIND_COLORS.healing }} /> {t.topology.legend_healing}
         </span>
         <span className="flex items-center gap-1">
-          <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: KIND_COLORS.decision }} /> 决策
+          <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: KIND_COLORS.decision }} /> {t.topology.legend_decision}
         </span>
       </div>
-      <div className="rounded-lg border border-border-subtle bg-surface-1 overflow-auto">
-        <svg width={W} height={H} className="mx-auto" style={{ maxWidth: "100%" }}>
+      <div className="rounded-lg border border-border-subtle bg-surface-1 overflow-auto" role="img" aria-label={t.topology.summary(nodes.length, edges.length)}>
+        <svg width={W} height={H} className="mx-auto" style={{ maxWidth: "100%" }} role="graphics-document" aria-label={t.topology.summary(nodes.length, edges.length)}>
           <defs>
             <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
               <polygon points="0 0, 8 3, 0 6" fill="#9ca3af" />
@@ -330,6 +394,7 @@ function GraphTopology({ nodes, edges }: { nodes: DecisionNode[]; edges: Decisio
             const to = positions[edge.to_node];
             if (!from || !to) return null;
             const highlighted = isEdgeHighlighted(edge);
+            const relationLabel = edge.relation === "caused" ? t.topology.legend_caused : t.topology.legend_influenced;
             return (
               <g key={`${edge.from_node}-${edge.to_node}`}>
                 <line
@@ -341,6 +406,7 @@ function GraphTopology({ nodes, edges }: { nodes: DecisionNode[]; edges: Decisio
                   strokeWidth={highlighted ? 2 : 1}
                   strokeDasharray={RELATION_DASH[edge.relation]}
                   markerEnd="url(#arrowhead)"
+                  aria-hidden="true"
                 />
                 {highlighted && (
                   <text
@@ -349,8 +415,9 @@ function GraphTopology({ nodes, edges }: { nodes: DecisionNode[]; edges: Decisio
                     textAnchor="middle"
                     fontSize={10}
                     fill="#6366f1"
+                    aria-hidden="true"
                   >
-                    {edge.relation === "caused" ? "因果" : "影响"}
+                    {relationLabel}
                   </text>
                 )}
               </g>
@@ -361,12 +428,23 @@ function GraphTopology({ nodes, edges }: { nodes: DecisionNode[]; edges: Decisio
             const pos = positions[n.node_id];
             if (!pos) return null;
             const highlighted = hoverNode === n.node_id;
+            const kindLabel = t.kinds[n.kind] ?? n.kind;
             return (
               <g
                 key={n.node_id}
                 onMouseEnter={() => setHoverNode(n.node_id)}
                 onMouseLeave={() => setHoverNode(null)}
                 style={{ cursor: "pointer" }}
+                role="button"
+                tabIndex={0}
+                aria-label={`${kindLabel}: ${n.action} (${n.actor})`}
+                aria-pressed={highlighted}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setHoverNode(hoverNode === n.node_id ? null : n.node_id);
+                  }
+                }}
               >
                 <circle
                   cx={pos.x}
@@ -391,9 +469,7 @@ function GraphTopology({ nodes, edges }: { nodes: DecisionNode[]; edges: Decisio
           })}
         </svg>
       </div>
-      <div className="text-xs text-text-tertiary">
-        {nodes.length} 个节点，{edges.length} 条因果边 · 悬停节点高亮关联路径
-      </div>
+      <div className="text-xs text-text-tertiary" aria-live="polite">{t.topology.summary(nodes.length, edges.length)}</div>
     </div>
   );
 }
@@ -402,40 +478,73 @@ function GraphTopology({ nodes, edges }: { nodes: DecisionNode[]; edges: Decisio
 
 type TabKey = "overview" | "nodes" | "topology";
 
-const TABS: { key: TabKey; label: string }[] = [
-  { key: "overview", label: "概览" },
-  { key: "nodes", label: "节点列表" },
-  { key: "topology", label: "因果拓扑" },
-];
+const TAB_KEYS: TabKey[] = ["overview", "nodes", "topology"];
 
-export const DecisionGraphViewer: React.FC<Props> = ({ data }) => {
+export const DecisionGraphViewer: React.FC<Props> = ({ data, locale = "zh-CN" }) => {
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
+  const [currentLocale, setCurrentLocale] = useState<Locale>(locale);
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const t = dict[currentLocale];
+
+  const handleTabKeyDown = useCallback((e: React.KeyboardEvent, idx: number) => {
+    let newIdx = idx;
+    if (e.key === "ArrowRight") {
+      newIdx = (idx + 1) % TAB_KEYS.length;
+    } else if (e.key === "ArrowLeft") {
+      newIdx = (idx - 1 + TAB_KEYS.length) % TAB_KEYS.length;
+    } else if (e.key === "Home") {
+      newIdx = 0;
+    } else if (e.key === "End") {
+      newIdx = TAB_KEYS.length - 1;
+    } else {
+      return;
+    }
+    e.preventDefault();
+    setActiveTab(TAB_KEYS[newIdx]);
+    tabRefs.current[newIdx]?.focus();
+  }, []);
 
   return (
-    <div className="decision-graph-viewer space-y-4">
-      <div className="flex gap-1 border-b border-border-subtle pb-0 overflow-x-auto">
-        {TABS.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors whitespace-nowrap ${
-              activeTab === tab.key
-                ? "border-accent text-accent"
-                : "border-transparent text-text-tertiary hover:text-text-secondary"
-            }`}
-            aria-current={activeTab === tab.key ? "page" : undefined}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+    <LocaleContext.Provider value={{ locale: currentLocale, t, setLocale: setCurrentLocale }}>
+      <div className="decision-graph-viewer space-y-4" role="region" aria-label={t.title}>
+        {/* Tab bar */}
+        <div className="flex gap-1 border-b border-border-subtle pb-0 overflow-x-auto" role="tablist" aria-label={t.title} aria-orientation="horizontal">
+          {TAB_KEYS.map((key, idx) => (
+            <button
+              key={key}
+              ref={(el) => { tabRefs.current[idx] = el; }}
+              role="tab"
+              id={`tab-${key}`}
+              aria-selected={activeTab === key}
+              aria-controls={`panel-${key}`}
+              tabIndex={activeTab === key ? 0 : -1}
+              onClick={() => setActiveTab(key)}
+              onKeyDown={(e) => handleTabKeyDown(e, idx)}
+              className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors whitespace-nowrap focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
+                activeTab === key
+                  ? "border-accent text-accent"
+                  : "border-transparent text-text-tertiary hover:text-text-secondary"
+              }`}
+            >
+              {t.tabs[key]}
+            </button>
+          ))}
+        </div>
 
-      <div className="min-h-[300px]">
-        {activeTab === "overview" && <OverviewTab data={data} />}
-        {activeTab === "nodes" && <NodesListTab nodes={data.nodes} />}
-        {activeTab === "topology" && <GraphTopology nodes={data.nodes} edges={data.edges} />}
+        {/* Tab panels */}
+        <div className="min-h-[300px]" aria-live="polite" aria-atomic="false">
+          <div id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" hidden={activeTab !== "overview"}>
+            {activeTab === "overview" && <OverviewTab data={data} />}
+          </div>
+          <div id="panel-nodes" role="tabpanel" aria-labelledby="tab-nodes" hidden={activeTab !== "nodes"}>
+            {activeTab === "nodes" && <NodesListTab nodes={data.nodes} />}
+          </div>
+          <div id="panel-topology" role="tabpanel" aria-labelledby="tab-topology" hidden={activeTab !== "topology"}>
+            {activeTab === "topology" && <GraphTopology nodes={data.nodes} edges={data.edges} />}
+          </div>
+        </div>
       </div>
-    </div>
+    </LocaleContext.Provider>
   );
 };
 
