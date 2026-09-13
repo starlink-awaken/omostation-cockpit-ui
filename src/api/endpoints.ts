@@ -586,6 +586,17 @@ export const JOURNEYS_ENDPOINTS = {
   },
 } as const;
 
+// ── Decision Graph ──
+
+export const DECISION_GRAPH_ENDPOINTS = {
+  /** Get decision graph summary (nodes, edges, by_kind, actors, actions) */
+  summary: '/api/v1/decision-graph/summary',
+  /** Get full node and edge list */
+  nodes: '/api/v1/decision-graph/nodes',
+  /** Get subgraph (ancestors + downstream) for a specific node */
+  node: (nodeId: string) => `/api/v1/decision-graph/node/${encodeURIComponent(nodeId)}`,
+} as const;
+
 // ── Export all endpoints ──
 
 export const API_ENDPOINTS = {
@@ -636,4 +647,5 @@ export const API_ENDPOINTS = {
   decisionInbox: DECISION_INBOX_ENDPOINTS,
   outcomes: OUTCOMES_ENDPOINTS,
   journeys: JOURNEYS_ENDPOINTS,
+  decisionGraph: DECISION_GRAPH_ENDPOINTS,
 } as const;
