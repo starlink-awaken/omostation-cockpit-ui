@@ -1,9 +1,9 @@
 /** Console API hooks — hand-written, not using factory.ts. */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/query-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch, apiPost } from '../client';
-import { CONSOLE_BOS_ENDPOINTS, CONSOLE_HARNESS_ENDPOINTS, CONSOLE_MOF_ENDPOINTS } from './endpoints';
+import { CONSOLE_BOS_ENDPOINTS, CONSOLE_HARNESS_ENDPOINTS, CONSOLE_MOF_ENDPOINTS } from '../console/endpoints';
 import type {
   BosInvokeRequest,
   BosInvokeResult,
