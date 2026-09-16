@@ -11,7 +11,6 @@ import {
   type KnowledgeSubTab,
   inferKnowledgeSubTab,
   matchesKnowledgeFocusQuery,
-  copyText,
 } from './KnowledgeHubView.types';
 import {
   FocusedKnowledgeCardSection,

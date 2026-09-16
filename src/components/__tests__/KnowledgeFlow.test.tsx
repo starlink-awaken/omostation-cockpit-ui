@@ -3,7 +3,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 
 vi.hoisted(() => {
-  (globalThis as any).Loader = ({ className }: { className?: string }) => (
+  (globalThis as unknown as Record<string, unknown>).Loader = ({ className }: { className?: string }) => (
     <svg data-testid="mock-loader" className={className} />
   );
 });
