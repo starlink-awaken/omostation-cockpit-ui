@@ -6,7 +6,9 @@
  */
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { SquareTerminal, Terminal, ShieldCheck, Workflow } from 'lucide-react';
+import { SquareTerminal, Terminal, ShieldCheck, Workflow, Activity } from 'lucide-react';
+import { useBosCatalog, useBosSchema, useBosHistory, useBosInvoke, useMofRules, useMofAudit, useMofEvaluate } from '../../api/hooks/console';
+import type { BosInvokeRequest, MofViolation } from '../../api/console/types';
 
 type ConsoleTab = 'bos' | 'mof' | 'harness';
 
@@ -74,7 +76,7 @@ export default function ConsolePage({ initialTab = 'bos', initialUri }: ConsoleP
         <BosConsoleTab initialUri={selectedUri} />
       )}
       {activeTab === 'mof' && (
-        <div className="text-muted-foreground">MOF 控制台 — M2 实现中</div>
+        <MofConsoleTab />
       )}
       {activeTab === 'harness' && (
         <div className="text-muted-foreground">Harness 控制台 — M3 实现中</div>
@@ -422,4 +424,242 @@ function generateConfirmToken(body: BosInvokeRequest): string {
     hash = hash & hash; // Convert to 32-bit integer
   }
   return `${body.uri}:${Math.abs(hash).toString(16).padStart(16, '0').slice(0, 16)}`;
+}
+
+// ── MOF Tab ──────────────────────────────────────────────────
+
+function MofConsoleTab() {
+  const [activeSub, setActiveSub] = useState<'audit' | 'evaluate' | 'rules' | 'value'>('audit');
+  const audit = useMofAudit();
+  const evaluate = useMofEvaluate();
+  const rules = useMofRules();
+
+  const [evalForm, setEvalForm] = useState({
+    constraint_id: '',
+    target: '',
+    target_kind: 'python_code' as 'python_code' | 'write' | 'command',
+  });
+
+  const [auditResult, setAuditResult] = useState<MofViolation[] | null>(null);
+  const [auditDegraded, setAuditDegraded] = useState(false);
+  const [evalResult, setEvalResult] = useState<{ passed: boolean; violations: MofViolation[] } | null>(null);
+
+  const handleAudit = useCallback(async () => {
+    try {
+      const result = await audit.mutateAsync();
+      setAuditResult(result.violations);
+      setAuditDegraded(result.degraded);
+    } catch (e) {
+      setAuditResult(null);
+      setAuditDegraded(true);
+      console.error('Audit failed:', e);
+    }
+  }, [audit]);
+
+  const handleEvaluate = useCallback(async () => {
+    if (!evalForm.constraint_id || !evalForm.target) return;
+    try {
+      const result = await evaluate.mutateAsync(evalForm);
+      setEvalResult(result);
+    } catch (e) {
+      console.error('Evaluate failed:', e);
+    }
+  }, [evalForm, evaluate]);
+
+  const subs: { id: typeof activeSub; label: string }[] = [
+    { id: 'audit', label: '全量审计' },
+    { id: 'evaluate', label: '单约束验证' },
+    { id: 'rules', label: '规则目录' },
+    { id: 'value', label: '价值循环' },
+  ];
+
+  return (
+    <div className="space-y-4">
+      {/* Sub-tabs */}
+      <div className="flex gap-1 border-b">
+        {subs.map((s) => (
+          <button
+            key={s.id}
+            onClick={() => setActiveSub(s.id)}
+            className={`px-3 py-1.5 text-sm border-b-2 transition-colors ${
+              activeSub === s.id
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {s.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Audit Panel */}
+      {activeSub === 'audit' && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleAudit}
+              disabled={audit.isPending}
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium disabled:opacity-50"
+            >
+              {audit.isPending ? '审计中...' : '开始全量审计'}
+            </button>
+            {audit.isPending && <span className="text-sm text-muted-foreground">子进程扫描中，可能需要数分钟...</span>}
+          </div>
+
+          {auditDegraded && !audit.isPending && (
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md text-sm">
+              MOF 审计不可用 — ecos 子模块可能未初始化
+            </div>
+          )}
+
+          {auditResult && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-4 text-sm">
+                <span className="font-medium">
+                  {auditResult.length === 0 ? '✅ 无违规' : `❌ ${auditResult.length} 处违规`}
+                </span>
+              </div>
+              {auditResult.length > 0 && (
+                <div className="max-h-96 overflow-y-auto border rounded-md">
+                  <table className="w-full text-sm">
+                    <thead className="sticky top-0 bg-muted">
+                      <tr>
+                        <th className="px-3 py-2 text-left">ID</th>
+                        <th className="px-3 py-2 text-left">Severity</th>
+                        <th className="px-3 py-2 text-left">Message</th>
+                        <th className="px-3 py-2 text-left">Target</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {auditResult.map((v, i) => (
+                        <tr key={i} className="border-t">
+                          <td className="px-3 py-1.5 font-mono text-xs">{v.constraint_id}</td>
+                          <td className="px-3 py-1.5">
+                            <span className={`px-1.5 py-0.5 rounded text-xs ${
+                              v.severity === 'error' ? 'bg-red-100 text-red-700'
+                              : v.severity === 'warning' ? 'bg-yellow-100 text-yellow-700'
+                              : 'bg-gray-100 text-gray-700'
+                            }`}>{v.severity}</span>
+                          </td>
+                          <td className="px-3 py-1.5 text-xs">{v.message}</td>
+                          <td className="px-3 py-1.5 text-xs font-mono truncate max-w-48">{v.target}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Evaluate Panel */}
+      {activeSub === 'evaluate' && (
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-sm font-medium">Constraint ID</label>
+              <input
+                type="text"
+                value={evalForm.constraint_id}
+                onChange={(e) => setEvalForm({ ...evalForm, constraint_id: e.target.value })}
+                placeholder="e.g. CR-SFOP-003"
+                className="w-full px-3 py-2 mt-1 border rounded-md text-sm font-mono"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Target</label>
+              <input
+                type="text"
+                value={evalForm.target}
+                onChange={(e) => setEvalForm({ ...evalForm, target: e.target.value })}
+                placeholder="e.g. projects/omo/src/..."
+                className="w-full px-3 py-2 mt-1 border rounded-md text-sm font-mono"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="text-sm font-medium">Target Kind</label>
+            <select
+              value={evalForm.target_kind}
+              onChange={(e) => setEvalForm({ ...evalForm, target_kind: e.target.value as 'python_code' | 'write' | 'command' })}
+              className="w-full px-3 py-2 mt-1 border rounded-md text-sm"
+            >
+              <option value="python_code">Python Code (AST)</option>
+              <option value="write">Write Path (boundary)</option>
+              <option value="command">Command (safety)</option>
+            </select>
+          </div>
+          <button
+            onClick={handleEvaluate}
+            disabled={!evalForm.constraint_id || !evalForm.target || evaluate.isPending}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium disabled:opacity-50"
+          >
+            {evaluate.isPending ? '评估中...' : '执行评估'}
+          </button>
+
+          {evalResult && (
+            <div className={`p-3 rounded-md border ${evalResult.passed ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+              <div className="font-medium text-sm">
+                {evalResult.passed ? '✅ 通过' : '❌ 未通过'}
+              </div>
+              {evalResult.violations.length > 0 && (
+                <ul className="mt-2 text-sm space-y-1">
+                  {evalResult.violations.map((v, i) => (
+                    <li key={i} className="text-xs">
+                      <span className="font-mono">{v.constraint_id}</span>: {v.message}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Rules Panel */}
+      {activeSub === 'rules' && (
+        <div className="space-y-2">
+          {rules.isLoading && <p className="text-sm text-muted-foreground">加载规则目录...</p>}
+          {rules.error && <p className="text-sm text-destructive">规则目录不可用</p>}
+          {rules.data && (
+            <div className="max-h-96 overflow-y-auto border rounded-md">
+              {Object.entries(rules.data.families || {}).map(([fam, info]) => (
+                <details key={fam} className="border-b">
+                  <summary className="px-3 py-2 text-sm cursor-pointer hover:bg-muted/50">
+                    <span className="font-mono">{fam}</span> — {info.count} 条
+                  </summary>
+                  <div className="px-3 py-1 space-y-1">
+                    {info.rules.map((r: { id: string; dimension: string }, i: number) => (
+                      <div key={i} className="text-xs flex gap-2">
+                        <span className="font-mono">{r.id}</span>
+                        <span className="text-muted-foreground">{r.dimension}</span>
+                      </div>
+                    ))}
+                  </div>
+                </details>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Value Loop Panel */}
+      {activeSub === 'value' && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Activity className="text-primary" size={16} />
+            <span className="font-medium text-sm">价值循环 5 阶段</span>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            信号感知 → 信号分类 → 旅程执行 → 价值记录 → 进化反馈
+          </p>
+          <p className="text-xs text-muted-foreground">
+            价值循环执行引擎将在 V2 实现。当前版本仅提供可视化投影。
+          </p>
+        </div>
+      )}
+    </div>
+  );
 }
