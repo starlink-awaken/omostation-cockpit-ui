@@ -6,9 +6,9 @@
  */
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { SquareTerminal, Terminal, ShieldCheck, Workflow, Activity } from 'lucide-react';
-import { useBosCatalog, useBosSchema, useBosHistory, useBosInvoke, useMofRules, useMofAudit, useMofEvaluate } from '../../api/hooks/console';
-import type { BosInvokeRequest, MofViolation } from '../../api/console/types';
+import { SquareTerminal, Terminal, ShieldCheck, Workflow, Activity, Play, Square, CheckCircle2 } from 'lucide-react';
+import { useBosCatalog, useBosSchema, useBosHistory, useBosInvoke, useMofRules, useMofAudit, useMofEvaluate, useHarnessRuns, useHarnessSubmit, useHarnessEventStream } from '../../api/hooks/console';
+import type { BosInvokeRequest, MofViolation, HarnessRun, HarnessSseEvent, StreamPhase } from '../../api/console/types';
 
 type ConsoleTab = 'bos' | 'mof' | 'harness';
 
@@ -79,7 +79,7 @@ export default function ConsolePage({ initialTab = 'bos', initialUri }: ConsoleP
         <MofConsoleTab />
       )}
       {activeTab === 'harness' && (
-        <div className="text-muted-foreground">Harness 控制台 — M3 实现中</div>
+        <HarnessConsoleTab />
       )}
     </div>
   );
@@ -658,6 +658,219 @@ function MofConsoleTab() {
           <p className="text-xs text-muted-foreground">
             价值循环执行引擎将在 V2 实现。当前版本仅提供可视化投影。
           </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Harness Tab ──────────────────────────────────────────────
+
+const HARNESS_STAGES = [
+  { id: 'admission', label: '准入' },
+  { id: 'spec', label: 'Spec' },
+  { id: 'grill', label: 'Grill' },
+  { id: 'dispatch', label: '调度' },
+  { id: 'execute', label: '执行' },
+  { id: 'verify', label: '验证' },
+  { id: 'audit', label: '审计' },
+  { id: 'accept', label: '验收' },
+];
+
+function HarnessConsoleTab() {
+  const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
+  const [betId, setBetId] = useState('');
+  const [profile, setProfile] = useState('governance-agent');
+  const [objective, setObjective] = useState('');
+  const [worktreePath, setWorktreePath] = useState('');
+
+  const runs = useHarnessRuns();
+  const submit = useHarnessSubmit();
+  const stream = useHarnessEventStream(selectedRunId);
+
+  const handleRun = useCallback(async () => {
+    if (!betId || !objective || !worktreePath) return;
+    try {
+      const result = await submit.mutateAsync({
+        bet_id: betId,
+        profile,
+        objective,
+        worktree_path: worktreePath,
+      });
+      setSelectedRunId(result.run_id);
+    } catch (e) {
+      console.error('Submit failed:', e);
+    }
+  }, [betId, profile, objective, worktreePath, submit]);
+
+  // Auto-scroll event log
+  const eventLogRef = React.useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (eventLogRef.current) {
+      eventLogRef.current.scrollTop = eventLogRef.current.scrollHeight;
+    }
+  }, [stream.events]);
+
+  const phaseColor: Record<StreamPhase, string> = {
+    idle: 'bg-gray-400',
+    connecting: 'bg-yellow-400 animate-pulse',
+    open: 'bg-green-400',
+    reconnecting: 'bg-yellow-400 animate-pulse',
+    closed: 'bg-gray-400',
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Run Composer */}
+      <div className="p-4 border rounded-md space-y-3">
+        <div className="flex items-center gap-2">
+          <Play className="text-primary" size={16} />
+          <span className="font-medium text-sm">启动 Harness 运行</span>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-sm font-medium">BET ID</label>
+            <input
+              type="text"
+              value={betId}
+              onChange={(e) => setBetId(e.target.value)}
+              placeholder="e.g. BET-Y1Q4-T10-170"
+              className="w-full px-3 py-2 mt-1 border rounded-md text-sm font-mono"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium">Profile</label>
+            <select
+              value={profile}
+              onChange={(e) => setProfile(e.target.value)}
+              className="w-full px-3 py-2 mt-1 border rounded-md text-sm"
+            >
+              <option value="governance-agent">governance-agent</option>
+              <option value="engineering-agent">engineering-agent</option>
+              <option value="docs-agent">docs-agent</option>
+              <option value="qa-agent">qa-agent</option>
+              <option value="mof-agent">mof-agent</option>
+              <option value="sage-planner">sage-planner</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label className="text-sm font-medium">Objective</label>
+          <input
+            type="text"
+            value={objective}
+            onChange={(e) => setObjective(e.target.value)}
+            placeholder="任务目标描述"
+            className="w-full px-3 py-2 mt-1 border rounded-md text-sm"
+          />
+        </div>
+        <div>
+          <label className="text-sm font-medium">Worktree Path</label>
+          <input
+            type="text"
+            value={worktreePath}
+            onChange={(e) => setWorktreePath(e.target.value)}
+            placeholder="/Users/xiamingxing/ws-console"
+            className="w-full px-3 py-2 mt-1 border rounded-md text-sm font-mono"
+          />
+        </div>
+        <button
+          onClick={handleRun}
+          disabled={!betId || !objective || !worktreePath || submit.isPending}
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium disabled:opacity-50"
+        >
+          {submit.isPending ? '提交中...' : '启动运行'}
+        </button>
+      </div>
+
+      {/* Run List */}
+      <div className="space-y-2">
+        <h3 className="text-sm font-medium">运行列表</h3>
+        {runs.isLoading && <p className="text-sm text-muted-foreground">加载中...</p>}
+        {runs.data && runs.data.length === 0 && (
+          <p className="text-sm text-muted-foreground">暂无运行记录</p>
+        )}
+        {runs.data && runs.data.map((run: HarnessRun) => (
+          <button
+            key={run.run_id}
+            onClick={() => setSelectedRunId(run.run_id)}
+            className={`w-full text-left p-3 border rounded-md text-sm hover:bg-muted/50 transition-colors ${
+              selectedRunId === run.run_id ? 'border-primary bg-primary/5' : ''
+            }`}
+          >
+            <div className="flex justify-between items-center">
+              <span className="font-mono text-xs">{run.run_id}</span>
+              <span className={`px-2 py-0.5 rounded text-xs ${
+                run.status === 'completed' ? 'bg-green-100 text-green-700'
+                : run.status === 'failed' ? 'bg-red-100 text-red-700'
+                : run.status === 'running' ? 'bg-blue-100 text-blue-700'
+                : run.status === 'blocked' ? 'bg-yellow-100 text-yellow-700'
+                : 'bg-gray-100 text-gray-700'
+              }`}>{run.status}</span>
+            </div>
+            <div className="mt-1 text-muted-foreground">
+              {run.bet_id} — {run.profile}
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {/* Event Stream */}
+      {selectedRunId && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${phaseColor[stream.phase]}`} />
+            <span className="text-sm font-medium">事件流</span>
+            <span className="text-xs text-muted-foreground">{stream.phase}</span>
+            <span className="text-xs text-muted-foreground">seq: {stream.lastSeq}</span>
+          </div>
+
+          {/* Stage DAG visualization */}
+          <div className="flex gap-1 mb-2">
+            {HARNESS_STAGES.map((s) => {
+              const stageEvents = stream.events.filter(e => e.stage === s.id);
+              const hasCompleted = stageEvents.some(e => e.state === 'completed');
+              const isCurrent = stageEvents.some(e => e.state === 'started' && !hasCompleted);
+              return (
+                <div key={s.id} className="flex-1 text-center">
+                  <div className={`h-8 rounded flex items-center justify-center text-xs font-medium ${
+                    hasCompleted ? 'bg-green-500 text-white'
+                    : isCurrent ? 'bg-blue-500 text-white animate-pulse'
+                    : 'bg-muted text-muted-foreground'
+                  }`}>
+                    {s.label}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Event Log */}
+          <div
+            ref={eventLogRef}
+            className="max-h-64 overflow-y-auto border rounded-md p-2 bg-muted/30 font-mono text-xs space-y-1"
+          >
+            {stream.events.map((event: HarnessSseEvent, i: number) => (
+              <div key={i} className="flex gap-2 items-start">
+                <span className="text-muted-foreground shrink-0">[{event.seq}]</span>
+                <span className={`shrink-0 ${
+                  event.state === 'completed' ? 'text-green-600'
+                  : event.state === 'failed' ? 'text-red-600'
+                  : event.state === 'blocked' ? 'text-yellow-600'
+                  : event.check && event.blocking ? 'text-orange-600'
+                  : 'text-blue-600'
+                }`}>
+                  {event.state || 'progress'}
+                </span>
+                <span className="text-foreground">
+                  {event.stage && <span className="text-muted-foreground">stage={event.stage} </span>}
+                  {event.check && <span className="text-muted-foreground">check={event.check} </span>}
+                  {event.check && <span className="text-orange-600">blocking={event.blocking} </span>}
+                  {event.gate && <span className="text-purple-600">gate={event.gate} </span>}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

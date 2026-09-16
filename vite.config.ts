@@ -14,6 +14,14 @@ export default defineConfig({
         changeOrigin: true,
         headers: {
           'X-API-Key': process.env.VITE_API_KEY || ''
+        },
+        configure: (proxy) => {
+          proxy.on('proxyRes', (proxyRes) => {
+            const ct = proxyRes.headers['content-type']
+            if (ct && ct.includes('event-stream')) {
+              proxyRes.headers['cache-control'] = 'no-cache'
+            }
+          })
         }
       }
     }
