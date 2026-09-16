@@ -18,6 +18,7 @@ export * from './swarm';
 export * from './home';
 export * from './decisionGraph';
 export * from './decisionGraph';
+export * from './console';
 // factory and domains are not barrel-exported to avoid naming conflicts
 // Import directly: import { createResourceHooks } from '@/api/hooks/factory';
 // import { TaskHooks, useHarnessCompliance } from '@/api/hooks/domains';

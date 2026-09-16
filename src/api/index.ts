@@ -126,7 +126,42 @@ export type {
   OutcomeFeedbackResponse,
 } from './hooks';
 
-// ── Provider ──
+// ── Console Endpoints ──
+export {
+  CONSOLE_BOS_ENDPOINTS,
+  CONSOLE_MOF_ENDPOINTS,
+  CONSOLE_HARNESS_ENDPOINTS,
+} from './console/endpoints';
+
+// ── Console Types ──
+export type {
+  ConsoleEnvelope,
+  BosInvokeRequest,
+  BosInvokeResult,
+  BosSchema,
+  MofViolation,
+  MofAuditResult,
+  MofEvaluateResult,
+  MofRuleCatalog,
+  HarnessRun,
+  HarnessStage,
+  HarnessSseEvent,
+  StreamPhase,
+} from './console/types';
+
+// ── Console Hooks ──
+export {
+  useBosCatalog,
+  useBosSchema,
+  useBosHistory,
+  useBosInvoke,
+  useMofRules,
+  useMofAudit,
+  useMofEvaluate,
+  useHarnessRuns,
+  useHarnessSubmit,
+  useHarnessEventStream,
+} from './console';
 export { ApiProvider, useQueryClientInstance } from './provider';
 
 // ── 数组/对象防御工具 ──

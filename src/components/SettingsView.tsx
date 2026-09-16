@@ -6,8 +6,9 @@
  */
 
 import React, { useState } from 'react';
-import { Activity, GitBranch } from 'lucide-react';
+import { Activity, GitBranch, SquareTerminal } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { apiFetch, apiPost } from '../api/client';
 import './Dashboard.css';
 
@@ -76,6 +77,7 @@ function useRegisterInstance() {
 export default function SettingsView() {
   const [instanceUrl, setInstanceUrl] = useState('');
   const [instanceService, setInstanceService] = useState('');
+  const navigate = useNavigate();
   
   const { data: metrics, isLoading, error } = useMetricsHistory();
   const registerMutation = useRegisterInstance();
@@ -89,7 +91,25 @@ export default function SettingsView() {
   };
 
   return (
-    <div className="animate-fade-in" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
+    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Activity size={20} aria-hidden="true" className="text-primary" />
+          <h1 style={{ fontSize: '18px', margin: 0, fontWeight: 600 }}>系统设置</h1>
+        </div>
+        <button
+          onClick={() => navigate('/console')}
+          className="antd-btn"
+          style={{ fontSize: '13px', gap: '6px' }}
+          aria-label="打开 Console"
+        >
+          <SquareTerminal size={14} />
+          <span>Console</span>
+        </button>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
       
       {/* Metrics History Card */}
       <div className="antd-card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -209,5 +229,6 @@ export default function SettingsView() {
         )}
       </div>
     </div>
-  );
+  </div>
+);
 }

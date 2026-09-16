@@ -92,6 +92,8 @@ const PerformanceMonitorPage = lazy(() => import('./components/PerformanceMonito
 // eslint-disable-next-line react-refresh/only-export-components
 const SandboxTerminal = lazy(() => import('./components/SandboxTerminal'));
 // eslint-disable-next-line react-refresh/only-export-components
+const ConsolePage = lazy(() => import('./components/console/ConsolePage'));
+// eslint-disable-next-line react-refresh/only-export-components
 const SettingsView = lazy(() => import('./components/SettingsView'));
 // eslint-disable-next-line react-refresh/only-export-components
 const DeliveryJourneyView = lazy(() => import('./components/DeliveryJourneyView'));
@@ -228,6 +230,7 @@ export const ROUTES: RouteConfig[] = [
   { id: 'TaskCenter', path: '/tasks', label: '任务中心', subtitle: '任务统一管理、状态跟踪、操作控制。', group: '开发工具', domain: 'swarm', component: TaskCenterPage, icon: 'ClipboardList', purpose: '统一管理任务、草稿和承接动作。', whenToUse: '需要把发现变成任务时。' },
   { id: 'Performance', path: '/performance', label: '性能监控', subtitle: 'CPU/内存/磁盘/网络实时监控。', group: '开发工具', domain: 'system', component: PerformanceMonitorPage, icon: 'Activity', purpose: '查看 CPU、内存、网络与系统性能。', whenToUse: '系统慢、负载高时。' },
   { id: 'Sandbox', path: '/sandbox', label: '隔离沙箱', subtitle: '在线执行测试或运行未校验的任务指令。', group: '开发工具', domain: 'compute', component: SandboxTerminal, icon: 'Terminal', purpose: '隔离执行验证、复现和临时实验。', whenToUse: '先试再动生产面时。' },
+  { id: 'Console', path: '/console', label: '控制台', subtitle: 'BOS 调用 / MOF 校验 / Harness 运行 — 交互式控制平面。', group: '开发工具', domain: 'execution', component: ConsolePage, icon: 'SquareTerminal', purpose: '从只读仪表盘升级为可执行控制平面。', whenToUse: '需要真正调用 BOS、跑 MOF 校验或发起 Harness 运行时。' },
   { id: 'Workflows', path: '/workflows', label: '工作流', subtitle: '实时跟踪与干预自治 Agent 的运行链路。', group: '开发工具', domain: 'execution', component: WorkflowsView, icon: 'GitCommit', purpose: '跟踪自治 Agent 工作流运行链路。', whenToUse: '验证流程有没有真正闭环时。' },
   { id: 'DomainApps', path: '/domain-apps', label: '领域应用', subtitle: '第三方领域应用集成。', group: '开发工具', domain: 'registry', component: DomainAppsView, icon: 'LayoutDashboard', purpose: '统一挂载领域应用。', whenToUse: '进入领域应用时。' },
 
