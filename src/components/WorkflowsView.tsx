@@ -3,8 +3,9 @@
  */
 
 import React, { useState } from 'react';
-import { GitCommit, Play, Activity, RefreshCw, Eye } from 'lucide-react';
+import { GitCommit, Play, Activity, RefreshCw, Eye, SquareTerminal } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { apiFetch } from '../api/client';
 
 // ── Types ──
@@ -45,6 +46,7 @@ function useWorkflows() {
 
 export default function WorkflowsView() {
   const [selectedWorkflow, setSelectedWorkflow] = useState<Workflow | null>(null);
+  const navigate = useNavigate();
 
   const { data: workflows, isLoading, error } = useWorkflows();
 
@@ -88,6 +90,15 @@ export default function WorkflowsView() {
           <GitCommit size={20} aria-hidden="true" className="text-primary" />
           <h1 style={{ fontSize: '18px', margin: 0, fontWeight: 600 }}>MetaOS 工作流编排</h1>
         </div>
+        <button
+          onClick={() => navigate('/console')}
+          className="antd-btn"
+          style={{ fontSize: '13px', gap: '6px' }}
+          aria-label="打开 Console"
+        >
+          <SquareTerminal size={14} />
+          <span>Console</span>
+        </button>
       </div>
 
       {/* Loading State */}

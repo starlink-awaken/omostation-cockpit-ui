@@ -6,8 +6,9 @@
  */
 
 import React, { useState } from 'react';
-import { Network, Globe, Play, Send, PlusCircle, Activity, Search, ShieldCheck } from 'lucide-react';
+import { Network, Globe, Play, Send, PlusCircle, Activity, Search, ShieldCheck, SquareTerminal } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { apiFetch, apiPost } from '../api/client';
 import './Dashboard.css';
 
@@ -112,6 +113,7 @@ export default function McpMeshView() {
   const { data: health, isLoading: healthLoading } = useBosHealth();
   const registerMutation = useRegisterInstance();
 
+  const navigate = useNavigate();
   const isLoading = servicesLoading || healthLoading;
 
   const handleRegister = (e: React.FormEvent) => {
@@ -183,6 +185,15 @@ export default function McpMeshView() {
           <Network size={20} aria-hidden="true" className="text-primary" />
           <h1 style={{ fontSize: '18px', margin: 0, fontWeight: 600 }}>BOS URI & MCP 网格</h1>
         </div>
+        <button
+          onClick={() => navigate('/console')}
+          className="antd-btn"
+          style={{ fontSize: '13px', gap: '6px' }}
+          aria-label="打开 Console"
+        >
+          <SquareTerminal size={14} />
+          <span>Console</span>
+        </button>
       </div>
 
       {/* Loading State */}
