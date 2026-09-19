@@ -58,7 +58,6 @@ export default function CommandExplorer() {
     },
   });
 
-  const commands = useMemo(() => data?.commands ?? [], [data]);
   const groups = useMemo(() => data?.groups ?? [], [data]);
   const guideSections = useMemo(() => data?.guide_sections ?? [], [data]);
   const scenarios = useMemo(() => data?.scenarios ?? [], [data]);
