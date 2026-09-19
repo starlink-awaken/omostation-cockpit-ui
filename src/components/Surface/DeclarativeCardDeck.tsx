@@ -28,7 +28,7 @@ export interface DeclarativeCardDeckProps {
   cards?: DeclarativeCard[];
   title?: string;
   domain?: string;
-  onAction?: (actionId: string, payload?: Record<string, any>) => void;
+  onAction?: (actionId: string, payload?: Record<string, unknown>) => void;
 }
 
 function MetricGridRenderer({ card }: { card: DeclarativeCard }) {
@@ -205,7 +205,7 @@ function ActionPanelRenderer({
   onAction,
 }: {
   card: DeclarativeCard;
-  onAction?: (actionId: string, payload?: Record<string, any>) => void;
+  onAction?: (actionId: string, payload?: Record<string, unknown>) => void;
 }) {
   const data = card.static_data || card.payload || {};
   const actions: ActionButton[] = data.actions || [];

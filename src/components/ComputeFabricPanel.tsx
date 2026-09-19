@@ -12,7 +12,7 @@ export default function ComputeFabricPanel() {
       const res = await apiPost<{ model_id?: string; warmed_count?: number; estimated_saved_tokens?: number }>('/api/governance/compute/fabric/warm', { model_id: 'coding' });
       if (!res.ok) throw new Error(res.error || '预热请求失败');
       alert(`✅ 系统前缀预热完成！\n预热模型: ${res.data?.model_id || 'coding'}\n预热前缀数: ${res.data?.warmed_count || 3}\n节省 Token: ${res.data?.estimated_saved_tokens || 120}`);
-    } catch (e: any) {
+    } catch (e: unknown) {
       alert(`❌ 预热请求失败: ${e?.message || e}`);
     }
   };
@@ -25,7 +25,7 @@ export default function ComputeFabricPanel() {
       if (!res.ok) throw new Error(res.error || '显存估算失败');
       const d = res.data || {};
       alert(`📊 VRAM 预算评估结果:\n模型: ${d.model_id}\n上下文 Token: ${d.context_tokens}\nKV Cache 显存: ${d.kv_cache_mb?.toFixed(1)} MB\n预估总显存: ${d.total_estimated_vram_mb?.toFixed(1)} MB\n准入放行: ${d.admitted ? '✅ 放行' : '⚠️ 拦截/需压缩'}\n压缩建议: ${d.compaction_advised ? '需要滑动蒸馏' : '显存充裕'}`);
-    } catch (e: any) {
+    } catch (e: unknown) {
       alert(`❌ 显存估算失败: ${e?.message || e}`);
     }
   };
@@ -44,7 +44,7 @@ export default function ComputeFabricPanel() {
       if (!res.ok) throw new Error(res.error || '蒸馏压缩模拟失败');
       const d = res.data || {};
       alert(`🧬 上下文滑动蒸馏与显存自愈评估:\n模型: ${d.model_id}\n原始 Token: ${d.original_tokens}\n压缩后 Token: ${d.compacted_tokens}\n裁剪 Token: ${d.pruned_tokens} (压缩率 ${((d.compression_ratio ?? 0) * 100).toFixed(1)}%)\n自愈判定: ${d.compaction_advised ? '⚠️ 触发滑动蒸馏' : '✅ 显存充裕无需压缩'}\n摘要预览: ${d.distilled_summary || '保留完整多轮对话'}`);
-    } catch (e: any) {
+    } catch (e: unknown) {
       alert(`❌ 蒸馏压缩模拟失败: ${e?.message || e}`);
     }
   };

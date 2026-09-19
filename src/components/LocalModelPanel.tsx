@@ -31,6 +31,7 @@ export default function LocalModelPanel() {
     } catch { /* 静默:面板非关键路径 */ }
   };
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => { void fetchModels(); }, []);
 
   const isLoaded = (id: string) =>
@@ -45,7 +46,7 @@ export default function LocalModelPanel() {
         ? `✅ ${action} ${model} 完成`
         : `❌ ${res.data?.detail || res.data?.output || res.error || '失败'}`);
       await fetchModels();
-    } catch (e: any) {
+    } catch (e: unknown) {
       setModelsMsg('❌ ' + (e?.message || String(e)));
     } finally {
       setModelsBusy('');

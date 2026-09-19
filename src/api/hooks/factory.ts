@@ -26,8 +26,6 @@ export function createResourceHooks<T extends { id: string }>(
   endpoint: string,
   keyPrefix: string,
 ): ResourceHooks<T> {
-  const queryClient = useQueryClient();
-
   const useGet = (id: string, options?: UseQueryOptions<T>) =>
     useQuery<T>({
       queryKey: [keyPrefix, 'detail', id],
@@ -46,17 +44,20 @@ export function createResourceHooks<T extends { id: string }>(
     });
   };
 
-  const useCreate = (options?: UseMutationOptions<T, Error, Partial<T>>) =>
-    useMutation({
+  const useCreate = (options?: UseMutationOptions<T, Error, Partial<T>>) => {
+    const queryClient = useQueryClient();
+    return useMutation({
       mutationFn: (data) => apiPost(endpoint, data) as Promise<T>,
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: [keyPrefix, 'list'] });
       },
       ...options,
     });
+  };
 
-  const useUpdate = (options?: UseMutationOptions<T, Error, { id: string; data: Partial<T> }>) =>
-    useMutation({
+  const useUpdate = (options?: UseMutationOptions<T, Error, { id: string; data: Partial<T> }>) => {
+    const queryClient = useQueryClient();
+    return useMutation({
       mutationFn: ({ id, data }) => apiPut(`${endpoint}/${id}`, data) as Promise<T>,
       onSuccess: (_, { id }) => {
         queryClient.invalidateQueries({ queryKey: [keyPrefix, 'list'] });
@@ -64,15 +65,18 @@ export function createResourceHooks<T extends { id: string }>(
       },
       ...options,
     });
+  };
 
-  const useRemove = (options?: UseMutationOptions<void, Error, string>) =>
-    useMutation({
+  const useRemove = (options?: UseMutationOptions<void, Error, string>) => {
+    const queryClient = useQueryClient();
+    return useMutation({
       mutationFn: (id) => apiDelete(`${endpoint}/${id}`) as Promise<void>,
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: [keyPrefix, 'list'] });
       },
       ...options,
     });
+  };
 
   return { useGet, useList, useCreate, useUpdate, useRemove };
 }

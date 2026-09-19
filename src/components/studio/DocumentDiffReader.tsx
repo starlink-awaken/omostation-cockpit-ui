@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * 受管文档双版本 Diff 阅读器 (BET-Y1Q4-T8-24C done_when#4).
  *

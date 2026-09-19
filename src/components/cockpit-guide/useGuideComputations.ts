@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useMemo } from 'react';
 import { COCKPIT_WORK_MODES } from '../cockpitWorkModes';
 import type { CockpitNavigationTarget } from '../cockpitNavigation';

@@ -240,7 +240,7 @@ export default function TopologyView() {
     setEdges(builtEdges);
   }, [rawServices, setNodes, setEdges]);
 
-  const services = rawServices ?? [];
+  const services = useMemo(() => rawServices ?? [], [rawServices]);
 
   const filteredServices = useMemo(() => {
     return services.filter((service) => {

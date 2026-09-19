@@ -131,17 +131,17 @@ export default function CapabilityExplorer() {
     queryFn: () => apiFetch<{ skills: SkillItem[] }>('/api/capability/skills'),
   });
 
-  const servers = serversData?.servers ?? [];
   const totals = summary?.totals;
 
   const filteredServers = useMemo(() => {
+    const servers = serversData?.servers ?? [];
     if (!searchQuery) return servers;
     const q = searchQuery.toLowerCase();
     return servers.filter(
       s => s.id.toLowerCase().includes(q) || s.name.toLowerCase().includes(q) ||
         s.tools.some(t => t.toLowerCase().includes(q)),
     );
-  }, [servers, searchQuery]);
+  }, [serversData, searchQuery]);
 
   const workflowCount = totals?.workflows ?? workflowsData?.workflows?.length ?? 0;
 

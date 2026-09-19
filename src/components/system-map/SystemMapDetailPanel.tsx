@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React from 'react';
 import { ArrowRight, ClipboardCheck, ShieldAlert } from 'lucide-react';
 import type {

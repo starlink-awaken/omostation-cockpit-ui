@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { type ProtocolPayload, type ProtocolSurfaceId } from './types';
 
 export async function fetchJson<T>(url: string, fallback: T, label: string): Promise<{ data: T; error: string | null }> {

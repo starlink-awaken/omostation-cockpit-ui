@@ -76,20 +76,6 @@ interface DebtPayload {
   items?: DebtItem[];
 }
 
-interface OmoStatusPayload {
-  system?: {
-    current_phase?: string;
-    health_score?: number;
-    active_tasks?: number;
-    blocked_tasks?: number;
-  };
-  governance?: {
-    health_score?: number;
-    anomaly_count?: number;
-    total_tasks?: number;
-  };
-}
-
 interface L4HealthDomain {
   id: string;
   name: string;
@@ -166,37 +152,31 @@ export default function GovernanceDomainWorkbench({
   const [taskNotice, setTaskNotice] = useState<string | null>(null);
   const [taskError, setTaskError] = useState<string | null>(null);
   const [refreshToken, setRefreshToken] = useState(0);
+  void refreshToken;
 
   // React Query hooks replace raw fetch()
   const { data: systemMapData, isLoading: systemMapLoading, isError: systemMapError } = useSystemMap();
   const { data: debtData, isLoading: debtLoading, isError: debtError } = useDebt();
-  const { data: omoStatusData, isLoading: omoStatusLoading, isError: omoStatusError } = useOmoStatus();
+  const { isLoading: omoStatusLoading, isError: omoStatusError } = useOmoStatus();
   const { data: l4HealthData, isLoading: l4HealthLoading, isError: l4HealthError } = useL4Health();
   const createTaskMutation = useCreateTask();
 
-  // Derive typed data from hooks
-  const systemMap = systemMapData as unknown as SystemMapGovernanceLite || {};
-  const debt = debtData as unknown as DebtPayload || {};
-  const omoStatus = omoStatusData as unknown as OmoStatusPayload || {};
-  const l4Health = l4HealthData as unknown as L4HealthPayload || {};
-
-  // Availability derived from hook states
-  const systemMapAvailable = !systemMapError && !systemMapLoading;
-  const debtAvailable = !debtError && !debtLoading;
-  const omoStatusAvailable = !omoStatusError && !omoStatusLoading;
-  const l4HealthAvailable = !l4HealthError && !l4HealthLoading;
-
-  // Combined errors
-  const sourceErrors: string[] = [];
-  if (systemMapError) sourceErrors.push('系统地图');
-  if (debtError) sourceErrors.push('技术债账本');
-  if (omoStatusError) sourceErrors.push('OMO 状态');
-  if (l4HealthError) sourceErrors.push('L4 健康');
-
-  // Force refetch on refresh
-  void refreshToken;
-
   const summary = useMemo(() => {
+    const systemMap = systemMapData as unknown as SystemMapGovernanceLite || {};
+    const debt = debtData as unknown as DebtPayload || {};
+    const l4Health = l4HealthData as unknown as L4HealthPayload || {};
+
+    const systemMapAvailable = !systemMapError && !systemMapLoading;
+    const debtAvailable = !debtError && !debtLoading;
+    const omoStatusAvailable = !omoStatusError && !omoStatusLoading;
+    const l4HealthAvailable = !l4HealthError && !l4HealthLoading;
+
+    const sourceErrors: string[] = [];
+    if (systemMapError) sourceErrors.push('系统地图');
+    if (debtError) sourceErrors.push('技术债账本');
+    if (omoStatusError) sourceErrors.push('OMO 状态');
+    if (l4HealthError) sourceErrors.push('L4 健康');
+
     const projectSummary = systemMap.project_portfolio?.summary;
     const domainSummary = systemMap.domain_apps?.summary;
     const blockedProjects = projectSummary?.blocked || 0;
@@ -249,7 +229,7 @@ export default function GovernanceDomainWorkbench({
       topAttentionApp: systemMap.domain_apps?.attention_items?.[0],
       topUnhealthyDomain: l4Health.domains?.find((domain) => !domain.fresh) || l4Health.domains?.[0],
     };
-  }, [debt, l4Health, systemMap, systemMapAvailable, debtAvailable, omoStatusAvailable, l4HealthAvailable]);
+  }, [systemMapData, systemMapError, systemMapLoading, debtData, debtError, debtLoading, omoStatusError, omoStatusLoading, l4HealthData, l4HealthError, l4HealthLoading]);
 
   const governanceContextQuery = summary.topProject?.id
     || summary.topDebt?.id
@@ -298,7 +278,7 @@ export default function GovernanceDomainWorkbench({
           title: '系统治理工作台',
           target: { tab: currentPage, taskQuery: governanceTaskTitle },
         },
-      } as any);
+      } as unknown);
       setTaskNotice(`已登记治理任务：${result?.title || governanceTaskTitle}`);
       if (result?.id) openCockpitNavigationTarget({ tab: 'TaskCenter', taskQuery: String(result.id) }, onNavigate, onOpenTarget);
     } catch (requestError) {

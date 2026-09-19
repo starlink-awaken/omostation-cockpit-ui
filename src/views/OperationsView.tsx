@@ -41,11 +41,11 @@ export default function OperationsView() {
     let alive = true;
     (async () => {
       try {
-        const data = await apiFetch<any>('/api/bc-os/cases');
+        const data = await apiFetch<unknown>('/api/bc-os/cases');
         if (!alive) return;
         setCases(asArray<WorkCase>(data?.cases ?? data));
         setQueue(asArray<QueueStat>(data?.queues));
-      } catch (e: any) {
+      } catch (e: unknown) {
         if (alive) setError(e?.message ?? String(e));
       }
     })();

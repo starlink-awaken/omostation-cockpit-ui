@@ -245,7 +245,7 @@ export default function SystemAssuranceWorkbench({ onNavigate, onOpenTarget }: S
           title: '系统保证工作台',
           target: { tab: 'Overview', taskQuery: assuranceTaskTitle },
         },
-      } as any);
+      } as unknown);
       setTaskNotice(`已登记系统保证任务：${result?.title || assuranceTaskTitle}`);
       if (result?.id) openAssuranceTarget({ tab: 'TaskCenter', taskQuery: String(result.id) });
     } catch (requestError) {

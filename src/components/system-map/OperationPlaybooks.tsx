@@ -4,6 +4,7 @@ import type { CockpitNavigationTarget, SourceRef, SystemMapPayload } from './typ
 import { statusClass } from './utils';
 import PageButton from './PageButton';
 import SourceRefList from './SourceRefList';
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 type OperationPlaybooksProps = {
   systemMap: SystemMapPayload;

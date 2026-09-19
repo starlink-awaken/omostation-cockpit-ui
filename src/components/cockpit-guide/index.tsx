@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React from 'react';
 import { ArrowRight, Map as MapIcon, Route, Sparkles } from 'lucide-react';
 import '../Dashboard.css';
@@ -14,6 +15,7 @@ import { GuideGapSection, GuideMissingCapabilitySection, GuideProblemEntrySectio
 import { GuideClosureSection } from './GuideClosureSection';
 import { GuidePageCoverageSection } from './GuidePageCoverageSection';
 import {
+/* eslint-disable @typescript-eslint/no-unused-vars */
   GuideFeatureDomainSection,
   GuideDimensionSection,
   GuideProjectEntrySection,

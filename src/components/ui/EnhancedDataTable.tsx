@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * EnhancedDataTable — 增强版数据表格
  *
@@ -52,7 +53,7 @@ export function EnhancedDataTable<T>({
       const q = searchQuery.toLowerCase();
       result = result.filter(item =>
         columns.some(col => {
-          const val = col.render ? '' : (item as any)[col.key];
+          const val = col.render ? '' : (item as unknown)[col.key];
           return String(val).toLowerCase().includes(q);
         })
       );
@@ -61,8 +62,8 @@ export function EnhancedDataTable<T>({
     // 排序
     if (sortKey) {
       result.sort((a, b) => {
-        const aVal = (a as any)[sortKey];
-        const bVal = (b as any)[sortKey];
+        const aVal = (a as unknown)[sortKey];
+        const bVal = (b as unknown)[sortKey];
         const cmp = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
         return sortDir === 'asc' ? cmp : -cmp;
       });
@@ -161,7 +162,11 @@ export function EnhancedDataTable<T>({
                         onChange={() => {
                           if (!onSelectionChange) return;
                           const next = new Set(selectedKeys);
-                          isSelected ? next.delete(key) : next.add(key);
+                          if (isSelected) {
+                            next.delete(key);
+                          } else {
+                            next.add(key);
+                          }
                           onSelectionChange(next);
                         }}
                         className="rounded border-border-subtle"
@@ -171,7 +176,7 @@ export function EnhancedDataTable<T>({
                   )}
                   {columns.map(col => (
                     <td key={col.key} className={`px-3 py-2 text-text-primary ${col.className || ''}`}>
-                      {col.render ? col.render(item) : (item as any)[col.key]}
+                      {col.render ? col.render(item) : (item as unknown)[col.key]}
                     </td>
                   ))}
                 </tr>

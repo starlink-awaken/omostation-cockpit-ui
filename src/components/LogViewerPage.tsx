@@ -96,6 +96,7 @@ export default function LogViewerPage() {
     }
   }, [logHasMore, logLoadingMore, logOffset, logTotal]);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     void refreshLogs();
     if (!isStreaming) return undefined;

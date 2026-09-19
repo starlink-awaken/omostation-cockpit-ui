@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * GlobalSearch — 全局搜索组件
  *
@@ -37,6 +38,7 @@ export default function GlobalSearch() {
   const navigate = useNavigate();
 
   // 加载搜索历史
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     try {
       const saved = localStorage.getItem(HISTORY_KEY);

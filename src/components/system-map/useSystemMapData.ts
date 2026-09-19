@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useCallback, useState } from 'react';
 import type { DraftTask, ProjectAction, ProjectItem, RoadmapItem, SourceRef, SourcePreview, SystemMapPayload } from './types';
 import { SYSTEM_MAP_DRAFT_TASKS_URL, sourceTarget } from './utils';

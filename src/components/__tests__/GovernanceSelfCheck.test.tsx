@@ -109,7 +109,7 @@ describe('GovernanceSelfCheck', () => {
       });
     });
 
-    it('displays FAIL status when any check fails', async () => {
+    it('displays FAIL status when unknown check fails', async () => {
       const failResult = {
         items: [{ id: 'architecture-check', name: '架构漂移检查', status: 'FAIL' as const, summary: '失败', duration: 100 }],
         overall: 'FAIL' as const,

@@ -60,7 +60,7 @@ function TimelineNode({ item }: { item: JourneyTimelineItem }) {
           flexShrink: 0,
         }}
       >
-        <Icon style={{ width: 18, height: 18, color }} />
+        {React.createElement(Icon, { style: { width: 18, height: 18, color } })}
         <div
           style={{
             width: 2,

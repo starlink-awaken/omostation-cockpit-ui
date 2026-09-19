@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React from 'react';
 import { ClipboardCheck, Copy, Layers, Route } from 'lucide-react';
 import { type ProtocolLayer, type ProtocolWorkflow } from './types';

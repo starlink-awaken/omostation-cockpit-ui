@@ -176,10 +176,12 @@ export function useHarnessSubmit() {
 export function useHarnessEventStream(runId: string | null) {
   const [events, setEvents] = useState<HarnessSseEvent[]>([]);
   const [phase, setPhase] = useState<StreamPhase>('idle');
+  const [lastSeqState, setLastSeqState] = useState(-1);
   const lastSeq = useRef(-1);
   const attempts = useRef(0);
   const abortRef = useRef<AbortController | null>(null);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (!runId) {
       setEvents([]);
@@ -235,7 +237,10 @@ export function useHarnessEventStream(runId: string | null) {
             try {
               const parsed = JSON.parse(data) as HarnessSseEvent;
               setEvents((prev) => [...prev, parsed]);
-              if (parsed.seq != null) lastSeq.current = parsed.seq;
+              if (parsed.seq != null) {
+                lastSeq.current = parsed.seq;
+                setLastSeqState(parsed.seq);
+              }
               if (event === 'run_complete') completed = true;
             } catch {
               // skip malformed frames
@@ -253,7 +258,7 @@ export function useHarnessEventStream(runId: string | null) {
           setPhase('closed');
           attempts.current = 0;
         }
-      } catch (e) {
+      } catch {
         if (cancelled || ctrl.signal.aborted) return;
         setPhase('reconnecting');
         if (attempts.current < 5) {
@@ -275,7 +280,10 @@ export function useHarnessEventStream(runId: string | null) {
     };
   }, [runId]);
 
-  const reset = useCallback(() => setEvents([]), []);
+  const reset = useCallback(() => {
+    setEvents([]);
+    setLastSeqState(-1);
+  }, []);
 
-  return { events, phase, lastSeq: lastSeq.current, reset };
+  return { events, phase, lastSeq: lastSeqState, reset };
 }

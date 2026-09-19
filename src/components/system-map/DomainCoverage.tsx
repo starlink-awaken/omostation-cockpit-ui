@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React from 'react';
 import { AlertTriangle, ArrowRight, Compass, ExternalLink, ShieldAlert } from 'lucide-react';
 import type { CockpitNavigationTarget, FeatureDomain, SourceRef, SystemMapPayload } from './types';

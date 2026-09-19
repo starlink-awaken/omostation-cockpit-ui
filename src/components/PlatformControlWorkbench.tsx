@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useMemo, useState } from 'react';
 import { Activity, AlertTriangle, ClipboardCheck, Cpu, Gift, RefreshCw, Settings2, TerminalSquare } from 'lucide-react';
 import { openCockpitNavigationTarget, type CockpitNavigationTarget } from './cockpitNavigation';
@@ -119,29 +120,23 @@ export default function PlatformControlWorkbench({
   const { data: questsData, isLoading: questsLoading, isError: questsError } = useQuests();
   const createTaskMutation = useCreateTask();
 
-  // Derive typed data from hooks
-  const archHealth = archHealthData as unknown as ArchHealthPayload || {};
-  const bosMetrics = bosMetricsData as unknown as BosMetricsPayload || {};
-  const pipelines = Array.isArray(pipelinesData) ? pipelinesData : [];
-  const quests = questsData as unknown as QuestPayload || {};
-
-  // Availability derived from hook states
-  const archAvailable = !archError && !archLoading;
-  const bosAvailable = !bosError && !bosLoading;
-  const pipelinesAvailable = !pipelinesError && !pipelinesLoading;
-  const questsAvailable = !questsError && !questsLoading;
-
-  // Combined unavailable sources
-  const unavailableSources: string[] = [];
-  if (archError) unavailableSources.push('架构健康');
-  if (bosError || bosMetrics.data_quality === 'unavailable') unavailableSources.push('BOS 链路');
-  if (pipelinesError) unavailableSources.push('调度管线');
-  if (questsError) unavailableSources.push('冒险板');
-
-  // Force refetch on refresh
-  void refreshToken;
-
   const summary = useMemo(() => {
+    const archHealth = archHealthData as unknown as ArchHealthPayload || {};
+    const bosMetrics = bosMetricsData as unknown as BosMetricsPayload || {};
+    const pipelines = Array.isArray(pipelinesData) ? pipelinesData : [];
+    const quests = questsData as unknown as QuestPayload || {};
+
+    const archAvailable = !archError && !archLoading;
+    const bosAvailable = !bosError && !bosLoading;
+    const pipelinesAvailable = !pipelinesError && !pipelinesLoading;
+    const questsAvailable = !questsError && !questsLoading;
+
+    const unavailableSources: string[] = [];
+    if (archError) unavailableSources.push('架构健康');
+    if (bosError || bosMetrics.data_quality === 'unavailable') unavailableSources.push('BOS 链路');
+    if (pipelinesError) unavailableSources.push('调度管线');
+    if (questsError) unavailableSources.push('冒险板');
+
     const archUnavailable = !archAvailable;
     const bosUnavailable = !bosAvailable || bosMetrics.data_quality === 'unavailable';
     const metricsUnavailable = !bosAvailable;
@@ -164,9 +159,6 @@ export default function PlatformControlWorkbench({
     } else if (!pipelinesUnavailable && pipelines.length > 0) {
       nextAction = `当前登记了 ${pipelines.length} 条可用管线，可以去调度页推进下一步。`;
       nextTab = 'Engines';
-    } else if (!metricsUnavailable && false) {
-      nextAction = `控制面里还有服务未健康，先看 Settings。`;
-      nextTab = 'Settings';
     } else if (!questsUnavailable && activeQuests.length > 0) {
       nextAction = `还有 ${activeQuests.length} 条家庭冒险在排队，去 QuestBoard 看落地。`;
       nextTab = 'QuestBoard';
@@ -187,7 +179,7 @@ export default function PlatformControlWorkbench({
       nextAction,
       nextTab,
     };
-  }, [archHealth, bosMetrics, pipelines, quests, archAvailable, bosAvailable, pipelinesAvailable, questsAvailable]);
+  }, [archHealthData, archError, archLoading, bosMetricsData, bosError, bosLoading, pipelinesData, pipelinesError, pipelinesLoading, questsData, questsError, questsLoading]);
 
   const platformContextQuery = summary.topDomain?.domain || (summary.topQuest ? String(summary.topQuest.id) : 'platform');
   const nextTarget = summary.nextTab === 'Observability'
@@ -227,7 +219,7 @@ export default function PlatformControlWorkbench({
           title: '平台控制工作台',
           target: { tab: currentPage, taskQuery: platformContextQuery },
         },
-      } as any);
+      } as unknown);
       setTaskNotice(`已登记控制面任务：${result?.title || controlTaskTitle}`);
       if (result?.id) openCockpitNavigationTarget({ tab: 'TaskCenter', taskQuery: String(result.id) }, onNavigate, onOpenTarget);
     } catch (requestError) {

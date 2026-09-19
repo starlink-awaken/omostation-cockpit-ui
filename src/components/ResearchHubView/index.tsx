@@ -55,17 +55,17 @@ export default function ResearchHubView({
       ], focusTaskQuery)
     ));
     if (matchedResearch && matchedResearch.id !== data.selectedResearchId) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+        
       void data.openDetail(matchedResearch.id);
     }
-  }, [filteredResearch, focusTaskQuery, data.selectedResearchId]);
+  }, [filteredResearch, focusTaskQuery, data.selectedResearchId, data]);
 
   useEffect(() => {
     if (data.selectedResearchId !== null && !filteredResearch.some((item) => item.id === data.selectedResearchId)) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+        
       data.closeDetail();
     }
-  }, [filteredResearch, data.selectedResearchId]);
+  }, [filteredResearch, data.selectedResearchId, data]);
 
   const actionItems = useMemo(() => {
     const researchContextQuery = data.selectedResearchId ? String(data.selectedResearchId) : focusTaskQuery || 'Research';
