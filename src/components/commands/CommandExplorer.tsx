@@ -58,10 +58,10 @@ export default function CommandExplorer() {
     },
   });
 
-  const commands = data?.commands ?? [];
-  const groups = data?.groups ?? [];
-  const guideSections = data?.guide_sections ?? [];
-  const scenarios = data?.scenarios ?? [];
+  const commands = useMemo(() => data?.commands ?? [], [data]);
+  const groups = useMemo(() => data?.groups ?? [], [data]);
+  const guideSections = useMemo(() => data?.guide_sections ?? [], [data]);
+  const scenarios = useMemo(() => data?.scenarios ?? [], [data]);
 
   // 搜索 + 分类过滤
   const filteredCommands = useMemo(() => {
