@@ -1,8 +1,5 @@
-/**
- * Smoke test for hermes-console bus adapter.
- * Run with: bun test src/hermes_console/bus_adapter.test.ts
- */
-import { describe, expect, mock, test } from "bun:test";
+import { describe, expect, test } from "vitest";
+import { vi } from "vitest";
 import { HermesBus, withBusPublish } from "./bus_adapter";
 
 describe("HermesBus", () => {
@@ -18,7 +15,7 @@ describe("HermesBus", () => {
 
   test("publish fans out to local subscribers", async () => {
     const bus = new HermesBus();
-    const handler = mock(() => {});
+    const handler = vi.fn(() => {});
     const unsub = bus.subscribe("pipeline:completed", handler);
     const env = bus.buildEnvelope("pipeline:completed", { x: 1 });
     await bus.publish(env);
@@ -29,7 +26,7 @@ describe("HermesBus", () => {
   });
 
   test("publish posts to agora when agoraUrl set, swallows network errors", async () => {
-    const fetchMock = mock(() => Promise.reject(new Error("network down")));
+    const fetchMock = vi.fn(() => Promise.reject(new Error("network down")));
     const bus = new HermesBus({ agoraUrl: "http://localhost:9", fetchImpl: fetchMock as typeof fetch });
     const env = bus.buildEnvelope("message:received", { ok: true });
     // Should not throw even though fetch fails.
@@ -40,7 +37,7 @@ describe("HermesBus", () => {
   // R61 follow-up: wildcard subscription catches every event type.
   test("wildcard subscribers receive every event type", async () => {
     const bus = new HermesBus();
-    const handler = mock(() => {});
+    const handler = vi.fn(() => {});
     bus.subscribe("*", handler);
     await bus.publish(bus.buildEnvelope("pipeline:started", {}));
     await bus.publish(bus.buildEnvelope("pipeline:completed", {}));
@@ -52,7 +49,7 @@ describe("HermesBus", () => {
 describe("withBusPublish", () => {
   test("publishes event and returns props unchanged", async () => {
     const bus = new HermesBus();
-    const handler = mock(() => {});
+    const handler = vi.fn(() => {});
     bus.subscribe("ui:click", handler);
     const wrap = withBusPublish<{ className: string }>("ui:click", bus);
     const props = { className: "btn" };

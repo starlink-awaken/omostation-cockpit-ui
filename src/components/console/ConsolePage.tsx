@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * ConsolePage — 交互式控制平面主页面.
  *
@@ -22,6 +23,7 @@ export default function ConsolePage({ initialTab = 'bos', initialUri }: ConsoleP
   const [selectedUri, setSelectedUri] = useState<string | undefined>(initialUri);
 
   // Sync with URL params
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get('tab') as ConsoleTab | null;

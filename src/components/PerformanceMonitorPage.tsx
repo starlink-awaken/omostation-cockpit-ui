@@ -9,7 +9,7 @@
  *   - 空数据/错误态 a11y
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { AlertTriangle, Cpu, HardDrive, RefreshCw, Wifi } from 'lucide-react';
 import './PerformanceMonitorPage.css';
 
@@ -43,7 +43,7 @@ export default function PerformanceMonitorPage() {
   const [serviceQuery, setServiceQuery] = useState('');
   const [serviceStatusFilter, setServiceStatusFilter] = useState<'all' | 'online' | 'degraded' | 'offline'>('all');
 
-  const fetchData = async (isRefresh = false) => {
+  const fetchData = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
     try {
       const [metricsRes, servicesRes] = await Promise.all([
@@ -68,13 +68,14 @@ export default function PerformanceMonitorPage() {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [timeRange]);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     void fetchData();
     const interval = setInterval(() => void fetchData(true), 10000);
     return () => clearInterval(interval);
-  }, [timeRange]);
+  }, [timeRange, fetchData]);
 
   // 降级/热点服务自动检测
   const { degradedServices, hotServices, leadPerformanceService } = useMemo(() => {

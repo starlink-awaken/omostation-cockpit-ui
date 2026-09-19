@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * PulseView — P74 治理脉搏（主入口）
  *

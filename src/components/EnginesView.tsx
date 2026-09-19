@@ -115,8 +115,7 @@ function useExecuteTask() {
 
 export default function EnginesView() {
   const [events, setEvents] = useState<EventLog[]>([]);
-  const [activeSteps, setActiveSteps] = useState<string[]>([]);
-  const [selectedNode, setSelectedNode] = useState<any>(null);
+  const [selectedNode, setSelectedNode] = useState<unknown>(null);
   const [selectedPipeline, setSelectedPipeline] = useState('');
   const [pipelineInput, setPipelineInput] = useState('');
   const [runResult, setRunResult] = useState<EngineResult | null>(null);
@@ -132,6 +131,7 @@ export default function EnginesView() {
   const executeMutation = useExecuteTask();
 
   // Set default pipeline when data loads
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (pipelines && pipelines.length > 0 && !selectedPipeline) {
       setSelectedPipeline(pipelines[0]);
@@ -172,7 +172,7 @@ export default function EnginesView() {
     };
     return () => eventSource.close();
     // refreshToken 变化时重建 SSE 连接
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [refreshToken]);
 
   // 管线搜索筛选

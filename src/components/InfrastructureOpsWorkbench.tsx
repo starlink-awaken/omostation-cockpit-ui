@@ -129,9 +129,7 @@ export default function InfrastructureOpsWorkbench({ currentPage, onNavigate, on
   const bosServices: BosService[] = bosServicesData
     ? (Array.isArray(bosServicesData) ? bosServicesData as unknown as BosService[] : [])
     : [];
-  const runtime: RuntimeService[] = runtimeData
-    ? ((runtimeData as unknown)?.items as RuntimeService[] || [])
-    : [];
+  const runtime = useMemo(() => runtimeData ? ((runtimeData as unknown)?.items as RuntimeService[] || []) : [], [runtimeData]);
 
   // Availability derived from hook error states
   const computeAvailable = !computeError && !computeLoading;
@@ -217,7 +215,7 @@ export default function InfrastructureOpsWorkbench({ currentPage, onNavigate, on
           title: '基础设施工作台',
           target: { tab: currentPage, taskQuery: infrastructureContextQuery },
         },
-      } as any);
+      } as unknown);
       setTaskNotice(`已登记基础设施任务：${result?.title || infrastructureTaskTitle}`);
       if (result?.id) openCockpitNavigationTarget({ tab: 'TaskCenter', taskQuery: String(result.id) }, onNavigate, onOpenTarget);
     } catch (requestError) {

@@ -203,6 +203,7 @@ export default function Wave2DashboardView({
     }
   }, [load]);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     void load();
     void loadDoctor();

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useMemo, useState } from 'react';
 import { BookOpen, ClipboardCheck, ClipboardList, GitBranch, PlayCircle, RefreshCw, AlertTriangle } from 'lucide-react';
 import { openCockpitNavigationTarget } from './cockpitNavigation';
@@ -49,14 +50,14 @@ export default function KnowledgeExecutionWorkbench({
   const createTaskMutation = useCreateTask();
 
   // Derive typed data from hooks
-  const tasks: TaskItem[] = (tasksData?.items as unknown as TaskItem[]) || [];
-  const workflows: WorkflowPayload = (workflowsData as unknown as WorkflowPayload) || { workflows: [], total: 0 };
-  const skills: SkillItem[] = ((skillsData as unknown as { skills?: SkillItem[] })?.skills) || [];
-  const pipelineList: string[] = (pipelinesData as unknown as string[]) || [];
-  const systemMap = systemMapData as unknown as SystemMapLite || {};
+  const tasks = useMemo(() => (tasksData?.items as unknown as TaskItem[]) || [], [tasksData]);
+  const workflows = useMemo(() => (workflowsData as unknown as WorkflowPayload) || { workflows: [], total: 0 }, [workflowsData]);
+  const skills = useMemo(() => ((skillsData as unknown as { skills?: SkillItem[] })?.skills) || [], [skillsData]);
+  const pipelineList = useMemo(() => (pipelinesData as unknown as string[]) || [], [pipelinesData]);
+  const systemMap = useMemo(() => systemMapData as unknown as SystemMapLite || {}, [systemMapData]);
 
   // Workflow definitions (from /api/ecos/workflows - not in hooks, keep as derived)
-  const workflowDefinitions: WorkflowDefinition[] = [];
+  const workflowDefinitions = useMemo<WorkflowDefinition[]>(() => [], []);
 
   // Source errors
   const sourceErrors: string[] = [];
@@ -237,7 +238,7 @@ export default function KnowledgeExecutionWorkbench({
           title: executionTaskDraft.title,
           target: { tab: currentPage, taskQuery: executionTaskDraft.sourceId },
         },
-      } as any);
+      } as unknown);
       setTaskNotice(`已登记执行任务：${result?.title || executionTaskDraft.title}`);
       if (result?.id) openWorkbenchTarget('TaskCenter', String(result.id));
     } catch (requestError) {

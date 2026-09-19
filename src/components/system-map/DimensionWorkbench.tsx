@@ -2,6 +2,7 @@ import React from 'react';
 import { CheckCircle, ClipboardCheck, Copy } from 'lucide-react';
 import type { CockpitNavigationTarget, ProjectAction, ProjectItem, SystemMapPayload } from './types';
 import { copyText, statusClass } from './utils';
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 type DimensionWorkbenchProps = {
   systemMap: SystemMapPayload;

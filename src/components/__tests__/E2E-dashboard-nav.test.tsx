@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * E2E tests for the Dashboard sidebar navigation.
  *

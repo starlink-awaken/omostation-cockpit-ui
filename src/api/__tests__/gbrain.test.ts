@@ -59,7 +59,7 @@ describe('GBrain adapter', () => {
       mockFetch({});
       await gbrain.stats();
       expect(globalThis.fetch).toHaveBeenCalledWith(
-        expect.any(String),
+        expect.unknown(String),
         expect.objectContaining({ credentials: 'same-origin' }),
       );
     });

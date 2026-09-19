@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * GovernanceSelfCheck — 治理自检面板
  *

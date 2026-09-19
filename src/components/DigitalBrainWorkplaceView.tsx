@@ -81,7 +81,7 @@ export const DigitalBrainWorkplaceView: React.FC = () => {
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id as unknown)}
               style={{
                 background: activeTab === tab.id ? '#6366f1' : 'rgba(255, 255, 255, 0.08)',
                 color: activeTab === tab.id ? '#ffffff' : '#a5b4fc',

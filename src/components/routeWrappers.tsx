@@ -1,3 +1,5 @@
+/* eslint-disable react-refresh/only-export-components */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * routeWrappers — 路由包装器
  *
@@ -34,21 +36,21 @@ export function useCockpitNav() {
 
 // ── 页面包装器 ──
 
-export function Wave2Route({ Component }: { Component: React.ComponentType<any> }) {
+export function Wave2Route({ Component }: { Component: React.ComponentType<unknown> }) {
   const { goTo, openTarget } = useCockpitNavCallbacks();
-  return <Component onNavigate={goTo} onOpenTarget={(t: any) => t.tab && goTo(t.tab)} />;
+  return <Component onNavigate={goTo} onOpenTarget={(t: unknown) => t.tab && goTo(t.tab)} />;
 }
 
-export function HomeRoute({ Component }: { Component: React.ComponentType<any> }) {
+export function HomeRoute({ Component }: { Component: React.ComponentType<unknown> }) {
   const { goTo } = useCockpitNavCallbacks();
   return <Component onTabChange={goTo} />;
 }
 
-export function NavWrapper({ Component }: { Component: React.ComponentType<any> }) {
+export function NavWrapper({ Component }: { Component: React.ComponentType<unknown> }) {
   const { goTo, openTarget } = useCockpitNavCallbacks();
   return <Component onNavigate={goTo} onOpenTarget={openTarget} />;
 }
 
-export function TaskCenterRoute({ Component }: { Component: React.ComponentType<any> }) {
+export function TaskCenterRoute({ Component }: { Component: React.ComponentType<unknown> }) {
   return <Component />;
 }

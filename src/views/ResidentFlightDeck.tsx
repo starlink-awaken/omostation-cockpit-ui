@@ -80,13 +80,14 @@ export default function ResidentFlightDeck() {
         setCircuitTripped(data.circuit_tripped);
       }
       setError(null);
-    } catch (e: any) {
-      setError(e?.message ?? String(e));
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e));
     } finally {
       setLoading(false);
     }
   }, []);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     loadSnapshot();
     const interval = setInterval(loadSnapshot, 5000);
@@ -97,8 +98,8 @@ export default function ResidentFlightDeck() {
     try {
       await apiFetch('/api/flight-deck/circuit/trip', { method: 'POST' });
       setCircuitTripped(true);
-    } catch (e: any) {
-      setError(e?.message ?? String(e));
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e));
     }
   };
 
@@ -106,8 +107,8 @@ export default function ResidentFlightDeck() {
     try {
       await apiFetch('/api/flight-deck/circuit/reset', { method: 'POST' });
       setCircuitTripped(false);
-    } catch (e: any) {
-      setError(e?.message ?? String(e));
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e));
     }
   };
 

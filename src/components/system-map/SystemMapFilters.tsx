@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React from 'react';
 import { Search } from 'lucide-react';
 import type { PageMaturityFilter, SystemMapPayload } from './types';

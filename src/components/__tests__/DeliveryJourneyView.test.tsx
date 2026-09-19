@@ -114,7 +114,7 @@ describe('DeliveryJourneyView', () => {
   });
 
   it('switches fixture states when clicking fixture buttons', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockImplementation(async (url: any) => {
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(async (url: unknown) => {
       if (typeof url === 'string' && url.includes('fixture=VERIFIED')) {
         return {
           ok: true,

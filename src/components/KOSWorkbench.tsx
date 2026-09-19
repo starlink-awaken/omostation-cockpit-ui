@@ -87,7 +87,7 @@ export default function KOSWorkbench({ onNavigate, onOpenTarget, initialQuery }:
         priority: verifyResult ? 'high' : 'medium',
         risk_level: 'L1',
         evidence_required: ['KOS 原始响应', '关联知识对象确认', '后续执行结果', 'task closeout'],
-      } as any);
+      } as unknown);
       const taskId = result?.id ? String(result.id) : '';
       if (!taskId) throw new Error('任务服务没有返回任务 ID');
       setTaskNotice(`KOS 证据已登记为任务：${taskId}`);

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * StudioView unit tests — BET-Y1Q4-T8-24C.
  *

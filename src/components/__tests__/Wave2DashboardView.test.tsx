@@ -62,8 +62,8 @@ const sample = {
 
 describe('Wave2DashboardView', () => {
   beforeEach(() => {
-    (fetch as any).mockReset();
-    (fetch as any).mockImplementation((input: RequestInfo | URL) => {
+    (fetch as unknown).mockReset();
+    (fetch as unknown).mockImplementation((input: RequestInfo | URL) => {
       const url = String(input)
       if (url === '/api/wave2/dashboard') {
         return Promise.resolve(okJson(sample))
@@ -122,7 +122,7 @@ describe('Wave2DashboardView', () => {
   })
 
   it('loads dry-run plan actions', async () => {
-    (fetch as any).mockImplementation((input: RequestInfo | URL) => {
+    (fetch as unknown).mockImplementation((input: RequestInfo | URL) => {
       const url = String(input)
       if (url === '/api/wave2/dashboard') return Promise.resolve(okJson(sample))
       if (url === '/api/wave2/proposals/plan') {
@@ -146,7 +146,7 @@ describe('Wave2DashboardView', () => {
   })
 
   it('shows error when API fails', async () => {
-    (fetch as any).mockImplementation(() =>
+    (fetch as unknown).mockImplementation(() =>
       Promise.resolve({ ok: false, status: 500, json: async () => ({}) } as Response),
     )
     render(withQueryClient(<Wave2DashboardView />))
@@ -156,8 +156,8 @@ describe('Wave2DashboardView', () => {
   })
 
   it.skip('loads demo seed then refreshes dashboard', async () => {
-    let dashboardCalls = 0
-    (fetch as any).mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
+    let dashboardCalls = 0;
+    (fetch as unknown).mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input)
       if (url === '/api/wave2/dashboard') {
         dashboardCalls += 1
