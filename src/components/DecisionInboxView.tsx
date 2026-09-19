@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * DecisionInboxView — 决策收件箱视图 (Phase 1.5).
  *

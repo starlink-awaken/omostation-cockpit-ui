@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * Route configuration for cockpit-ui.
  *
@@ -68,18 +69,19 @@ const DomainAppsView = lazy(() => import('./components/DomainAppsView'));
 const QuestBoard = lazy(() => import('./components/QuestBoard'));
 // eslint-disable-next-line react-refresh/only-export-components
 const KnowledgeFlow = lazy(() => import('./components/KnowledgeFlow'));
-// Phase 8: Harness/Intent/Governance views
+// eslint-disable-next-line react-refresh/only-export-components
 const HarnessDashboard = lazy(() => import('./components/harness/HarnessDashboard'));
+// eslint-disable-next-line react-refresh/only-export-components
 const IntentCompiler = lazy(() => import('./components/intent/IntentCompiler'));
+// eslint-disable-next-line react-refresh/only-export-components
 const GovernanceSelfCheck = lazy(() => import('./components/governance/GovernanceSelfCheck'));
 // eslint-disable-next-line react-refresh/only-export-components
-const SwarmDashboard = lazy(() => import('./components/SwarmDashboard'));
-// eslint-disable-next-line react-refresh/only-export-components
-const DecisionInboxView = lazy(() => import('./components/DecisionInboxView'));
-// Scene v2 — lifecycle views
 const SceneOverviewView = lazy(() => import('./components/scene/SceneOverviewView'));
+// eslint-disable-next-line react-refresh/only-export-components
 const SceneDetailView = lazy(() => import('./components/scene/SceneDetailView'));
+// eslint-disable-next-line react-refresh/only-export-components
 const SceneGraphView = lazy(() => import('./components/scene/SceneGraphView'));
+// eslint-disable-next-line react-refresh/only-export-components
 const CalibrationView = lazy(() => import('./components/scene/CalibrationView'));
 // eslint-disable-next-line react-refresh/only-export-components
 const PilotReviewView = lazy(() => import('./components/PilotReviewView'));

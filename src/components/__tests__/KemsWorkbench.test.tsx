@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import KemsWorkbench from '../KemsWorkbench'
 
 describe('KemsWorkbench', () => {
   it('renders evidence-only queue and submits a correction', async () => {
-    (fetch as any).mockImplementation(async (input) => {
+    (fetch as unknown).mockImplementation(async (input) => {
       const url = String(input)
       if (url === '/api/kems/ocr/review-queue?limit=100') return { ok: true, json: async () => ({ items: [{ run_id: 'run-1', source_ref: 'vault://redacted/source', review_status: 'review' }] }) } as Response
       if (url === '/api/kems/ocr/runs/run-1') return { ok: true, json: async () => ({ run_id: 'run-1', source_ref: 'vault://redacted/source', evidence_ref: 'vault://redacted/evidence', review_status: 'review', metrics: { field_accuracy: 0.91 } }) } as Response
@@ -23,7 +24,7 @@ describe('KemsWorkbench', () => {
   })
 
   it('claims and adjudicates a redacted sample without raw content', async () => {
-    (fetch as any).mockImplementation(async (input, init) => {
+    (fetch as unknown).mockImplementation(async (input, init) => {
       const url = String(input)
       if (url === '/api/kems/ocr/review-queue?limit=100') return { ok: true, json: async () => ({ items: [] }) } as Response
       if (url === '/api/kems/adjudication/queue?limit=100') return { ok: true, json: async () => ({ items: [{ sample_id: 'sample-1', source_ref: 'vault://redacted/source', scenario_id: 'oa-notice', split: 'test', annotation_status: 'pending', labels: {} }] }) } as Response
@@ -54,7 +55,7 @@ describe('KemsWorkbench', () => {
   })
 
   it('preloads and validates the private-source-review label contract', async () => {
-    (fetch as any).mockImplementation(async (input) => {
+    (fetch as unknown).mockImplementation(async (input) => {
       const url = String(input)
       if (url === '/api/kems/ocr/review-queue?limit=100') return { ok: true, json: async () => ({ items: [] }) } as Response
       if (url === '/api/kems/adjudication/queue?limit=100') return { ok: true, json: async () => ({ items: [{ sample_id: 'private-1', source_ref: 'vault://redacted/source', scenario_id: 'private-source-review-v1', split: 'shadow', annotation_status: 'pending', labels: {} }] }) } as Response
@@ -71,11 +72,11 @@ describe('KemsWorkbench', () => {
     fireEvent.change(screen.getByLabelText('结构化 labels JSON'), { target: { value: '{"source_kind":"email"}' } })
     fireEvent.click(screen.getByRole('button', { name: '提交独立标注' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('标签结构不匹配')
-    expect((fetch as any).mock.calls.some(([input]) => String(input).endsWith('/private-1/annotate'))).toBe(false)
+    expect((fetch as unknown).mock.calls.some(([input]) => String(input).endsWith('/private-1/annotate'))).toBe(false)
   })
 
   it('registers an adjudicated manifest and records a model evaluation run', async () => {
-    (fetch as any).mockImplementation(async (input, init) => {
+    (fetch as unknown).mockImplementation(async (input, init) => {
       const url = String(input)
       if (url === '/api/kems/ocr/review-queue?limit=100') return { ok: true, json: async () => ({ items: [] }) } as Response
       if (url === '/api/kems/evaluations/manifests') return { ok: true, json: async () => ({ dataset_id: 'kems-real', sample_count: 1 }) } as Response
@@ -101,7 +102,7 @@ describe('KemsWorkbench', () => {
   })
 
   it('submits a redacted candidate model evaluation and keeps promotion blocked', async () => {
-    (fetch as any).mockImplementation(async (input) => {
+    (fetch as unknown).mockImplementation(async (input) => {
       const url = String(input)
       if (url === '/api/kems/ocr/review-queue?limit=100') return { ok: true, json: async () => ({ items: [] }) } as Response
       if (url === '/api/kems/adjudication/queue?limit=100') return { ok: true, json: async () => ({ items: [] }) } as Response
@@ -124,13 +125,13 @@ describe('KemsWorkbench', () => {
 
     await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/kems/models/candidates/candidate-v1/evaluation', expect.objectContaining({ method: 'POST' })))
     expect(await screen.findByRole('status')).toHaveTextContent('blocked_until_omo_approval')
-    const call = (fetch as any).mock.calls.find(([input]) => String(input).includes('/api/kems/models/candidates/candidate-v1/evaluation'))
+    const call = (fetch as unknown).mock.calls.find(([input]) => String(input).includes('/api/kems/models/candidates/candidate-v1/evaluation'))
     expect(String(call?.[1]?.body)).not.toContain('raw_text')
     expect(String(call?.[1]?.body)).toContain('evaluation_manifest_sha256')
   })
 
   it('registers an adjudicated manifest and records a model evaluation run', async () => {
-    (fetch as any).mockImplementation(async (input, init) => {
+    (fetch as unknown).mockImplementation(async (input, init) => {
       const url = String(input)
       if (url === '/api/kems/ocr/review-queue?limit=100') return { ok: true, json: async () => ({ items: [] }) } as Response
       if (url === '/api/kems/evaluations/manifests') return { ok: true, json: async () => ({ dataset_id: 'kems-real', sample_count: 1 }) } as Response

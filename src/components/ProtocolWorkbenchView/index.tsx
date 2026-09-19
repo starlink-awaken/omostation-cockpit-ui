@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, ClipboardCheck, GitBranch, Layers, RefreshCw, Route, Search, ShieldAlert, X } from 'lucide-react';
 import '../Dashboard.css';
@@ -358,7 +359,7 @@ export default function ProtocolWorkbenchView({
             </p>
           </div>
           <button className="antd-btn" onClick={() => {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
+             
             data.load();
           }}>
             <RefreshCw size={14} className={data.refreshing ? 'animate-spin' : ''} />

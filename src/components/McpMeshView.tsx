@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * McpMeshView with React Query integration.
  * 
@@ -25,7 +26,7 @@ interface BosHealth {
   status: string;
   total_routes: number;
   domains: Record<string, number>;
-  metrics: any;
+  metrics: unknown;
 }
 
 interface ServiceListResponse {
@@ -105,7 +106,7 @@ export default function McpMeshView() {
   // URI 解析器
   const [resolveUri, setResolveUri] = useState('bos://memory/kos/search');
   const [resolveArgs, setResolveArgs] = useState('{\n  "query": "SSOT"\n}');
-  const [resolveResult, setResolveResult] = useState<any>(null);
+  const [resolveResult, setResolveResult] = useState<unknown>(null);
   const [resolving, setResolving] = useState(false);
   const [resolveError, setResolveError] = useState<string | null>(null);
 
@@ -162,7 +163,7 @@ export default function McpMeshView() {
         throw new Error(response.error || 'Failed to resolve URI');
       }
       setResolveResult(response.data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       setResolveError(error.message);
     } finally {
       setResolving(false);

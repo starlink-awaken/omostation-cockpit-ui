@@ -58,13 +58,9 @@ export default function CommandExplorer() {
     },
   });
 
-  const commands = data?.commands ?? [];
-  const groups = data?.groups ?? [];
-  const guideSections = data?.guide_sections ?? [];
-  const scenarios = data?.scenarios ?? [];
-
   // 搜索 + 分类过滤
   const filteredCommands = useMemo(() => {
+    const commands = data?.commands ?? [];
     let result = commands;
     if (activeGroup) {
       result = result.filter(c => c.category === activeGroup);
@@ -79,7 +75,7 @@ export default function CommandExplorer() {
       );
     }
     return result;
-  }, [commands, searchQuery, activeGroup]);
+  }, [data, searchQuery, activeGroup]);
 
   return (
     <div className="min-h-screen bg-surface-0 px-6 py-8 max-w-[1400px] mx-auto">

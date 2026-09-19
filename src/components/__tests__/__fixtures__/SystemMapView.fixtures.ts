@@ -813,7 +813,7 @@ export function expectTaskCenterDraftCall(
   expect(target).toEqual(expect.objectContaining({
     tab: 'TaskCenter',
     taskQuery,
-    draftKey: expect.any(String),
+    draftKey: expect.unknown(String),
   }))
   const raw = window.sessionStorage.getItem(target.draftKey)
   expect(raw).toBeTruthy()

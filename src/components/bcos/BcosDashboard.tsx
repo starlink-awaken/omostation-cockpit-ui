@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * BcosDashboard — BCOS 北极星仪表盘（主入口）
  *

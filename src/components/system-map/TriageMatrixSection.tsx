@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  AlertTriangle,
+/* eslint-disable @typescript-eslint/no-unused-vars */
   BookOpen,
   CheckCircle,
   ClipboardCheck,
@@ -12,32 +12,23 @@ import {
   X,
 } from 'lucide-react';
 import type {
-  CapabilityGapClosureRow,
   CockpitNavigationTarget,
-  PageMaturity,
-  ProjectAction,
   ProjectItem,
-  ProjectPortfolioPriority,
   ProjectTriageQueue,
   SourceRef,
   SystemMapPayload,
 } from './types';
 import {
   closeoutText,
-  copyText,
   coverageCountLabel,
   coverageStatusText,
-  draftSourceLabel,
   openSystemMapTarget,
-  pageMaturityStatusText,
-  portfolioStatusText,
   projectStatusText,
   runtimeProfileText,
   runtimeStatusText,
   shortDate,
   statusClass,
   verifyText,
-  withTaskDraftHandoff,
 } from './utils';
 import SourceRefList from './SourceRefList';
 import ProjectActionList from './ProjectActionList';

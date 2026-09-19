@@ -34,11 +34,11 @@ export default function MissionView() {
     let alive = true;
     (async () => {
       try {
-        const data = await apiFetch<any>('/api/ledger/bets');
+        const data = await apiFetch<unknown>('/api/ledger/bets');
         if (!alive) return;
         setBets(asArray<BetRow>(data?.bets ?? data));
         setGolden(asArray<GoldenSlice>(data?.golden_slice));
-      } catch (e: any) {
+      } catch (e: unknown) {
         if (alive) setError(e?.message ?? String(e));
       }
     })();

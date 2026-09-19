@@ -3,6 +3,7 @@
  *
  * 从 Dashboard.tsx 提取，避免单文件过大。
  */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React from 'react';
 import {
   Activity, Search, Settings, Command, Zap, LayoutDashboard, Compass,

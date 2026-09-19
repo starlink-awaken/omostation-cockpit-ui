@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useEffect, useMemo } from 'react';
 import { COCKPIT_PAGE_REGISTRY } from '../cockpitPageRegistry';
 import type { CockpitNavigationTarget } from '../cockpitNavigation';

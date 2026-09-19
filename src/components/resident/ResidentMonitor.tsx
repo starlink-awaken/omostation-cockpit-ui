@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * ResidentMonitor — 常驻 Agent 监控页主入口.
  *

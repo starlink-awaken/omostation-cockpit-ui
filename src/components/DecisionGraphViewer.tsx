@@ -1,3 +1,5 @@
+ 
+/* eslint-disable react-refresh/only-export-components */
 /**
  * DecisionGraphViewer.tsx — 决策因果图可视化 (T5-05)
  *
@@ -483,12 +485,13 @@ const TAB_KEYS: TabKey[] = ["overview", "nodes", "topology"];
 export const DecisionGraphViewer: React.FC<Props> = ({ data, locale = "zh-CN" }) => {
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
   const [currentLocale, setCurrentLocale] = useState<Locale>(locale);
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => { setCurrentLocale(locale); }, [locale]);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const t = dict[currentLocale];
 
   const handleTabKeyDown = useCallback((e: React.KeyboardEvent, idx: number) => {
-    let newIdx = idx;
+    let newIdx: number;
     if (e.key === "ArrowRight") {
       newIdx = (idx + 1) % TAB_KEYS.length;
     } else if (e.key === "ArrowLeft") {

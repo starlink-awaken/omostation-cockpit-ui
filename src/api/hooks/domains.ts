@@ -6,9 +6,6 @@
 import { createResourceHooks, createQueryHook, createMutationHook } from './factory';
 import { apiFetch, apiPost, API_ENDPOINTS } from '../index';
 
-// Re-export for convenience
-const ENDPOINTS = API_ENDPOINTS;
-
 // ── 任务域 ──
 export interface Task {
   id: string;

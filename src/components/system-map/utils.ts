@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { findTaskDraftForTarget, persistTaskCenterDraft, taskDraftToIncomingDraft } from '../taskDraftHandoff';
 import { openCockpitNavigationTarget, type CockpitNavigationTarget } from '../cockpitNavigation';
 

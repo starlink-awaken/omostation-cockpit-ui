@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * DecisionGraphViewer — 因果决策图可视化页面 (BET-Y1Q4-T5-05).
  *

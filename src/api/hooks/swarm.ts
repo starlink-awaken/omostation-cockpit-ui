@@ -263,7 +263,7 @@ export function useConnectorStats() {
   return useQuery({
     queryKey: ['decision-inbox-connector-stats'],
     queryFn: async () => {
-      const res = await apiFetch<{ ok: boolean; stats: any }>(
+      const res = await apiFetch<{ ok: boolean; stats: unknown }>(
         API_ENDPOINTS.decisionInbox.connectorStats,
       );
       if (!res.ok || !res.data) throw new Error(res.error || 'Failed to load connector stats');

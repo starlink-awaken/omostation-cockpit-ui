@@ -95,8 +95,9 @@ export default function RuntimeOpsWorkbench({ currentPage, onNavigate, onOpenTar
 
   // Derive typed data from hooks
   const usagePaths = systemMapData?.usage_paths as RuntimeUsagePath[] | undefined;
-  const alerts: RuntimeAlert[] = alertsData?.items as unknown as RuntimeAlert[] || [];
-  const services: RuntimeService[] = (servicesData as unknown)?.items as RuntimeService[] || [];
+
+  const alerts = useMemo(() => (alertsData?.items as unknown as RuntimeAlert[]) || [], [alertsData]);
+  const services = useMemo(() => ((servicesData as unknown)?.items as RuntimeService[]) || [], [servicesData]);
 
   // Availability derived from hook states
   const usagePathAvailable = !systemMapError && !systemMapLoading;
@@ -182,7 +183,7 @@ export default function RuntimeOpsWorkbench({ currentPage, onNavigate, onOpenTar
           title: '运行诊断工作台',
           target: { tab: currentPage, taskQuery: runtimeContextQuery },
         },
-      } as any);
+      } as unknown);
       setTaskNotice(`已登记运行诊断任务：${result?.title || runtimeTaskTitle}`);
       if (result?.id) openCockpitNavigationTarget({ tab: 'TaskCenter', taskQuery: String(result.id) }, onNavigate, onOpenTarget);
     } catch (requestError) {

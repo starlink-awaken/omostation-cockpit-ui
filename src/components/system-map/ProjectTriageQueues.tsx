@@ -1,6 +1,6 @@
 import React from 'react';
 import { ClipboardCheck, Copy, Eye } from 'lucide-react';
-import type { ProjectAction, ProjectTriageQueue, CockpitNavigationTarget } from './types';
+import type { ProjectAction, ProjectTriageQueue } from './types';
 import { copyText, openCockpitNavigationTarget, statusClass } from './utils';
 
 type ProjectTriageQueuesProps = {

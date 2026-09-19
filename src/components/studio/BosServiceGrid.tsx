@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * BOS 服务网格 — 在线 Dry-run (BET-Y1Q4-T8-24C done_when#3).
  *

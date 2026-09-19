@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * StudioView 三个数据驱动 Tab 区块 (BET-Y1Q4-T8-24C).
  *

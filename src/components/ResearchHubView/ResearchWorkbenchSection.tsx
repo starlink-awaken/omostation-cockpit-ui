@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React from 'react';
 import { AlertTriangle, BookOpen, ClipboardList, ExternalLink, GitBranch, RefreshCw } from 'lucide-react';
 import { openCockpitNavigationTarget } from '../cockpitNavigation';

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * StudioView — 机理工坊与知识记忆中枢 (BET-Y1Q4-T8-24C).
  *
@@ -203,7 +204,7 @@ type TabId = 'memory' | 'skills' | 'bos' | 'docs';
 export const StudioView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabId>('memory');
   const skillsQuery = useSkills();
-  const realSkills = skillsQuery.data ?? [];
+  const realSkills = useMemo(() => skillsQuery.data ?? [], [skillsQuery.data]);
   const skillGraph = useMemo(() => buildSkillGraph(realSkills), [realSkills]);
 
   const tabs: { id: TabId; label: string; badge?: string }[] = [

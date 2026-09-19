@@ -30,7 +30,7 @@ export interface TableColumn {
 
 export interface DataTablePayload {
   columns?: (TableColumn | string)[];
-  rows?: Record<string, any>[];
+  rows?: Record<string, unknown>[];
 }
 
 export interface ActionButton {
@@ -39,7 +39,7 @@ export interface ActionButton {
   variant?: 'primary' | 'secondary' | 'danger';
   description?: string;
   confirm?: boolean;
-  payload?: Record<string, any>;
+  payload?: Record<string, unknown>;
   disabled?: boolean;
   disabled_reason?: string;
 }
@@ -79,8 +79,8 @@ export interface DeclarativeCard {
   title: string;
   refresh_interval_ms?: number;
   source_uri?: string;
-  static_data?: any;
-  payload?: any;
+  static_data?: unknown;
+  payload?: unknown;
 }
 
 export interface ExtensionManifestData {
