@@ -10,6 +10,7 @@
 import React from 'react';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 vi.mock('../../api/client', () => ({
@@ -57,7 +58,9 @@ function createTestClient() {
 function renderPage(ui: React.ReactElement) {
   const client = createTestClient();
   return render(
-    <QueryClientProvider client={client}>{ui}</QueryClientProvider>,
+    <MemoryRouter>
+      <QueryClientProvider client={client}>{ui}</QueryClientProvider>
+    </MemoryRouter>,
   );
 }
 

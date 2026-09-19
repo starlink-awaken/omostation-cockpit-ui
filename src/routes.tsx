@@ -143,6 +143,10 @@ const BcosDashboard = lazy(() => import('./components/bcos/BcosDashboard'));
 const PulseView = lazy(() => import('./components/p74/PulseView'));
 // eslint-disable-next-line react-refresh/only-export-components
 const DecisionGraphPage = lazy(() => import('./components/DecisionGraphPage'));
+// eslint-disable-next-line react-refresh/only-export-components
+const DecisionInboxView = lazy(() => import('./components/DecisionInboxView'));
+// eslint-disable-next-line react-refresh/only-export-components
+const SwarmDashboard = lazy(() => import('./components/SwarmDashboard'));
 
 export type SurfaceDomainType =
   | 'overview'
