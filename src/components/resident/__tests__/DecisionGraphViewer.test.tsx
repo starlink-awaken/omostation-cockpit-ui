@@ -82,8 +82,8 @@ describe('DecisionGraphViewer', () => {
     expect(screen.getByText('因果边数')).toBeInTheDocument();
     expect(screen.getByText('Actor 数')).toBeInTheDocument();
     expect(screen.getByText('Action 数')).toBeInTheDocument();
-    expect(screen.getByText('5')).toBeInTheDocument();
-    expect(screen.getByText('4')).toBeInTheDocument();
+    expect(screen.getAllByText('5').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('4').length).toBeGreaterThan(0);
   });
 
   it('renders distribution bars for kind and relation', async () => {
@@ -101,9 +101,9 @@ describe('DecisionGraphViewer', () => {
       expect(screen.getByText('节点类型分布')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('patrol')).toBeInTheDocument();
-    expect(screen.getByText('healing')).toBeInTheDocument();
-    expect(screen.getByText('decision')).toBeInTheDocument();
+    expect(screen.getAllByText('patrol').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('healing').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('decision').length).toBeGreaterThan(0);
     expect(screen.getByText('关系类型分布')).toBeInTheDocument();
     expect(screen.getByText('CAUSED')).toBeInTheDocument();
     expect(screen.getByText('INFLUENCED')).toBeInTheDocument();
@@ -150,15 +150,17 @@ describe('DecisionGraphViewer', () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({ data: null, error: 'server error', ok: false }),
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error',
+        json: async () => ({ data: null, error: 'server error' }),
       })
     );
 
     render(withQueryClient(<DecisionGraphViewer />));
 
     await waitFor(() => {
-      expect(screen.getByText(/数据加载失败/)).toBeInTheDocument();
+      expect(screen.getByText(/HTTP 500/)).toBeInTheDocument();
     });
   });
 

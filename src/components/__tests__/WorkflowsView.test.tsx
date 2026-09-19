@@ -2,6 +2,7 @@ import React from 'react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MemoryRouter } from 'react-router-dom';
 import WorkflowsView from '../WorkflowsView';
 
 const createTestClient = () =>
@@ -13,7 +14,11 @@ const createTestClient = () =>
 
 const renderWithProviders = (ui: React.ReactElement) => {
   const client = createTestClient();
-  return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
+  return render(
+    <QueryClientProvider client={client}>
+      <MemoryRouter>{ui}</MemoryRouter>
+    </QueryClientProvider>,
+  );
 };
 
 describe('WorkflowsView', () => {
