@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useSceneGraph } from '../../api/hooks/sceneLifecycle';
+import SceneSubNav from './SceneSubNav';
 
 export default function SceneGraphView() {
   const { data, isLoading, error } = useSceneGraph();
@@ -16,6 +17,7 @@ export default function SceneGraphView() {
 
   return (
     <div className="space-y-6 p-6">
+      <SceneSubNav />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold">场景图</h1>

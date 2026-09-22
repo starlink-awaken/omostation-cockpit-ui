@@ -17,7 +17,7 @@ const GUIDE_GROUP_BLUEPRINTS: GuideGroupBlueprint[] = [
     description: '先用导览和系统地图定路径，再从首页进入日常值守。',
     summary: '把第一次使用、导航总图、领域挂载入口放在最前面。',
     target: { tab: 'SystemMap' },
-    registryGroups: ['入口'],
+    registryGroups: ['入口', '态势感知'],
   },
   {
     id: 'runtime',
@@ -25,7 +25,7 @@ const GUIDE_GROUP_BLUEPRINTS: GuideGroupBlueprint[] = [
     description: '覆盖服务健康、网格路由、拓扑关系和算力调配。',
     summary: '这是面向运行态的主工作区，适合做状态确认和问题定位。',
     target: { tab: 'Overview' },
-    registryGroups: ['运行大盘'],
+    registryGroups: ['运行大盘', '主权算力'],
   },
   {
     id: 'intelligence',
@@ -33,7 +33,7 @@ const GUIDE_GROUP_BLUEPRINTS: GuideGroupBlueprint[] = [
     description: '承接研究、知识、引擎、资产、协议和工作流编排。',
     summary: '这是把"知道什么"和"怎么执行"接起来的工作带。',
     target: { tab: 'Knowledge' },
-    registryGroups: ['智能与知识'],
+    registryGroups: ['智能与知识', '业务闭环'],
   },
   {
     id: 'governance',
@@ -41,7 +41,7 @@ const GUIDE_GROUP_BLUEPRINTS: GuideGroupBlueprint[] = [
     description: '覆盖战略、告警、L4 域健康、债务和可观测。',
     summary: '这是从风险、治理、质量和演进角度看 cockpit 的面。',
     target: { tab: 'C2G' },
-    registryGroups: ['系统治理'],
+    registryGroups: ['系统治理', '治理与合规'],
   },
   {
     id: 'devtools',

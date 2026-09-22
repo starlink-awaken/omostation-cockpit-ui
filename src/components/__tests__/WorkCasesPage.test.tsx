@@ -92,7 +92,7 @@ describe('WorkCasesPage', () => {
       id: 'WorkCases',
       path: '/cases',
       label: '案件',
-      group: '工作案件',
+      group: '业务闭环',
     }));
   });
 

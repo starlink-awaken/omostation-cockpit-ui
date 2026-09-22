@@ -258,3 +258,97 @@
   color: var(--color-text-secondary);
 }
 
+/* Sidebar Domain Filter Tabs */
+.sidebar-domain-filter {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.15);
+  border-bottom: 1px solid var(--color-border-subtle);
+  overflow-x: auto;
+}
+
+.domain-tab-pill {
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.domain-tab-pill:hover {
+  color: var(--color-text-primary);
+  background: rgba(94, 106, 210, 0.08);
+}
+
+.domain-tab-pill.active {
+  color: var(--color-accent);
+  background: rgba(94, 106, 210, 0.15);
+  border-color: rgba(94, 106, 210, 0.3);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+/* Topbar Telemetry Badge */
+.topbar-telemetry-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  background: rgba(6, 9, 19, 0.65);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+
+.topbar-telemetry-badge:hover {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 12px rgba(94, 106, 210, 0.25);
+  background: rgba(16, 24, 48, 0.8);
+}
+
+.telemetry-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--color-text-muted);
+}
+
+.telemetry-dot.connected {
+  background-color: #10b981;
+  box-shadow: 0 0 8px #10b981;
+  animation: pulse-dot 2s infinite;
+}
+
+.telemetry-dot.fallback {
+  background-color: #06b6d4;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.telemetry-text {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--color-text-primary);
+}
+
+.telemetry-pill {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--color-text-secondary);
+}
+

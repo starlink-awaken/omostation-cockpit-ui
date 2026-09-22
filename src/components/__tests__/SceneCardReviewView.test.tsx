@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import SceneCardReviewView from '../SceneCardReviewView';
 
@@ -35,7 +36,13 @@ function renderView() {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false, refetchInterval: false, refetchOnWindowFocus: false } },
   });
-  return render(<QueryClientProvider client={client}><SceneCardReviewView /></QueryClientProvider>);
+  return render(
+    <QueryClientProvider client={client}>
+      <MemoryRouter>
+        <SceneCardReviewView />
+      </MemoryRouter>
+    </QueryClientProvider>,
+  );
 }
 
 describe('SceneCardReviewView', () => {

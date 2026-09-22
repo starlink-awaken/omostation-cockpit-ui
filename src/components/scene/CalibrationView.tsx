@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useSceneList } from '../../api/hooks/sceneLifecycle';
+import SceneSubNav from './SceneSubNav';
 
 interface Row {
   scene_id: string;
@@ -29,6 +30,7 @@ export default function CalibrationView() {
 
   return (
     <div className="space-y-6 p-6">
+      <SceneSubNav />
       <div>
         <h1 className="text-xl font-semibold">校准中心</h1>
         <p className="text-sm text-gray-500">

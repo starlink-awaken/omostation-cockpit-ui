@@ -5,9 +5,10 @@
  * 从 677 行精简到 < 250 行。
  * 图标映射、路由包装器已提取到独立模块。
  */
-import React, { Suspense, useState, useCallback } from 'react';
+import React, { Suspense, useState, useCallback, useEffect } from 'react';
 import { Routes, Route, Navigate, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { ROUTES, ROUTE_REDIRECTS, getVisibleRoutes, getRouteById, getRouteByPath } from '../routes';
+import { useLiveTelemetry } from '../api/liveTelemetry';
 import Breadcrumb from './common/Breadcrumb';
 import { RouteErrorBoundary } from './common/RouteErrorBoundary';
 import { CommandPalette, useCommandPalette } from './common/CommandPalette';
@@ -20,11 +21,22 @@ import './Dashboard.css';
 
 const visibleRoutes = getVisibleRoutes();
 
+const DOMAIN_TABS = [
+  { id: 'all', label: '全部' },
+  { id: '态势感知', label: '态势' },
+  { id: '主权算力', label: '算力' },
+  { id: '业务闭环', label: '业务' },
+  { id: '治理与合规', label: '治理' },
+] as const;
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   const currentRoute = getRouteByPath(location.pathname);
   const activeTab = currentRoute?.id ?? 'Home';
+
+  const [activeDomain, setActiveDomain] = useState<string>('all');
+  const telemetry = useLiveTelemetry();
 
   // Collapsible groups: default-collapse groups with > 5 items
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(() => {
@@ -39,6 +51,18 @@ export default function Dashboard() {
     return initial;
   });
 
+  // Automatically expand group of the active route
+  useEffect(() => {
+    if (currentRoute?.group) {
+      setCollapsedGroups(prev => {
+        if (!prev.has(currentRoute.group)) return prev;
+        const next = new Set(prev);
+        next.delete(currentRoute.group);
+        return next;
+      });
+    }
+  }, [currentRoute?.group]);
+
   const toggleGroup = useCallback((group: string) => {
     setCollapsedGroups(prev => {
       const next = new Set(prev);
@@ -46,6 +70,18 @@ export default function Dashboard() {
       else next.add(group);
       return next;
     });
+  }, []);
+
+  const handleDomainSelect = useCallback((domainId: string) => {
+    setActiveDomain(domainId);
+    if (domainId !== 'all') {
+      setCollapsedGroups(prev => {
+        if (!prev.has(domainId)) return prev;
+        const next = new Set(prev);
+        next.delete(domainId);
+        return next;
+      });
+    }
   }, []);
 
   const goTo = useCallback((tabId: string) => {
@@ -87,10 +123,10 @@ export default function Dashboard() {
 
   // Breadcrumb
   const breadcrumbItems = [];
-  if (currentRoute && currentRoute.group !== '总览与导航') {
+  if (currentRoute && currentRoute.id !== 'Home' && currentRoute.id !== 'Panorama') {
     breadcrumbItems.push({ label: currentRoute.group, onClick: () => goTo(visibleRoutes.find(r => r.group === currentRoute.group)?.id ?? 'Home') });
+    breadcrumbItems.push({ label: currentRoute?.label ?? '控制台' });
   }
-  breadcrumbItems.push({ label: currentRoute?.label ?? '控制台' });
 
   // Hero
   const hero = currentRoute
@@ -109,36 +145,54 @@ export default function Dashboard() {
           </div>
           <h2>Cockpit Console</h2>
         </div>
-        <nav aria-label="控制台主导航" className="sidebar-nav" role="menu">
-          {Object.entries(groupedRoutes).map(([group, routes]) => (
-            <React.Fragment key={group}>
-              <button
-                className="nav-group-title"
-                id={`group-${group}`}
-                onClick={() => toggleGroup(group)}
-                aria-expanded={!collapsedGroups.has(group)}
-              >
-                {group}
-                <span className="group-toggle">{collapsedGroups.has(group) ? '+' : '−'}</span>
-              </button>
-              {!collapsedGroups.has(group) && routes.map(route => {
-                const IconComp = getIconComponent(route.icon);
-                return (
-                  <NavLink
-                    key={route.id}
-                    to={route.path}
-                    role="menuitem"
-                    aria-describedby={`group-${group}`}
-                    className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-                    onClick={() => goTo(route.id)}
-                  >
-                    <IconComp size={16} aria-hidden="true" />
-                    <span>{route.label}</span>
-                  </NavLink>
-                );
-              })}
-            </React.Fragment>
+
+        {/* Domain Filter Tabs */}
+        <div className="sidebar-domain-filter" role="tablist" aria-label="核心业务域过滤">
+          {DOMAIN_TABS.map(tab => (
+            <button
+              key={tab.id}
+              role="tab"
+              aria-selected={activeDomain === tab.id}
+              className={`domain-tab-pill ${activeDomain === tab.id ? 'active' : ''}`}
+              onClick={() => handleDomainSelect(tab.id)}
+            >
+              {tab.label}
+            </button>
           ))}
+        </div>
+
+        <nav aria-label="控制台主导航" className="sidebar-nav" role="menu">
+          {Object.entries(groupedRoutes)
+            .filter(([group]) => activeDomain === 'all' || group === activeDomain)
+            .map(([group, routes]) => (
+              <React.Fragment key={group}>
+                <button
+                  className="nav-group-title"
+                  id={`group-${group}`}
+                  onClick={() => toggleGroup(group)}
+                  aria-expanded={!collapsedGroups.has(group)}
+                >
+                  {group}
+                  <span className="group-toggle">{collapsedGroups.has(group) ? '+' : '−'}</span>
+                </button>
+                {!collapsedGroups.has(group) && routes.map(route => {
+                  const IconComp = getIconComponent(route.icon);
+                  return (
+                    <NavLink
+                      key={route.id}
+                      to={route.path}
+                      role="menuitem"
+                      aria-describedby={`group-${group}`}
+                      className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                      onClick={() => goTo(route.id)}
+                    >
+                      <IconComp size={16} aria-hidden="true" />
+                      <span>{route.label}</span>
+                    </NavLink>
+                  );
+                })}
+              </React.Fragment>
+            ))}
         </nav>
       </aside>
 
@@ -157,6 +211,24 @@ export default function Dashboard() {
             />
           </div>
           <div className="topbar-actions">
+            <div
+              className="topbar-telemetry-badge"
+              onClick={() => goTo('Panorama')}
+              title="知行实时遥测 (端口 43191) - 点击进入全景座舱"
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') goTo('Panorama'); }}
+              aria-label="知行实时遥测"
+            >
+              <span className={`telemetry-dot ${telemetry.connected ? 'connected' : 'fallback'}`} />
+              <span className="telemetry-text">43191 {telemetry.connected ? 'LIVE' : 'SYNC'}</span>
+              <span className="telemetry-pill">
+                门禁 {telemetry.gates.filter(g => g.verdict === 'PASS').length}/{telemetry.gates.length}
+              </span>
+              <span className="telemetry-pill">
+                台账 {telemetry.betStats.done}/{telemetry.betStats.total}
+              </span>
+            </div>
             <button className="topbar-btn" onClick={() => openWithQuery(searchQuery)} title="命令面板 (Ctrl+K)">
               ⌘
             </button>
@@ -168,7 +240,7 @@ export default function Dashboard() {
         </header>
 
         <div className="content-area">
-          {activeTab !== 'Home' && <Breadcrumb items={breadcrumbItems} />}
+          {activeTab !== 'Home' && activeTab !== 'Panorama' && <Breadcrumb items={breadcrumbItems} />}
 
           <div key={activeTab} className="hero-section animate-fade-in">
             <h1 className="hero-title">{hero.title}</h1>

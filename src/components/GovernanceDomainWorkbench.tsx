@@ -157,7 +157,7 @@ export default function GovernanceDomainWorkbench({
   // React Query hooks replace raw fetch()
   const { data: systemMapData, isLoading: systemMapLoading, isError: systemMapError } = useSystemMap();
   const { data: debtData, isLoading: debtLoading, isError: debtError } = useDebt();
-  const { isLoading: omoStatusLoading, isError: omoStatusError } = useOmoStatus();
+  const { data: omoStatus, isLoading: omoStatusLoading, isError: omoStatusError } = useOmoStatus();
   const { data: l4HealthData, isLoading: l4HealthLoading, isError: l4HealthError } = useL4Health();
   const createTaskMutation = useCreateTask();
 
@@ -210,6 +210,7 @@ export default function GovernanceDomainWorkbench({
     }
 
     return {
+      sourceErrors,
       projectSummary,
       domainSummary,
       systemMapUnavailable: !systemMapAvailable,
@@ -225,6 +226,8 @@ export default function GovernanceDomainWorkbench({
       topProject: systemMap.project_portfolio?.priority_projects?.[0],
       topGap: systemMap.gaps?.[0],
       topRoadmap: systemMap.roadmap?.items?.[0],
+      debt,
+      l4Health,
       topDebt: debt.items?.find((item) => item.lifecycle_state !== 'closed') || debt.items?.[0],
       topAttentionApp: systemMap.domain_apps?.attention_items?.[0],
       topUnhealthyDomain: l4Health.domains?.find((domain) => !domain.fresh) || l4Health.domains?.[0],
@@ -310,12 +313,12 @@ export default function GovernanceDomainWorkbench({
         </div>
       </div>
 
-      {sourceErrors.length > 0 && (
+      {summary.sourceErrors.length > 0 && (
         <div className="overview-inline-error" role="alert">
           <ShieldCheck size={16} />
           <div>
             <strong>治理数据需要补证</strong>
-            <span>{sourceErrors.join('；')}，当前治理数字可能不完整。</span>
+            <span>{summary.sourceErrors.join('；')}，当前治理数字可能不完整。</span>
           </div>
           <button type="button" className="antd-btn" onClick={() => setRefreshToken((value) => value + 1)}>重试</button>
         </div>
@@ -330,7 +333,7 @@ export default function GovernanceDomainWorkbench({
         <div className="governance-workbench-card">
           <span>技术债账本</span>
           <strong>{summary.debtUnavailable ? 'N/A' : summary.openDebt}</strong>
-          <small>{summary.debtUnavailable ? '技术债证据不可用' : `总数 ${debt.total ?? 0} · 已关闭 ${debt.closed ?? 0}`}</small>
+          <small>{summary.debtUnavailable ? '技术债证据不可用' : `总数 ${summary.debt.total ?? 0} · 已关闭 ${summary.debt.closed ?? 0}`}</small>
         </div>
         <div className="governance-workbench-card">
           <span>领域挂载</span>
@@ -339,8 +342,8 @@ export default function GovernanceDomainWorkbench({
         </div>
         <div className="governance-workbench-card">
           <span>L4 健康率</span>
-          <strong>{summary.l4HealthUnavailable ? 'N/A' : l4Health.health_rate || '0%'}</strong>
-          <small>{summary.l4HealthUnavailable ? 'L4 健康证据不可用' : `健康 ${l4Health.healthy_count ?? 0} · 异常 ${summary.unhealthyDomains}`}</small>
+          <strong>{summary.l4HealthUnavailable ? 'N/A' : summary.l4Health.health_rate || '0%'}</strong>
+          <small>{summary.l4HealthUnavailable ? 'L4 健康证据不可用' : `健康 ${summary.l4Health.healthy_count ?? 0} · 异常 ${summary.unhealthyDomains}`}</small>
         </div>
         <button
           type="button"
@@ -412,7 +415,7 @@ export default function GovernanceDomainWorkbench({
               <Compass size={16} />
               战略与组合
             </strong>
-            <small>{omoStatus.system?.current_phase || '未登记阶段'}</small>
+            <small>{omoStatus?.system?.current_phase || '未登记阶段'}</small>
           </div>
           <div className="governance-workbench-list">
             {summary.topProject ? (
@@ -479,7 +482,7 @@ export default function GovernanceDomainWorkbench({
               <AppWindow size={16} />
               领域与域健康
             </strong>
-            <small>{summary.l4HealthUnavailable ? '域数量证据不可用' : `${l4Health.total_domains ?? 0} 个域`}</small>
+            <small>{summary.l4HealthUnavailable ? '域数量证据不可用' : `${summary.l4Health.total_domains ?? 0} 个域`}</small>
           </div>
           <div className="governance-workbench-list">
             {summary.topAttentionApp ? (
