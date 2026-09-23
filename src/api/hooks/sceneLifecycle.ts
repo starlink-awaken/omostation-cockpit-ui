@@ -118,10 +118,12 @@ export interface SceneEscalation {
 export function useSceneList(domain?: string) {
   return useQuery({
     queryKey: ['scene-lifecycle-list', domain ?? 'all'],
-    queryFn: () =>
-      apiFetch<{ ok: boolean; count: number; scenes: SceneCardV3[] }>(
+    queryFn: async () => {
+      const res = await apiFetch<{ ok: boolean; count: number; scenes: SceneCardV3[] }>(
         domain ? `${SCENE_LIFECYCLE.list}?domain=${encodeURIComponent(domain)}` : SCENE_LIFECYCLE.list,
-      ),
+      );
+      return res.ok && res.data ? res.data : { ok: true, count: 0, scenes: [] };
+    },
     staleTime: 30_000,
   });
 }
@@ -129,7 +131,10 @@ export function useSceneList(domain?: string) {
 export function useSceneStatus(sceneId: string | undefined) {
   return useQuery({
     queryKey: ['scene-lifecycle-status', sceneId],
-    queryFn: () => apiFetch<{ ok: boolean; scene: SceneCardV3 }>(SCENE_LIFECYCLE.status(sceneId!)),
+    queryFn: async () => {
+      const res = await apiFetch<{ ok: boolean; scene: SceneCardV3 }>(SCENE_LIFECYCLE.status(sceneId!));
+      return res.ok && res.data ? res.data : null;
+    },
     enabled: !!sceneId,
     staleTime: 15_000,
   });
@@ -138,7 +143,10 @@ export function useSceneStatus(sceneId: string | undefined) {
 export function useSceneMetrics(sceneId: string | undefined, window = 30) {
   return useQuery({
     queryKey: ['scene-lifecycle-metrics', sceneId, window],
-    queryFn: () => apiFetch<CalibrationMetrics>(SCENE_LIFECYCLE.metrics(sceneId!, window)),
+    queryFn: async () => {
+      const res = await apiFetch<CalibrationMetrics>(SCENE_LIFECYCLE.metrics(sceneId!, window));
+      return res.ok && res.data ? res.data : null;
+    },
     enabled: !!sceneId,
     staleTime: 60_000,
   });
@@ -147,7 +155,15 @@ export function useSceneMetrics(sceneId: string | undefined, window = 30) {
 export function useSceneGraph() {
   return useQuery({
     queryKey: ['scene-lifecycle-graph'],
-    queryFn: () => apiFetch<SceneGraph>(SCENE_LIFECYCLE.graph),
+    queryFn: async () => {
+      const res = await apiFetch<SceneGraph>(SCENE_LIFECYCLE.graph);
+      return res.ok && res.data ? res.data : {
+        graph_id: 'empty',
+        entry_point: null,
+        nodes: {},
+        topological_order: [],
+      };
+    },
     staleTime: 120_000,
   });
 }
@@ -155,10 +171,12 @@ export function useSceneGraph() {
 export function useEscalationQueue() {
   return useQuery({
     queryKey: ['scene-lifecycle-escalations'],
-    queryFn: () =>
-      apiFetch<{ ok: boolean; count: number; escalations: SceneEscalation[] }>(
+    queryFn: async () => {
+      const res = await apiFetch<{ ok: boolean; count: number; escalations: SceneEscalation[] }>(
         SCENE_LIFECYCLE.escalations,
-      ),
+      );
+      return res.ok && res.data ? res.data : { ok: true, count: 0, escalations: [] };
+    },
     staleTime: 10_000,
   });
 }

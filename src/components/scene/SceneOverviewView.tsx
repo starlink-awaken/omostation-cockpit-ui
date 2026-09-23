@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useEscalationQueue, useSceneList } from '../../api/hooks/sceneLifecycle';
+import SceneSubNav from './SceneSubNav';
 
 const LIFECYCLE_STYLES: Record<string, string> = {
   draft: 'bg-gray-100 text-gray-600 border-gray-200',
@@ -36,6 +37,7 @@ export default function SceneOverviewView() {
 
   return (
     <div className="space-y-6 p-6">
+      <SceneSubNav />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold">场景总览</h1>

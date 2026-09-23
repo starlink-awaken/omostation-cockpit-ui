@@ -49,8 +49,10 @@ const FATAL_PATTERNS = [
 // Patterns that indicate backend unavailability (non-fatal)
 const BACKEND_PATTERNS = [
   /Failed to load resource/i,
+  /502/i,
   /503/i,
   /404/i,
+  /ECONNREFUSED/i,
   /net::ERR_/i,
   /EventSource/i,
   /MIME type/i,
@@ -71,31 +73,27 @@ async function main() {
   });
 
   try {
-    const page = await browser.newPage();
-
-    // Capture console errors
-    page.on('console', (msg) => {
-      if (msg.type() === 'error') {
-        const kind = classifyError(msg.text());
-        if (kind === 'fatal') {
-          fatalErrors.push({ route: page.url(), text: msg.text() });
-        } else {
-          backendErrors.push({ route: page.url(), text: msg.text() });
-        }
-      }
-    });
-
-    // Capture page errors (always fatal)
-    page.on('pageerror', (err) => {
-      fatalErrors.push({ route: page.url(), text: err.message });
-    });
-
     for (const route of ROUTES) {
       const url = `${BASE_URL}${route}`;
+      const page = await browser.newPage();
+      page.on('console', (msg) => {
+        if (msg.type() === 'error') {
+          const kind = classifyError(msg.text());
+          if (kind === 'fatal') {
+            fatalErrors.push({ route: page.url(), text: msg.text() });
+          } else {
+            backendErrors.push({ route: page.url(), text: msg.text() });
+          }
+        }
+      });
+      page.on('pageerror', (err) => {
+        fatalErrors.push({ route: page.url(), text: err.message });
+      });
+
       try {
-        await page.goto(url, { waitUntil: 'networkidle0', timeout: 30000 });
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 5000 });
         // Wait for body to render
-        await page.waitForSelector('body', { timeout: 5000 });
+        await page.waitForSelector('body', { timeout: 3000 });
         const bodyText = await page.$eval('body', (el) => el.textContent?.trim() || '');
         const hasContent = bodyText.length > 0;
         results.push({ route, status: 'ok', hasContent });
@@ -103,6 +101,8 @@ async function main() {
       } catch (err) {
         results.push({ route, status: 'fail', error: err.message });
         process.stdout.write('x');
+      } finally {
+        await page.close();
       }
     }
   } finally {

@@ -15,6 +15,7 @@ import {
   type SceneCardReviewDecision,
 } from '../api/hooks';
 import SceneCardIntakePanel from './SceneCardIntakePanel';
+import SceneSubNav from './scene/SceneSubNav';
 
 const DECISIONS: Array<{ value: SceneCardReviewDecision; label: string }> = [
   { value: 'pending', label: '保留待审' },
@@ -74,6 +75,7 @@ export default function SceneCardReviewView() {
 
   return (
     <section style={{ display: 'grid', gap: 16, padding: '1rem 0' }} aria-label="场景卡候选评审">
+      <SceneSubNav />
       <header className="antd-card" style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
         <div style={{ display: 'grid', gap: 5 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

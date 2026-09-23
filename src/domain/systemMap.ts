@@ -26,7 +26,19 @@ import type {
 import { normalizeSearchText } from '../utils/search';
 
 /** 页面分组排序优先级 */
-export const PAGE_GROUP_ORDER = ['入口', '运行大盘', '智能与知识', '系统治理', '开发工具', '领域应用', '系统配置'];
+export const PAGE_GROUP_ORDER = [
+  '态势感知',
+  '主权算力',
+  '业务闭环',
+  '治理与合规',
+  '入口',
+  '运行大盘',
+  '智能与知识',
+  '系统治理',
+  '开发工具',
+  '领域应用',
+  '系统配置',
+];
 
 // ─── 页面分组 ───
 

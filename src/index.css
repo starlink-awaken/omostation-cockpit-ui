@@ -21,27 +21,28 @@
   --antd-info: var(--color-accent);
 
   /* Layout Colors → surface hierarchy */
-  --antd-bg-layout: var(--color-surface-0);
-  --antd-bg-body: var(--color-surface-0);
-  --antd-bg-container: var(--color-surface-1);
-  --antd-bg-elevated: var(--color-surface-2);
+  --antd-bg-layout: var(--color-surface-0, #08090d);
+  --antd-bg-body: var(--color-surface-0, #08090d);
+  --antd-bg-container: var(--color-surface-1, #111218);
+  --antd-bg-container-hover: var(--color-surface-2, #181924);
+  --antd-bg-elevated: var(--color-surface-2, #181924);
 
-  --tech-cyan-glow: 0 0 12px rgba(94, 106, 210, 0.15);
-  --tech-glow-intense: 0 0 20px rgba(94, 106, 210, 0.3);
+  --tech-cyan-glow: 0 0 12px rgba(99, 102, 241, 0.2);
+  --tech-glow-intense: 0 0 20px rgba(99, 102, 241, 0.35);
 
-  --antd-border-color: var(--color-border-subtle);
-  --antd-border-color-hover: var(--color-border-default);
+  --antd-border-color: var(--color-border-subtle, rgba(255, 255, 255, 0.08));
+  --antd-border-color-hover: var(--color-border-default, rgba(255, 255, 255, 0.16));
 
-  --antd-text-primary: var(--color-text-primary);
-  --antd-text-secondary: var(--color-text-secondary);
-  --antd-text-muted: var(--color-text-tertiary);
+  --antd-text-primary: var(--color-text-primary, #f8fafc);
+  --antd-text-secondary: var(--color-text-secondary, #94a3b8);
+  --antd-text-muted: var(--color-text-tertiary, #64748b);
 
-  --antd-radius-lg: var(--radius-lg);
-  --antd-radius-md: var(--radius-md);
-  --antd-radius-sm: var(--radius-sm);
+  --antd-radius-lg: 10px;
+  --antd-radius-md: 6px;
+  --antd-radius-sm: 4px;
 
-  --antd-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.06);
-  --antd-shadow-dropdown: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  --antd-shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.4), 0 2px 6px -1px rgba(0, 0, 0, 0.2);
+  --antd-shadow-dropdown: 0 12px 36px 0 rgba(0, 0, 0, 0.6);
 
   /* Spacing Scale */
   --space-1: 4px;
@@ -93,153 +94,156 @@
 
 body {
   font-family: var(--font-sans);
-  background: var(--antd-bg-body);
-  /* Cyber Ambient Background Grid Lines */
+  background-color: var(--color-surface-0, #08090d);
+  /* Precision grid lines in subtle white tone */
   background-image: 
-    linear-gradient(rgba(0, 242, 254, 0.015) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 242, 254, 0.015) 1px, transparent 1px);
-  background-size: 40px 40px;
-  color: var(--antd-text-primary);
+    linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+  background-size: 32px 32px;
+  color: var(--color-text-primary, #f8fafc);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   position: relative;
 }
 
-/* Ambient Neon Lights on Body */
+/* Ambient Deep Space Light */
 body::before {
   content: "";
   position: fixed;
-  top: -10%;
-  left: 30%;
-  width: 40vw;
-  height: 40vw;
-  background: radial-gradient(circle, rgba(0, 242, 254, 0.05), transparent 70%);
-  filter: blur(80px);
+  top: -15%;
+  left: 35%;
+  width: 50vw;
+  height: 45vw;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.04), transparent 65%);
+  filter: blur(100px);
   pointer-events: none;
   z-index: -1;
 }
 
 /* Typography Resets */
 h1, h2, h3, h4, h5, h6 {
-  color: var(--antd-text-primary);
+  color: var(--color-text-primary, #f8fafc);
   font-weight: 600;
-  text-shadow: 0 0 8px rgba(0, 242, 254, 0.1);
+  letter-spacing: -0.015em;
 }
 
 p {
-  color: var(--antd-text-secondary);
+  color: var(--color-text-secondary, #94a3b8);
   line-height: 1.5715;
 }
 
-/* Accessibility (a11y) Focus Outline style matching neon cyan glow */
-*:focus-visible {
-  outline: 2px solid var(--antd-primary);
-  outline-offset: 1px;
-  box-shadow: var(--tech-glow-intense);
+/* Text Selection */
+::selection {
+  background: rgba(99, 102, 241, 0.35);
+  color: #ffffff;
 }
 
-/* Global utility classes matching Ant Design styles with Cybertech accents */
+/* Accessibility Focus Outline */
+*:focus-visible {
+  outline: 2px solid var(--color-accent, #6366f1);
+  outline-offset: 1px;
+}
+
+/* Global utility classes matching Ant Design styles with Modern Tech accents */
 .antd-btn {
   font-size: 13px;
+  font-weight: 500;
   height: 32px;
-  padding: 4px 16px;
-  border-radius: var(--antd-radius-md);
-  border: 1px solid var(--antd-border-color);
-  background: rgba(16, 24, 48, 0.4);
-  color: var(--antd-text-primary);
+  padding: 4px 14px;
+  border-radius: var(--radius-md, 6px);
+  border: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.08));
+  background: var(--color-surface-2, #181924);
+  color: var(--color-text-primary, #f8fafc);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  transition: all 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
+  gap: 6px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 .antd-btn:hover {
-  color: var(--antd-primary-hover);
-  border-color: var(--antd-primary-hover);
-  box-shadow: var(--tech-cyan-glow);
-  background: rgba(16, 24, 48, 0.8);
+  color: #ffffff;
+  border-color: var(--color-border-default, rgba(255, 255, 255, 0.16));
+  background: var(--color-surface-3, #222332);
+  transform: translateY(-1px);
 }
 
 .antd-btn:active {
-  color: var(--antd-primary-active);
-  border-color: var(--antd-primary-active);
+  transform: translateY(0);
+  background: var(--color-surface-1, #111218);
 }
 
 .antd-btn-primary {
-  background: linear-gradient(135deg, rgba(0, 242, 254, 0.1) 0%, rgba(79, 172, 254, 0.2) 100%);
-  border-color: var(--antd-primary);
-  color: var(--antd-primary);
-  text-shadow: 0 0 4px rgba(0, 242, 254, 0.4);
-  box-shadow: var(--tech-cyan-glow);
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  border-color: #6366f1;
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(99, 102, 241, 0.3);
 }
 
 .antd-btn-primary:hover {
-  background: linear-gradient(135deg, rgba(0, 242, 254, 0.2) 0%, rgba(79, 172, 254, 0.3) 100%);
-  border-color: var(--antd-primary-hover);
-  color: #fff;
-  box-shadow: var(--tech-glow-intense);
+  background: linear-gradient(135deg, #7174f8 0%, #5a52ee 100%);
+  border-color: #7174f8;
+  color: #ffffff;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.45);
 }
 
 .antd-btn-primary:active {
-  background: var(--antd-primary-active);
-  border-color: var(--antd-primary-active);
-  color: #fff;
+  background: #4338ca;
+  border-color: #4338ca;
 }
 
 .antd-btn-danger {
-  color: var(--antd-error);
-  border-color: var(--antd-error);
-  background: rgba(255, 71, 87, 0.05);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.25);
+  background: rgba(239, 68, 68, 0.08);
 }
 
 .antd-btn-danger:hover {
-  color: #fff;
-  background: var(--antd-error);
-  border-color: var(--antd-error);
-  box-shadow: 0 0 12px rgba(255, 71, 87, 0.2);
+  color: #ffffff;
+  background: #dc2626;
+  border-color: #dc2626;
+  box-shadow: 0 2px 12px rgba(220, 38, 38, 0.35);
 }
 
 .antd-input {
   font-size: 13px;
   height: 32px;
   padding: 4px 12px;
-  border-radius: var(--antd-radius-md);
-  border: 1px solid var(--antd-border-color);
-  background: rgba(6, 9, 19, 0.6);
-  color: var(--antd-text-primary);
+  border-radius: var(--radius-md, 6px);
+  border: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.08));
+  background: rgba(14, 15, 21, 0.7);
+  color: var(--color-text-primary, #f8fafc);
   outline: none;
-  transition: all 0.2s;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .antd-input:hover {
-  border-color: var(--antd-primary-hover);
+  border-color: var(--color-border-default, rgba(255, 255, 255, 0.16));
 }
 
 .antd-input:focus {
-  border-color: var(--antd-primary);
-  box-shadow: var(--tech-cyan-glow);
+  border-color: var(--color-accent, #6366f1);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.18);
+  background: rgba(17, 18, 25, 0.9);
 }
 
 .antd-card {
-  background: var(--antd-bg-container);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid var(--antd-border-color);
-  border-radius: var(--antd-radius-lg);
+  background: rgba(18, 19, 26, 0.75);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.07));
+  border-radius: var(--radius-lg, 10px);
   padding: 24px;
-  box-shadow: var(--antd-shadow-card);
-  transition: all 0.3s;
+  box-shadow: var(--shadow-card, 0 4px 20px -2px rgba(0, 0, 0, 0.4));
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .antd-card:hover {
-  border-color: var(--antd-border-color-hover);
-  box-shadow: var(--tech-cyan-glow), inset 0 0 8px rgba(0, 242, 254, 0.05);
+  border-color: var(--color-border-hover, rgba(99, 102, 241, 0.35));
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45), 0 0 16px rgba(99, 102, 241, 0.08);
 }
 
 /* Scrollbar reset */
@@ -251,9 +255,9 @@ p {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 242, 254, 0.2);
-  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 242, 254, 0.4);
+  background: rgba(255, 255, 255, 0.25);
 }

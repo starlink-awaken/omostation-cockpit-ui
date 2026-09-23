@@ -1,25 +1,44 @@
 import { Link } from 'react-router-dom';
+import { GitBranch } from 'lucide-react';
 import { useSceneGraph } from '../../api/hooks/sceneLifecycle';
+import SceneSubNav from './SceneSubNav';
+import EmptyState from '../ui/EmptyState';
 
 export default function SceneGraphView() {
   const { data, isLoading, error } = useSceneGraph();
 
   if (isLoading) return <div className="p-6 text-sm text-gray-500">构建场景图中…</div>;
   if (error) return <div className="p-6 text-sm text-red-600">加载失败: {(error as Error).message}</div>;
-  if (!data) return <div className="p-6 text-sm text-gray-500">无数据</div>;
 
-  const roots = data.topological_order.filter(
-    (id) => !data.topological_order.some(
-      (other) => data.nodes[other]?.edges.some((e) => e.target === id),
+  const topologicalOrder = data?.topological_order ?? [];
+  const nodes = data?.nodes ?? {};
+
+  if (!data || topologicalOrder.length === 0) {
+    return (
+      <div className="space-y-6 p-6">
+        <SceneSubNav />
+        <EmptyState
+          icon={<GitBranch size={32} className="text-indigo-400" />}
+          title="暂无场景 DAG 拓扑"
+          message="当前尚未检测到活跃场景流转数据。可在知行 43191 监造底座或场景卡评审中初始化场景。"
+        />
+      </div>
+    );
+  }
+
+  const roots = topologicalOrder.filter(
+    (id) => !topologicalOrder.some(
+      (other) => nodes[other]?.edges?.some((e) => e.target === id),
     ),
   );
 
   return (
     <div className="space-y-6 p-6">
+      <SceneSubNav />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold">场景图</h1>
-          <p className="text-sm text-gray-500">DAG 拓扑 · {data.topological_order.length} 节点 · 入口 {data.entry_point ?? '—'}</p>
+          <p className="text-sm text-gray-500">DAG 拓扑 · {topologicalOrder.length} 节点 · 入口 {data.entry_point ?? '—'}</p>
         </div>
       </div>
 
