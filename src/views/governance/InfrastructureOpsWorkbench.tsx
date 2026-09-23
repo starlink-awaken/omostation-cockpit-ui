@@ -3,6 +3,7 @@ import { Activity, ArrowRight, ClipboardCheck, Cpu, FileText, Gauge, Network, Ro
 import { openCockpitNavigationTarget, type CockpitNavigationTarget } from '../../components/cockpitNavigation';
 import { useComputeStatus, useBosHealth, useBosServices, useServiceStatus, useCreateTask } from '../../api/hooks';
 import GovernanceBaseBridgeBanner from '../../components/common/GovernanceBaseBridgeBanner';
+import { useToast } from '../../components/common/Toast';
 
 type InfraPage = 'McpMesh' | 'Topology' | 'Compute' | 'Overview' | 'LogViewer' | string;
 
@@ -123,6 +124,7 @@ export default function InfrastructureOpsWorkbench({ currentPage, onNavigate, on
   const { data: bosServicesData, isLoading: bosServicesLoading, isError: bosServicesError } = useBosServices();
   const { data: runtimeData, isLoading: runtimeLoading, isError: runtimeError } = useServiceStatus();
   const createTaskMutation = useCreateTask();
+  const { showSuccess, showError } = useToast();
 
   // Derive typed data from hooks
   const compute: ComputePayload | null = computeData?.nodes ? computeData as unknown as ComputePayload : null;
@@ -217,10 +219,14 @@ export default function InfrastructureOpsWorkbench({ currentPage, onNavigate, on
           target: { tab: currentPage, taskQuery: infrastructureContextQuery },
         },
       } as unknown);
-      setTaskNotice(`已登记基础设施任务：${result?.title || infrastructureTaskTitle}`);
+      const notice = `已登记基础设施任务：${result?.title || infrastructureTaskTitle}`;
+      setTaskNotice(notice);
+      showSuccess(notice);
       if (result?.id) openCockpitNavigationTarget({ tab: 'TaskCenter', taskQuery: String(result.id) }, onNavigate, onOpenTarget);
     } catch (requestError) {
-      setTaskError(requestError instanceof Error ? requestError.message : '基础设施任务登记失败');
+      const errMsg = requestError instanceof Error ? requestError.message : '基础设施任务登记失败';
+      setTaskError(errMsg);
+      showError(errMsg);
     } finally {
       setTaskPending(false);
     }
@@ -231,6 +237,8 @@ export default function InfrastructureOpsWorkbench({ currentPage, onNavigate, on
       <GovernanceBaseBridgeBanner
         workbenchName="基础设施工作台"
         sourceModule="projects/cockpit/infrastructure"
+        targetSection="#swarm"
+        actionText="直达算力拓扑总览"
       />
       <div className="section-header">
         <div>

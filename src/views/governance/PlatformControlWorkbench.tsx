@@ -4,6 +4,7 @@ import { Activity, AlertTriangle, ClipboardCheck, Cpu, Gift, RefreshCw, Settings
 import { openCockpitNavigationTarget, type CockpitNavigationTarget } from '../../components/cockpitNavigation';
 import { useArchHealth, useBosMetrics, usePipelines, useQuests, useCreateTask } from '../../api/hooks';
 import GovernanceBaseBridgeBanner from '../../components/common/GovernanceBaseBridgeBanner';
+import { useToast } from '../../components/common/Toast';
 
 interface ArchHealthPayload {
   system?: {
@@ -120,6 +121,7 @@ export default function PlatformControlWorkbench({
   const { data: pipelinesData, isLoading: pipelinesLoading, isError: pipelinesError } = usePipelines();
   const { data: questsData, isLoading: questsLoading, isError: questsError } = useQuests();
   const createTaskMutation = useCreateTask();
+  const { showSuccess, showError } = useToast();
 
   const archHealth = (archHealthData as unknown as ArchHealthPayload) || {};
   const bosMetrics = (bosMetricsData as unknown as BosMetricsPayload) || {};
@@ -223,10 +225,14 @@ export default function PlatformControlWorkbench({
           target: { tab: currentPage, taskQuery: platformContextQuery },
         },
       } as unknown);
-      setTaskNotice(`已登记控制面任务：${result?.title || controlTaskTitle}`);
+      const notice = `已登记控制面任务：${result?.title || controlTaskTitle}`;
+      setTaskNotice(notice);
+      showSuccess(notice);
       if (result?.id) openCockpitNavigationTarget({ tab: 'TaskCenter', taskQuery: String(result.id) }, onNavigate, onOpenTarget);
     } catch (requestError) {
-      setTaskError(requestError instanceof Error ? requestError.message : '控制面任务登记失败');
+      const errMsg = requestError instanceof Error ? requestError.message : '控制面任务登记失败';
+      setTaskError(errMsg);
+      showError(errMsg);
     } finally {
       setTaskPending(false);
     }
@@ -248,6 +254,8 @@ export default function PlatformControlWorkbench({
       <GovernanceBaseBridgeBanner
         workbenchName={title}
         sourceModule="projects/cockpit/governance"
+        targetSection="#arch"
+        actionText="直达架构与平台中枢"
       />
       <div className="section-header" style={{ marginBottom: 0 }}>
         <div>

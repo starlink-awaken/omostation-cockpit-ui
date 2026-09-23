@@ -3,6 +3,7 @@ import { AppWindow, ClipboardCheck, Compass, Layers, ShieldCheck } from 'lucide-
 import { openCockpitNavigationTarget, type CockpitNavigationTarget } from '../../components/cockpitNavigation';
 import { useSystemMap, useDebt, useOmoStatus, useL4Health, useCreateTask } from '../../api/hooks';
 import GovernanceBaseBridgeBanner from '../../components/common/GovernanceBaseBridgeBanner';
+import { useToast } from '../../components/common/Toast';
 
 interface RoadmapItem {
   id: string;
@@ -161,6 +162,7 @@ export default function GovernanceDomainWorkbench({
   const { data: omoStatus, isLoading: omoStatusLoading, isError: omoStatusError } = useOmoStatus();
   const { data: l4HealthData, isLoading: l4HealthLoading, isError: l4HealthError } = useL4Health();
   const createTaskMutation = useCreateTask();
+  const { showSuccess, showError } = useToast();
 
   const summary = useMemo(() => {
     const systemMap = systemMapData as unknown as SystemMapGovernanceLite || {};
@@ -283,10 +285,14 @@ export default function GovernanceDomainWorkbench({
           target: { tab: currentPage, taskQuery: governanceTaskTitle },
         },
       } as unknown);
-      setTaskNotice(`已登记治理任务：${result?.title || governanceTaskTitle}`);
+      const notice = `已登记治理任务：${result?.title || governanceTaskTitle}`;
+      setTaskNotice(notice);
+      showSuccess(notice);
       if (result?.id) openCockpitNavigationTarget({ tab: 'TaskCenter', taskQuery: String(result.id) }, onNavigate, onOpenTarget);
     } catch (requestError) {
-      setTaskError(requestError instanceof Error ? requestError.message : '治理任务登记失败');
+      const errMsg = requestError instanceof Error ? requestError.message : '治理任务登记失败';
+      setTaskError(errMsg);
+      showError(errMsg);
     } finally {
       setTaskPending(false);
     }
@@ -308,6 +314,8 @@ export default function GovernanceDomainWorkbench({
       <GovernanceBaseBridgeBanner
         workbenchName={title}
         sourceModule="projects/cockpit/governance"
+        targetSection="#gov"
+        actionText="直达治理与门禁矩阵"
       />
       <div className="section-header" style={{ marginBottom: 0 }}>
         <div>
