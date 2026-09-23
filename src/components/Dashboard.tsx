@@ -17,9 +17,12 @@ import { useKeyboardShortcuts } from './common/CommandPalette';
 import UserMenu from './common/UserMenu';
 import { useCockpitStore } from '../store';
 import { getIconComponent } from './dashboardIcons';
+import GuardianInspectionDrawer from './common/GuardianInspectionDrawer';
 import './Dashboard.css';
 
 const visibleRoutes = getVisibleRoutes();
+// All navigable routes (including deep parameterized routes like /scenes/:id, excluding retired standalone workbenches)
+const registeredRoutes = ROUTES.filter(r => r.group !== '工作台');
 
 const DOMAIN_TABS = [
   { id: 'all', label: '全部' },
@@ -93,10 +96,27 @@ export default function Dashboard() {
   const searchQuery = useCockpitStore((s) => s.search.query);
   const setSearchQuery = useCockpitStore((s) => s.search.setQuery);
 
+  // Guardian Inspection Drawer state
+  const [isGuardianDrawerOpen, setIsGuardianDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    const handleOpenGuardian = () => setIsGuardianDrawerOpen(true);
+    window.addEventListener('open-guardian-inspection', handleOpenGuardian);
+    return () => window.removeEventListener('open-guardian-inspection', handleOpenGuardian);
+  }, []);
+
+  // All active routes indexed for Command Palette
+  const allCommands = React.useMemo(() => {
+    return registeredRoutes.map(r => ({
+      id: r.id,
+      label: r.label,
+      description: `${r.group} · ${r.path}`,
+      action: () => goTo(r.id),
+    }));
+  }, [goTo]);
+
   // Command palette
-  const { isOpen: isCommandPaletteOpen, initialQuery, open: openCommandPalette, openWithQuery, close: closeCommandPalette } = useCommandPalette(
-    visibleRoutes.map(r => ({ id: r.id, label: r.label, description: r.label, action: () => goTo(r.id) })),
-  );
+  const { isOpen: isCommandPaletteOpen, initialQuery, open: openCommandPalette, openWithQuery, close: closeCommandPalette } = useCommandPalette(allCommands);
 
   // Quick actions
   const { isOpen: isQuickActionsOpen, open: openQuickActions, close: closeQuickActions } = useQuickActions();
@@ -194,6 +214,23 @@ export default function Dashboard() {
               </React.Fragment>
             ))}
         </nav>
+        <div className="sidebar-footer">
+          <button
+            type="button"
+            onClick={() => setIsGuardianDrawerOpen(true)}
+            className="sidebar-sentinel-badge"
+            title="知行 43191 守护底座 - 点击展开 74s 哨兵巡检"
+          >
+            <div className="sidebar-sentinel-left">
+              <span className="sentinel-pulse-dot" />
+              <div className="sidebar-sentinel-info">
+                <span className="sidebar-sentinel-title">74s 哨兵巡检</span>
+                <span className="sidebar-sentinel-sub">43191 底座健康</span>
+              </div>
+            </div>
+            <span className="sidebar-sentinel-status">PASS</span>
+          </button>
+        </div>
       </aside>
 
       {/* Main */}
@@ -213,11 +250,11 @@ export default function Dashboard() {
           <div className="topbar-actions">
             <div
               className="topbar-telemetry-badge"
-              onClick={() => goTo('Panorama')}
-              title="知行实时遥测 (端口 43191) - 点击进入全景座舱"
+              onClick={() => setIsGuardianDrawerOpen(true)}
+              title="知行实时遥测 (端口 43191) - 点击展开 74s 哨兵巡检与监造底座抽屉"
               role="button"
               tabIndex={0}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') goTo('Panorama'); }}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setIsGuardianDrawerOpen(true); }}
               aria-label="知行实时遥测"
             >
               <span className={`telemetry-dot ${telemetry.connected ? 'connected' : 'fallback'}`} />
@@ -253,7 +290,7 @@ export default function Dashboard() {
                 {Object.entries(ROUTE_REDIRECTS).map(([from, to]) => (
                   <Route key={from} path={from} element={<Navigate to={to} replace />} />
                 ))}
-                {visibleRoutes.map(route => (
+                {registeredRoutes.map(route => (
                   <Route key={route.path} path={route.path} element={<route.component />} />
                 ))}
                 <Route path="*" element={<Navigate to="/" replace />} />
@@ -267,9 +304,13 @@ export default function Dashboard() {
         isOpen={isCommandPaletteOpen}
         onClose={closeCommandPalette}
         initialQuery={initialQuery}
-        commands={visibleRoutes.map(r => ({ id: r.id, label: r.label, description: r.label, action: () => goTo(r.id) }))}
+        commands={allCommands}
       />
       <QuickActionsPanel isOpen={isQuickActionsOpen} onClose={closeQuickActions} />
+      <GuardianInspectionDrawer
+        isOpen={isGuardianDrawerOpen}
+        onClose={() => setIsGuardianDrawerOpen(false)}
+      />
     </div>
   );
 }

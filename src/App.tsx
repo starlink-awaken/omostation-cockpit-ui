@@ -4,6 +4,7 @@ import { ApiProvider } from './api/provider';
 import Dashboard from './components/Dashboard';
 import GlobalSearch from './components/GlobalSearch';
 import { setCockpitNavigator } from './components/cockpitNavigation';
+import { ToastProvider } from './components/common/Toast';
 import './index.css';
 
 /**
@@ -21,11 +22,13 @@ function App() {
   return (
     <ApiProvider>
       <BrowserRouter>
-        <CockpitNavBridge />
-        <div className="min-h-screen bg-surface-0 text-text-primary">
-          <Dashboard />
-          <GlobalSearch />
-        </div>
+        <ToastProvider>
+          <CockpitNavBridge />
+          <div className="min-h-screen bg-surface-0 text-text-primary">
+            <Dashboard />
+            <GlobalSearch />
+          </div>
+        </ToastProvider>
       </BrowserRouter>
     </ApiProvider>
   );

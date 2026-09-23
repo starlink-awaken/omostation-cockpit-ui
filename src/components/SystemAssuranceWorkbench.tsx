@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Activity, AlertTriangle, ClipboardCheck, ExternalLink, Layers, RefreshCw, ShieldCheck } from 'lucide-react';
 import { openCockpitNavigationTarget, type CockpitNavigationTarget } from './cockpitNavigation';
 import { useCreateTask } from '../api/hooks';
+import GovernanceBaseBridgeBanner from './common/GovernanceBaseBridgeBanner';
 
 type LayerStatus = {
   layer?: string;
@@ -257,6 +258,10 @@ export default function SystemAssuranceWorkbench({ onNavigate, onOpenTarget }: S
 
   return (
     <section className="services-section overview-ops-panel" role="region" aria-label="系统保证工作台">
+      <GovernanceBaseBridgeBanner
+        workbenchName="系统保障工作台"
+        sourceModule="projects/cockpit/governance"
+      />
       <div className="section-header">
         <div>
           <h2 style={{ margin: 0, fontSize: 16 }}>系统保证工作台</h2>

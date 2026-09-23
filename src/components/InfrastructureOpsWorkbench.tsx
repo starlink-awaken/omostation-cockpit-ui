@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Activity, ArrowRight, ClipboardCheck, Cpu, FileText, Gauge, Network, Route, Workflow } from 'lucide-react';
 import { openCockpitNavigationTarget, type CockpitNavigationTarget } from './cockpitNavigation';
 import { useComputeStatus, useBosHealth, useBosServices, useServiceStatus, useCreateTask } from '../api/hooks';
+import GovernanceBaseBridgeBanner from './common/GovernanceBaseBridgeBanner';
 
 type InfraPage = 'McpMesh' | 'Topology' | 'Compute' | 'Overview' | 'LogViewer' | string;
 
@@ -227,6 +228,10 @@ export default function InfrastructureOpsWorkbench({ currentPage, onNavigate, on
 
   return (
     <section className="services-section infra-workbench" aria-label="基础设施工作台">
+      <GovernanceBaseBridgeBanner
+        workbenchName="基础设施工作台"
+        sourceModule="projects/cockpit/infrastructure"
+      />
       <div className="section-header">
         <div>
           <h2 style={{ margin: 0, fontSize: 16 }}>基础设施工作台</h2>
