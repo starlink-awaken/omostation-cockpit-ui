@@ -3,6 +3,7 @@ import { Activity, AlertTriangle, ClipboardCheck, ExternalLink, Layers, RefreshC
 import { openCockpitNavigationTarget, type CockpitNavigationTarget } from '../../components/cockpitNavigation';
 import { useCreateTask } from '../../api/hooks';
 import GovernanceBaseBridgeBanner from '../../components/common/GovernanceBaseBridgeBanner';
+import { useToast } from '../../components/common/Toast';
 
 type LayerStatus = {
   layer?: string;
@@ -148,6 +149,7 @@ export default function SystemAssuranceWorkbench({ onNavigate, onOpenTarget }: S
   const [taskNotice, setTaskNotice] = useState<string | null>(null);
   const [taskError, setTaskError] = useState<string | null>(null);
   const createTaskMutation = useCreateTask();
+  const { showSuccess, showError } = useToast();
 
   useEffect(() => {
     let active = true;
@@ -247,10 +249,14 @@ export default function SystemAssuranceWorkbench({ onNavigate, onOpenTarget }: S
           target: { tab: 'Overview', taskQuery: assuranceTaskTitle },
         },
       } as unknown);
-      setTaskNotice(`已登记系统保证任务：${result?.title || assuranceTaskTitle}`);
+      const notice = `已登记系统保证任务：${result?.title || assuranceTaskTitle}`;
+      setTaskNotice(notice);
+      showSuccess(notice);
       if (result?.id) openAssuranceTarget({ tab: 'TaskCenter', taskQuery: String(result.id) });
     } catch (requestError) {
-      setTaskError(requestError instanceof Error ? requestError.message : '系统保证任务登记失败');
+      const errMsg = requestError instanceof Error ? requestError.message : '系统保证任务登记失败';
+      setTaskError(errMsg);
+      showError(errMsg);
     } finally {
       setTaskPending(false);
     }
@@ -261,6 +267,8 @@ export default function SystemAssuranceWorkbench({ onNavigate, onOpenTarget }: S
       <GovernanceBaseBridgeBanner
         workbenchName="系统保障工作台"
         sourceModule="projects/cockpit/governance"
+        targetSection="#health"
+        actionText="直达系统健康雷达"
       />
       <div className="section-header">
         <div>

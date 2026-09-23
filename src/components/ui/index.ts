@@ -17,3 +17,5 @@ export type { EmptyStateProps } from './EmptyState';
 
 export { default as DataTable } from './DataTable';
 export type { DataTableProps, ColumnDef, SortDirection } from './DataTable';
+
+export { Skeleton, SkeletonCard, SkeletonMetric, SkeletonTable } from './Skeleton';

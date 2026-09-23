@@ -3,11 +3,28 @@ import { GitBranch } from 'lucide-react';
 import { useSceneGraph } from '../../api/hooks/sceneLifecycle';
 import SceneSubNav from './SceneSubNav';
 import EmptyState from '../ui/EmptyState';
+import { Skeleton, SkeletonCard, SkeletonTable } from '../ui/Skeleton';
 
 export default function SceneGraphView() {
   const { data, isLoading, error } = useSceneGraph();
 
-  if (isLoading) return <div className="p-6 text-sm text-gray-500">构建场景图中…</div>;
+  if (isLoading) {
+    return (
+      <div className="space-y-6 p-6">
+        <SceneSubNav />
+        <div className="space-y-2">
+          <Skeleton width="180px" height="28px" />
+          <Skeleton width="280px" height="18px" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+        <SkeletonTable rows={4} />
+      </div>
+    );
+  }
   if (error) return <div className="p-6 text-sm text-red-600">加载失败: {(error as Error).message}</div>;
 
   const topologicalOrder = data?.topological_order ?? [];
