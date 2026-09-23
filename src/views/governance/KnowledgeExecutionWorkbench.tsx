@@ -1,0 +1,449 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import React, { useMemo, useState } from 'react';
+import { BookOpen, ClipboardCheck, ClipboardList, GitBranch, PlayCircle, RefreshCw, AlertTriangle } from 'lucide-react';
+import { openCockpitNavigationTarget } from '../../components/cockpitNavigation';
+import { useTasks, useWorkflows, useEcosSkills, usePipelines, useSystemMap, useCreateTask } from '../../api/hooks';
+import {
+  EXECUTION_STEPS,
+} from '../../components/KnowledgeExecutionWorkbenchConfig';
+import type {
+  TaskItem,
+  WorkflowPayload,
+  SkillItem,
+  WorkflowDefinition,
+  SystemMapLite,
+  KnowledgeExecutionWorkbenchProps,
+  ExecutionRouteCard,
+} from '../../components/KnowledgeExecutionWorkbenchTypes';
+import { KnowledgeExecutionPanels } from '../../components/KnowledgeExecutionPanels';
+
+export default function KnowledgeExecutionWorkbench({
+  currentPage,
+  onNavigate,
+  onOpenTarget,
+}: KnowledgeExecutionWorkbenchProps) {
+  const openWorkbenchTarget = (tab: string, taskQuery?: string) => {
+    openCockpitNavigationTarget({
+      tab: tab as never,
+      taskQuery: taskQuery || currentPage,
+    }, onNavigate, onOpenTarget);
+  };
+  const [taskPending, setTaskPending] = useState(false);
+  const [taskNotice, setTaskNotice] = useState<string | null>(null);
+  const [taskError, setTaskError] = useState<string | null>(null);
+  const [refreshToken, setRefreshToken] = useState(0);
+
+  // React Query hooks replace raw fetch()
+  const { data: tasksData, isLoading: tasksLoading, isError: tasksError } = useTasks({
+    include_playbook_drafts: true,
+    include_project_portfolio_drafts: true,
+    include_verification_ready_drafts: true,
+    include_domain_app_drafts: true,
+    include_capability_gap_drafts: true,
+    include_page_maturity_drafts: true,
+    limit: 80,
+  });
+  const { data: workflowsData, isLoading: workflowsLoading, isError: workflowsError } = useWorkflows({ limit: 100, offset: 0 });
+  const { data: skillsData, isLoading: skillsLoading, isError: skillsError } = useEcosSkills();
+  const { data: pipelinesData, isLoading: pipelinesLoading, isError: pipelinesError } = usePipelines();
+  const { data: systemMapData, isLoading: systemMapLoading, isError: systemMapError } = useSystemMap();
+  const createTaskMutation = useCreateTask();
+
+  // Derive typed data from hooks
+  const tasks = useMemo(() => (tasksData?.items as unknown as TaskItem[]) || [], [tasksData]);
+  const workflows = useMemo(() => (workflowsData as unknown as WorkflowPayload) || { workflows: [], total: 0 }, [workflowsData]);
+  const skills = useMemo(() => ((skillsData as unknown as { skills?: SkillItem[] })?.skills) || [], [skillsData]);
+  const pipelineList = useMemo(() => (pipelinesData as unknown as string[]) || [], [pipelinesData]);
+  const systemMap = useMemo(() => systemMapData as unknown as SystemMapLite || {}, [systemMapData]);
+
+  // Workflow definitions (from /api/ecos/workflows - not in hooks, keep as derived)
+  const workflowDefinitions = useMemo<WorkflowDefinition[]>(() => [], []);
+
+  // Source errors
+  const sourceErrors: string[] = [];
+  if (tasksError) sourceErrors.push('任务池');
+  if (workflowsError) sourceErrors.push('工作流记录');
+  if (skillsError) sourceErrors.push('技能目录');
+  if (pipelinesError) sourceErrors.push('管线目录');
+  if (systemMapError) sourceErrors.push('系统地图');
+
+  // Force refetch on refresh
+  void refreshToken;
+
+  const workflowTotal = typeof workflows.total === 'number' ? workflows.total : (workflows.workflows || []).length;
+
+  const summary = useMemo(() => {
+    const pendingTasks = tasks.filter((task) => task.status === 'pending').length;
+    const runningTasks = tasks.filter((task) => task.status === 'in_progress').length;
+    const draftTasks = tasks.filter((task) => task.read_only).length;
+    const approvalCount = (workflows.workflows || []).filter((workflow) => workflow.status === 'awaiting_approval').length;
+    const runningWorkflows = (workflows.workflows || []).filter((workflow) => workflow.status === 'running').length;
+    const latestTask = [...tasks]
+      .sort((left, right) => {
+        const leftIsPriority = left.priority === 'critical' || left.priority === 'high';
+        const rightIsPriority = right.priority === 'critical' || right.priority === 'high';
+        if (leftIsPriority !== rightIsPriority) {
+          return leftIsPriority ? -1 : 1;
+        }
+        if ((left.status === 'in_progress') !== (right.status === 'in_progress')) {
+          return left.status === 'in_progress' ? -1 : 1;
+        }
+        return 0;
+      })[0];
+    const latestWorkflow = (workflows.workflows || [])[0];
+    const usagePath = systemMap.usage_paths?.[0];
+    const playbook = systemMap.playbooks?.[0];
+    const gap = systemMap.gaps?.[0];
+    const roadmapItem = systemMap.roadmap?.items?.[0];
+
+    let nextAction = '去资产页挑能力，补一条能直接执行的路径。';
+    let nextTab = 'Assets';
+    if (approvalCount > 0) {
+      nextAction = `有 ${approvalCount} 条工作流在等人工放行，先去处理编排门控。`;
+      nextTab = 'Workflows';
+    } else if (pendingTasks + runningTasks > 0 || draftTasks > 0) {
+      nextAction = `任务池里还有 ${pendingTasks + runningTasks} 条执行项，外加 ${draftTasks} 条只读草稿。`;
+      nextTab = 'TaskCenter';
+    } else if ((systemMap.gaps || []).length > 0 || (systemMap.usage_paths || []).length > 0) {
+      nextAction = '先回知识中枢收敛缺口，再决定走哪条执行路径。';
+      nextTab = 'Knowledge';
+    }
+
+    return {
+      pendingTasks,
+      runningTasks,
+      draftTasks,
+      approvalCount,
+      runningWorkflows,
+      latestTask,
+      latestWorkflow,
+      usagePath,
+      playbook,
+      gap,
+      roadmapItem,
+      nextAction,
+      nextTab,
+    };
+  }, [systemMap, tasks, workflows]);
+
+  const workbenchTitle =
+    currentPage === 'Knowledge'
+      ? '知识到执行工作台'
+      : currentPage === 'Assets'
+        ? '资产到执行工作台'
+        : currentPage === 'Workflows'
+          ? '工作流到执行工作台'
+          : '任务到执行工作台';
+
+  const executionRoutes = useMemo<ExecutionRouteCard[]>(() => {
+    const capabilityCount = skills.length + pipelineList.length + workflowDefinitions.length;
+    const knowledgeSignal = `${systemMap.usage_paths?.length || 0} 路径 · ${(systemMap.playbooks || []).length} 清单 · ${(systemMap.gaps || []).length} 缺口`;
+    const capabilitySignal = `${skills.length} 技能 · ${pipelineList.length} 管线 · ${workflowDefinitions.length} 工作流`;
+    const workflowSignal = `${summary.approvalCount} 待审批 · ${summary.runningWorkflows} 运行中`;
+    const taskSignal = `${summary.pendingTasks + summary.runningTasks} 执行项 · ${summary.draftTasks} 草稿`;
+
+    return [
+      {
+        id: 'Knowledge',
+        title: '知识锚点',
+        objectTab: 'Knowledge',
+        taskTab: 'TaskCenter',
+        tone: (systemMap.usage_paths || []).length > 0 || (systemMap.gaps || []).length > 0 ? 'degraded' : 'offline',
+        signal: knowledgeSignal,
+        summary: summary.usagePath?.title || summary.gap?.title || '先把高频路径、清单和缺口收进知识面。',
+        nextAction: summary.usagePath?.intent || summary.gap?.next || '补一条稳定使用路径，再决定往哪个对象面分发。',
+        current: currentPage === 'Knowledge',
+      },
+      {
+        id: 'Assets',
+        title: '能力与自动化',
+        objectTab: 'Assets',
+        taskTab: 'TaskCenter',
+        tone: capabilityCount > 0 ? 'online' : 'offline',
+        signal: capabilitySignal,
+        summary: skills[0]?.name || workflowDefinitions[0]?.name || pipelineList[0] || '能力目录还偏薄。',
+        nextAction: capabilityCount > 0
+          ? '把当前路径挂到合适的技能、管线或自动化工作流上。'
+          : '先补技能说明、管线入口和工作流定义，避免知识页只能描述问题。',
+        current: currentPage === 'Assets',
+      },
+      {
+        id: 'Workflows',
+        title: '执行编排',
+        objectTab: 'Workflows',
+        taskTab: 'TaskCenter',
+        tone: summary.approvalCount > 0 || summary.runningWorkflows > 0 ? 'degraded' : (workflows.workflows || []).length > 0 ? 'online' : 'offline',
+        signal: workflowSignal,
+        summary: summary.latestWorkflow?.task || summary.latestWorkflow?.id || '还没有最近工作流记录。',
+        nextAction: summary.approvalCount > 0
+          ? `先处理 ${summary.approvalCount} 条待审批工作流，别让路径卡在人工门控。`
+          : summary.latestWorkflow
+            ? '核对最近一次编排是否真的承接了知识面和资产面的意图。'
+            : '至少产出一条可回放的工作流样本，让自动化层有实证。',
+        current: currentPage === 'Workflows',
+      },
+      {
+        id: 'TaskCenter',
+        title: '任务落地',
+        objectTab: 'TaskCenter',
+        taskTab: 'TaskCenter',
+        tone: summary.pendingTasks + summary.runningTasks + summary.draftTasks > 0 ? 'degraded' : 'online',
+        signal: taskSignal,
+        summary: summary.latestTask?.title || summary.roadmapItem?.title || '当前还没有在途任务。',
+        nextAction: summary.latestTask
+          ? '回任务中心收口对象入口、证据字段和真正的下一步。'
+          : summary.roadmapItem?.problem || '把路线图或操作清单继续沉到任务中心。',
+        current: currentPage === 'TaskCenter',
+      },
+    ];
+  }, [currentPage, pipelineList, skills, summary, systemMap.gaps, systemMap.playbooks, systemMap.usage_paths, workflowDefinitions, workflows.workflows]);
+
+  const executionTaskDraft = useMemo(() => {
+    const source = summary.gap || summary.roadmapItem || summary.usagePath;
+    const title = summary.gap?.title
+      ? `补齐执行能力：${summary.gap.title}`
+      : summary.roadmapItem?.title
+        ? `落地执行路线：${summary.roadmapItem.title}`
+        : summary.usagePath?.title
+          ? `落地使用路径：${summary.usagePath.title}`
+          : '建立知识到任务执行样本';
+    const description = summary.gap?.next
+      || summary.roadmapItem?.problem
+      || summary.usagePath?.intent
+      || '把知识、能力、工作流和任务中心串成一条可回放的执行链路。';
+    return {
+      title,
+      description,
+      priority: summary.gap?.severity === 'high' || summary.gap?.severity === 'critical' ? 'high' : 'medium',
+      sourceType: summary.gap ? 'capability_gap' : summary.roadmapItem ? 'roadmap' : summary.usagePath ? 'usage_path' : 'execution_sample',
+      sourceId: source?.id || currentPage,
+    };
+  }, [currentPage, summary.gap, summary.roadmapItem, summary.usagePath]);
+
+  const createExecutionTask = async () => {
+    setTaskPending(true);
+    setTaskNotice(null);
+    setTaskError(null);
+    try {
+      const result = await createTaskMutation.mutateAsync({
+        title: executionTaskDraft.title,
+        description: executionTaskDraft.description,
+        priority: executionTaskDraft.priority,
+        risk_level: 'L1',
+        evidence_required: ['知识或路线图对象', '能力/工作流执行证据', 'TaskCenter closeout'],
+        tags: ['knowledge-execution', executionTaskDraft.sourceType],
+        source: {
+          type: `cockpit.knowledge-execution.${executionTaskDraft.sourceType}`,
+          id: executionTaskDraft.sourceId,
+          title: executionTaskDraft.title,
+          target: { tab: currentPage, taskQuery: executionTaskDraft.sourceId },
+        },
+      } as unknown);
+      setTaskNotice(`已登记执行任务：${result?.title || executionTaskDraft.title}`);
+      if (result?.id) openWorkbenchTarget('TaskCenter', String(result.id));
+    } catch (requestError) {
+      setTaskError(requestError instanceof Error ? requestError.message : '执行任务登记失败');
+    } finally {
+      setTaskPending(false);
+    }
+  };
+
+  return (
+    <section className="knowledge-execution-workbench antd-card">
+      <div className="section-header" style={{ marginBottom: 0 }}>
+        <div>
+          <h2>{workbenchTitle}</h2>
+          <p className="text-muted">
+            把知识中枢、能力资产、自动化编排和任务落地串成一条日常可操作的路径。
+          </p>
+        </div>
+        <button type="button" className="antd-btn small" onClick={() => setRefreshToken((value) => value + 1)}>
+          <RefreshCw size={13} />
+          <span>重新加载</span>
+        </button>
+      </div>
+
+      {sourceErrors.length > 0 && (
+        <div className="overview-inline-error" role="alert">
+          <AlertTriangle size={16} />
+          <div>
+            <strong>执行闭环数据不完整</strong>
+            <span>{sourceErrors.join('；')}，当前空状态不代表没有能力或任务。</span>
+          </div>
+          <button type="button" className="antd-btn" onClick={() => setRefreshToken((value) => value + 1)}>重试</button>
+        </div>
+      )}
+
+      <div className="knowledge-execution-summary">
+        <div className="knowledge-execution-card">
+          <span>知识锚点</span>
+          <strong>{systemMap.usage_paths?.length || 0} 条路径</strong>
+          <small>操作清单 {(systemMap.playbooks || []).length} · 能力缺口 {(systemMap.gaps || []).length}</small>
+        </div>
+        <div className="knowledge-execution-card">
+          <span>资产目录</span>
+          <strong>{skills.length + pipelineList.length + workflowDefinitions.length} 项能力</strong>
+          <small>技能 {skills.length} · 管线 {pipelineList.length} · 工作流 {workflowDefinitions.length}</small>
+        </div>
+        <div className="knowledge-execution-card">
+          <span>执行编排</span>
+          <strong>{summary.approvalCount} 条待审批</strong>
+          <small>运行中 {summary.runningWorkflows} · 历史 {(workflows.workflows || []).length}/{workflowTotal}</small>
+        </div>
+        <button
+          type="button"
+          className="knowledge-execution-card knowledge-execution-card-wide"
+          onClick={() => openWorkbenchTarget(summary.nextTab, summary.latestTask?.id || summary.latestWorkflow?.id)}
+        >
+          <span>建议下一步</span>
+          <strong>{summary.nextAction}</strong>
+          <small>点击进入 {summary.nextTab}</small>
+        </button>
+      </div>
+
+      <section className="services-section" role="region" aria-label="执行任务登记" style={{ marginTop: 16 }}>
+        <div className="section-header">
+          <div>
+            <h2 style={{ margin: 0, fontSize: 16 }}>执行任务登记</h2>
+            <p className="text-muted" style={{ margin: '4px 0 0', fontSize: 13 }}>
+              当前路径、能力缺口或路线图项还没有在途任务时，直接登记正式执行项，避免只看汇总不落地。
+            </p>
+          </div>
+          <span className="status-badge degraded">可直接落任务</span>
+        </div>
+        <article className="action-surface-item" style={{ alignItems: 'flex-start' }}>
+          <div>
+            <strong>{executionTaskDraft.title}</strong>
+            <p>{executionTaskDraft.description}</p>
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'flex-end' }}>
+            <button
+              type="button"
+              className="antd-btn"
+              disabled={taskPending}
+              aria-label={`登记执行任务 ${executionTaskDraft.title}`}
+              onClick={() => { void createExecutionTask(); }}
+            >
+              <ClipboardCheck size={14} />
+              <span>{taskPending ? '登记中...' : '登记正式任务'}</span>
+            </button>
+            {taskNotice && <span role="status" aria-live="polite" className="text-muted">{taskNotice}</span>}
+            {taskError && <span role="alert">{taskError}</span>}
+          </div>
+        </article>
+      </section>
+
+      <div className="knowledge-execution-path">
+        {EXECUTION_STEPS.map((step, index) => (
+          <button
+            key={step.id}
+            type="button"
+            className={`knowledge-execution-step ${currentPage === step.id ? 'active' : ''}`}
+            onClick={() => openWorkbenchTarget(step.id)}
+          >
+            <span>{index + 1}</span>
+            <div>
+              <strong>{step.title}</strong>
+              <small>{step.summary}</small>
+            </div>
+            <small>{step.id}</small>
+          </button>
+        ))}
+      </div>
+
+      <section className="services-section" role="region" aria-label="执行闭环总表" style={{ marginTop: 16 }}>
+        <div className="section-header">
+          <div>
+            <h2 style={{ margin: 0, fontSize: 16 }}>执行闭环总表</h2>
+            <p className="text-muted" style={{ margin: '4px 0 0', fontSize: 13 }}>
+              把知识、能力、编排和任务四层承接面放到一张表里，先看该回哪个对象面，再决定落到哪个任务面。
+            </p>
+          </div>
+          <span className="status-badge degraded">
+            闭环面 {executionRoutes.filter((route) => route.tone !== 'offline').length} / {executionRoutes.length}
+          </span>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
+          {executionRoutes.map((route) => (
+            <article key={route.id} className="antd-card" style={{ padding: 18, display: 'grid', gap: 12 }}>
+              <div style={{ display: 'grid', gap: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                  <strong style={{ fontSize: 15 }}>{route.title}</strong>
+                  <span className={`status-badge ${route.current ? 'online' : route.tone}`}>
+                    {route.current ? '当前页' : route.tone === 'online' ? '可用' : route.tone === 'degraded' ? '待收口' : '待补'}
+                  </span>
+                </div>
+                <p className="text-muted" style={{ margin: 0, fontSize: 12, lineHeight: 1.6 }}>{route.signal}</p>
+              </div>
+
+              <div style={{ display: 'grid', gap: 8 }}>
+                <div style={{ display: 'grid', gap: 4, padding: 12, border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8 }}>
+                  <span className="text-muted" style={{ fontSize: 12 }}>当前对象</span>
+                  <strong>{route.summary}</strong>
+                  <small className="text-muted" style={{ fontSize: 12 }}>{route.nextAction}</small>
+                </div>
+                <div style={{ display: 'grid', gap: 4, padding: 12, border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8 }}>
+                  <span className="text-muted" style={{ fontSize: 12 }}>回写路径</span>
+                  <strong>{route.objectTab} {'->'} {route.taskTab}</strong>
+                  <small className="text-muted" style={{ fontSize: 12 }}>先看对象面，再把动作沉到任务面。</small>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                <button
+                  type="button"
+                  className="antd-btn small"
+                  aria-label={`打开闭环对象 ${route.title}`}
+                  onClick={() => openWorkbenchTarget(route.objectTab, route.id)}
+                >
+                  <BookOpen size={13} />
+                  <span>看对象</span>
+                </button>
+                <button
+                  type="button"
+                  className="antd-btn small"
+                  aria-label={`打开闭环任务 ${route.title}`}
+                  onClick={() => openWorkbenchTarget(route.taskTab, route.id)}
+                >
+                  <ClipboardList size={13} />
+                  <span>看任务</span>
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <KnowledgeExecutionPanels
+        systemMap={systemMap}
+        skills={skills}
+        workflowDefinitions={workflowDefinitions}
+        tasks={tasks}
+        workflows={workflows.workflows || []}
+        workflowTotal={workflowTotal}
+        summary={summary}
+        onOpenTarget={openWorkbenchTarget}
+      />
+
+      <div className="knowledge-execution-actions">
+        <button type="button" className="antd-btn" onClick={() => openWorkbenchTarget('Knowledge')}>
+          <BookOpen size={14} />
+          <span>去知识中枢</span>
+        </button>
+        <button type="button" className="antd-btn" onClick={() => openWorkbenchTarget('Assets')}>
+          <PlayCircle size={14} />
+          <span>去资产页</span>
+        </button>
+        <button type="button" className="antd-btn" onClick={() => openWorkbenchTarget('Workflows')}>
+          <GitBranch size={14} />
+          <span>去工作流</span>
+        </button>
+        <button type="button" className="antd-btn" onClick={() => openWorkbenchTarget('TaskCenter')}>
+          <ClipboardList size={14} />
+          <span>去任务中心</span>
+        </button>
+      </div>
+    </section>
+  );
+}

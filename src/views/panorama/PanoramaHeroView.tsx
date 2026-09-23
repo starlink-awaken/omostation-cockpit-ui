@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   ShieldCheck, 
@@ -13,6 +13,8 @@ import {
   Sparkles
 } from 'lucide-react';
 import { useLiveTelemetry } from '../../api/liveTelemetry';
+import { useApprovalQueue } from '../../api/hooks/swarm';
+import InPlaceDecisionDrawer from './InPlaceDecisionDrawer';
 
 const GATE_ROUTE_MAP: Record<string, string> = {
   A1: '/workflows',
@@ -38,7 +40,10 @@ const LOOP_ROUTE_MAP: Record<string, string> = {
 export default function PanoramaHeroView() {
   const navigate = useNavigate();
   const telemetry = useLiveTelemetry();
+  const { data: queueData } = useApprovalQueue();
+  const [isDecisionDrawerOpen, setIsDecisionDrawerOpen] = useState(false);
 
+  const pendingCount = queueData?.queue?.length ?? 0;
   const completionPct = Math.round((telemetry.betStats.done / (telemetry.betStats.total || 1)) * 100);
 
   return (
@@ -49,15 +54,31 @@ export default function PanoramaHeroView() {
         
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-400/30 text-blue-400 text-xs font-semibold tracking-wider uppercase">
+            <div 
+              role="button"
+              tabIndex={0}
+              onClick={() => setIsDecisionDrawerOpen(true)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsDecisionDrawerOpen(true); } }}
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-400/30 text-blue-400 text-xs font-semibold tracking-wider uppercase cursor-pointer hover:bg-blue-500/20 transition-colors"
+            >
               <Sparkles className="w-3.5 h-3.5" />
               主权执掌者视界 · 夏明星态势导读与署名自进化舱
             </div>
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white flex items-center gap-3">
               人类意志最高控制权 (Human In Command)
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                0 项待决 · 全域绿灯
-              </span>
+              <button
+                type="button"
+                onClick={() => setIsDecisionDrawerOpen(true)}
+                className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium cursor-pointer transition-all duration-200 hover:scale-105 ${
+                  pendingCount > 0
+                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-lg shadow-amber-500/20 animate-pulse'
+                    : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:border-emerald-400/60'
+                }`}
+                title="点击打开主权执掌者决策闸门"
+              >
+                <span className={`w-1.5 h-1.5 rounded-full ${pendingCount > 0 ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+                <span>{pendingCount > 0 ? `${pendingCount} 项待决 · 点击裁决` : '0 项待决 · 全域绿灯'}</span>
+              </button>
             </h1>
             <p className="text-sm text-slate-300 max-w-3xl leading-relaxed">
               智能体提炼的草案与治理自愈提案在此呈递。每一次物理批准或修改都会作为强化学习样本，固化进个人主权时间账本与知识库。
@@ -199,7 +220,18 @@ export default function PanoramaHeroView() {
               100% PASS
             </span>
           </div>
-          <span className="text-xs text-slate-400">点击卡片可下钻深层面板 · 读源 43191</span>
+          <div className="flex items-center gap-3 text-xs">
+            <span className="text-slate-400">点击卡片可下钻 · 读源 43191</span>
+            <a
+              href="http://localhost:43191/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1 transition-colors"
+            >
+              <span>进入知行监造台</span>
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </a>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
@@ -345,6 +377,12 @@ export default function PanoramaHeroView() {
           </button>
         </div>
       </section>
+
+      {/* In-place Decision Drawer */}
+      <InPlaceDecisionDrawer 
+        isOpen={isDecisionDrawerOpen}
+        onClose={() => setIsDecisionDrawerOpen(false)}
+      />
     </div>
   );
 }

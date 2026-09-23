@@ -14,7 +14,7 @@ import { lazy } from 'react';
 
 // Lazy-loaded view components
 // eslint-disable-next-line react-refresh/only-export-components
-const HomePage = lazy(() => import('./components/HomePage'));
+const HomePage = lazy(() => import('./views/common/HomePage'));
 // eslint-disable-next-line react-refresh/only-export-components
 const WorkCasesPage = lazy(() => import('./features/work-cases/WorkCasesPage'));
 // eslint-disable-next-line react-refresh/only-export-components
@@ -22,53 +22,53 @@ const CockpitGuideView = lazy(() => import('./components/CockpitGuideView'));
 // eslint-disable-next-line react-refresh/only-export-components
 const SystemMapView = lazy(() => import('./components/SystemMapView'));
 // eslint-disable-next-line react-refresh/only-export-components
-const OverviewPage = lazy(() => import('./components/OverviewPage'));
+const OverviewPage = lazy(() => import('./views/posture/OverviewPage'));
 // eslint-disable-next-line react-refresh/only-export-components
-const McpMeshView = lazy(() => import('./components/McpMeshView'));
+const McpMeshView = lazy(() => import('./views/compute/McpMeshView'));
 // eslint-disable-next-line react-refresh/only-export-components
-const TopologyView = lazy(() => import('./components/TopologyView'));
+const TopologyView = lazy(() => import('./views/posture/TopologyView'));
 // eslint-disable-next-line react-refresh/only-export-components
-const ComputeView = lazy(() => import('./components/ComputeView'));
+const ComputeView = lazy(() => import('./views/compute/ComputeView'));
 // eslint-disable-next-line react-refresh/only-export-components
 const ResearchHubView = lazy(() => import('./components/ResearchHubView'));
 // eslint-disable-next-line react-refresh/only-export-components
-const KnowledgeHubView = lazy(() => import('./components/KnowledgeHubView'));
+const KnowledgeHubView = lazy(() => import('./views/governance/KnowledgeHubView'));
 // eslint-disable-next-line react-refresh/only-export-components
 const GBrainDashboard = lazy(() => import('./components/GBrain/GBrainDashboard'));
 // eslint-disable-next-line react-refresh/only-export-components
-const EnginesView = lazy(() => import('./components/EnginesView'));
+const EnginesView = lazy(() => import('./views/compute/EnginesView'));
 // eslint-disable-next-line react-refresh/only-export-components
-const AssetsView = lazy(() => import('./components/AssetsView'));
+const AssetsView = lazy(() => import('./views/governance/AssetsView'));
 // eslint-disable-next-line react-refresh/only-export-components
 const ProtocolWorkbenchView = lazy(() => import('./components/ProtocolWorkbenchView'));
 // eslint-disable-next-line react-refresh/only-export-components
-const KemsWorkbench = lazy(() => import('./components/KemsWorkbench'));
+const KemsWorkbench = lazy(() => import('./views/governance/KemsWorkbench'));
 // eslint-disable-next-line react-refresh/only-export-components
 const SceneCardReviewView = lazy(() => import('./components/SceneCardReviewView'));
 // eslint-disable-next-line react-refresh/only-export-components
-const ExternalResourceCatalogView = lazy(() => import('./components/ExternalResourceCatalogView'));
+const ExternalResourceCatalogView = lazy(() => import('./views/governance/ExternalResourceCatalogView'));
 // eslint-disable-next-line react-refresh/only-export-components
 const BrainChat = lazy(() => import('./views/BrainChat'));
 // eslint-disable-next-line react-refresh/only-export-components
-const WorkflowsView = lazy(() => import('./components/WorkflowsView'));
+const WorkflowsView = lazy(() => import('./views/business/WorkflowsView'));
 // eslint-disable-next-line react-refresh/only-export-components
-const AlertCenterPage = lazy(() => import('./components/AlertCenterPage'));
+const AlertCenterPage = lazy(() => import('./views/posture/AlertCenterPage'));
 // eslint-disable-next-line react-refresh/only-export-components
-const L4HealthView = lazy(() => import('./components/L4HealthView'));
+const L4HealthView = lazy(() => import('./views/posture/L4HealthView'));
 // eslint-disable-next-line react-refresh/only-export-components
-const DebtView = lazy(() => import('./components/DebtView'));
+const DebtView = lazy(() => import('./views/governance/DebtView'));
 // eslint-disable-next-line react-refresh/only-export-components
-const ObservabilityView = lazy(() => import('./components/ObservabilityView'));
+const ObservabilityView = lazy(() => import('./views/posture/ObservabilityView'));
 // eslint-disable-next-line react-refresh/only-export-components
-const C2GStrategyView = lazy(() => import('./components/C2GStrategyView'));
+const C2GStrategyView = lazy(() => import('./views/governance/C2GStrategyView'));
 // eslint-disable-next-line react-refresh/only-export-components
-const Wave2DashboardView = lazy(() => import('./components/Wave2DashboardView'));
+const Wave2DashboardView = lazy(() => import('./views/governance/Wave2DashboardView'));
 // eslint-disable-next-line react-refresh/only-export-components
 const DomainAppsView = lazy(() => import('./components/DomainAppsView'));
 // eslint-disable-next-line react-refresh/only-export-components
-const QuestBoard = lazy(() => import('./components/QuestBoard'));
+const QuestBoard = lazy(() => import('./views/business/QuestBoard'));
 // eslint-disable-next-line react-refresh/only-export-components
-const KnowledgeFlow = lazy(() => import('./components/KnowledgeFlow'));
+const KnowledgeFlow = lazy(() => import('./views/governance/KnowledgeFlow'));
 // eslint-disable-next-line react-refresh/only-export-components
 const HarnessDashboard = lazy(() => import('./components/harness/HarnessDashboard'));
 // eslint-disable-next-line react-refresh/only-export-components
@@ -84,49 +84,49 @@ const SceneGraphView = lazy(() => import('./components/scene/SceneGraphView'));
 // eslint-disable-next-line react-refresh/only-export-components
 const CalibrationView = lazy(() => import('./components/scene/CalibrationView'));
 // eslint-disable-next-line react-refresh/only-export-components
-const PilotReviewView = lazy(() => import('./components/PilotReviewView'));
+const PilotReviewView = lazy(() => import('./views/governance/PilotReviewView'));
 // eslint-disable-next-line react-refresh/only-export-components
-const LogViewerPage = lazy(() => import('./components/LogViewerPage'));
+const LogViewerPage = lazy(() => import('./views/common/LogViewerPage'));
 // eslint-disable-next-line react-refresh/only-export-components
-const TaskCenterPage = lazy(() => import('./components/TaskCenterPage'));
+const TaskCenterPage = lazy(() => import('./views/business/TaskCenterPage'));
 // eslint-disable-next-line react-refresh/only-export-components
-const PerformanceMonitorPage = lazy(() => import('./components/PerformanceMonitorPage'));
+const PerformanceMonitorPage = lazy(() => import('./views/posture/PerformanceMonitorPage'));
 // eslint-disable-next-line react-refresh/only-export-components
-const SandboxTerminal = lazy(() => import('./components/SandboxTerminal'));
+const SandboxTerminal = lazy(() => import('./views/governance/SandboxTerminal'));
 // eslint-disable-next-line react-refresh/only-export-components
 const ConsolePage = lazy(() => import('./components/console/ConsolePage'));
 // eslint-disable-next-line react-refresh/only-export-components
-const SettingsView = lazy(() => import('./components/SettingsView'));
+const SettingsView = lazy(() => import('./views/common/SettingsView'));
 // eslint-disable-next-line react-refresh/only-export-components
-const DeliveryJourneyView = lazy(() => import('./components/DeliveryJourneyView'));
+const DeliveryJourneyView = lazy(() => import('./views/business/DeliveryJourneyView'));
 // eslint-disable-next-line react-refresh/only-export-components
-const OutcomesView = lazy(() => import('./components/OutcomesView'));
+const OutcomesView = lazy(() => import('./views/business/OutcomesView'));
 // eslint-disable-next-line react-refresh/only-export-components
-const JourneysTimelineView = lazy(() => import('./components/JourneysTimelineView'));
+const JourneysTimelineView = lazy(() => import('./views/business/JourneysTimelineView'));
 // eslint-disable-next-line react-refresh/only-export-components
-const WorkflowMeshOperationsView = lazy(() => import('./components/WorkflowMeshOperationsView'));
+const WorkflowMeshOperationsView = lazy(() => import('./views/business/WorkflowMeshOperationsView'));
 // eslint-disable-next-line react-refresh/only-export-components
-const CapabilityExplorer = lazy(() => import('./components/CapabilityExplorer'));
+const CapabilityExplorer = lazy(() => import('./views/governance/CapabilityExplorer'));
 // eslint-disable-next-line react-refresh/only-export-components
-const EcosWorkflowWorkbench = lazy(() => import('./components/EcosWorkflowWorkbench'));
+const EcosWorkflowWorkbench = lazy(() => import('./views/business/EcosWorkflowWorkbench'));
 // eslint-disable-next-line react-refresh/only-export-components
-const GovernanceDomainWorkbench = lazy(() => import('./components/GovernanceDomainWorkbench'));
+const GovernanceDomainWorkbench = lazy(() => import('./views/governance/GovernanceDomainWorkbench'));
 // eslint-disable-next-line react-refresh/only-export-components
-const InfrastructureOpsWorkbench = lazy(() => import('./components/InfrastructureOpsWorkbench'));
+const InfrastructureOpsWorkbench = lazy(() => import('./views/governance/InfrastructureOpsWorkbench'));
 // eslint-disable-next-line react-refresh/only-export-components
-const KnowledgeExecutionWorkbench = lazy(() => import('./components/KnowledgeExecutionWorkbench'));
+const KnowledgeExecutionWorkbench = lazy(() => import('./views/governance/KnowledgeExecutionWorkbench'));
 // eslint-disable-next-line react-refresh/only-export-components
-const KnowledgeActionView = lazy(() => import('./components/KnowledgeActionView'));
+const KnowledgeActionView = lazy(() => import('./views/governance/KnowledgeActionView'));
 // eslint-disable-next-line react-refresh/only-export-components
-const KOSWorkbench = lazy(() => import('./components/KOSWorkbench'));
+const KOSWorkbench = lazy(() => import('./views/governance/KOSWorkbench'));
 // eslint-disable-next-line react-refresh/only-export-components
 const MemoryInjector = lazy(() => import('./components/MemoryInjector'));
 // eslint-disable-next-line react-refresh/only-export-components
-const PlatformControlWorkbench = lazy(() => import('./components/PlatformControlWorkbench'));
+const PlatformControlWorkbench = lazy(() => import('./views/governance/PlatformControlWorkbench'));
 // eslint-disable-next-line react-refresh/only-export-components
-const RuntimeOpsWorkbench = lazy(() => import('./components/RuntimeOpsWorkbench'));
+const RuntimeOpsWorkbench = lazy(() => import('./views/governance/RuntimeOpsWorkbench'));
 // eslint-disable-next-line react-refresh/only-export-components
-const SystemAssuranceWorkbench = lazy(() => import('./components/SystemAssuranceWorkbench'));
+const SystemAssuranceWorkbench = lazy(() => import('./views/governance/SystemAssuranceWorkbench'));
 
 // Phase 2 capability-reflection views (lazy loaded)
 // eslint-disable-next-line react-refresh/only-export-components
@@ -142,11 +142,11 @@ const BcosDashboard = lazy(() => import('./components/bcos/BcosDashboard'));
 // eslint-disable-next-line react-refresh/only-export-components
 const PulseView = lazy(() => import('./components/p74/PulseView'));
 // eslint-disable-next-line react-refresh/only-export-components
-const DecisionGraphPage = lazy(() => import('./components/DecisionGraphPage'));
+const DecisionGraphPage = lazy(() => import('./views/business/DecisionGraphPage'));
 // eslint-disable-next-line react-refresh/only-export-components
-const DecisionInboxView = lazy(() => import('./components/DecisionInboxView'));
+const DecisionInboxView = lazy(() => import('./views/business/DecisionInboxView'));
 // eslint-disable-next-line react-refresh/only-export-components
-const SwarmDashboard = lazy(() => import('./components/SwarmDashboard'));
+const SwarmDashboard = lazy(() => import('./views/compute/SwarmDashboard'));
 // eslint-disable-next-line react-refresh/only-export-components
 const PanoramaHeroView = lazy(() => import('./views/panorama/PanoramaHeroView'));
 
@@ -224,26 +224,25 @@ export const ROUTES: RouteConfig[] = [
   { id: 'Kems', path: '/kems', label: 'KEMS 质量治理', subtitle: '以质量指标、哈希和证据引用驱动 OCR 复核与知识准入。', group: '业务闭环', domain: 'registry', component: KemsWorkbench, icon: 'FileText', purpose: '以质量指标、哈希和证据引用驱动 OCR 复核与知识准入。', whenToUse: '做知识质量治理时。' },
   { id: 'ExternalResources', path: '/external-resources', label: '外部能力目录', subtitle: '查看外部知识、数据、方法、工具和渠道的动态发现与健康状态。', group: '业务闭环', domain: 'registry', component: ExternalResourceCatalogView, icon: 'Database', purpose: '查看动态发现的外部知识、数据、方法、工具和渠道。', whenToUse: '判断外部能力是否存在、健康和可触达时。' },
 
-  // ── 治理与合规 (Security & Governance Domain) ──
-  { id: 'GovernanceDomain', path: '/governance-domain', label: '治理域', subtitle: '治理工作台：域治理、合规检查、SSOT 巡检。', group: '治理与合规', domain: 'security', component: GovernanceDomainWorkbench, icon: 'Shield', purpose: '统一治理工作台，覆盖域治理、合规检查与 SSOT 巡检。', whenToUse: '做治理巡检或合规审查时。' },
+  // ── 治理与合规 (Security & Governance Domain) —— 已全面下沉至知行 43191 底座监造台 ──
+  { id: 'GovernanceDomain', path: '/governance-domain', label: '治理域', subtitle: '治理工作台：域治理、合规检查、SSOT 巡检。', group: '治理与合规', domain: 'security', component: GovernanceDomainWorkbench, icon: 'Shield', purpose: '统一治理工作台，覆盖域治理、合规检查与 SSOT 巡检。', whenToUse: '做治理巡检或合规审查时。', hidden: true },
   { id: 'AlertCenter', path: '/alerts', label: '告警中心', subtitle: '统一告警管理、规则配置、告警历史。', group: '治理与合规', domain: 'security', component: AlertCenterPage, icon: 'Bell', purpose: '统一管理告警、规则和历史。', whenToUse: 'P0/P1 先从这里落点。' },
-  { id: 'L4Health', path: '/l4-health', label: 'L4 域健康', subtitle: '实时监控 L4 域健康状态、趋势分析和风险评估。', group: '治理与合规', domain: 'security', component: L4HealthView, icon: 'Heart', purpose: '查看 L4 域健康状态与风险。', whenToUse: '比单页看得更全时。' },
-  { id: 'Debt', path: '/debt', label: '债务治理', subtitle: '全自动审计技术债务评分，追踪高危风险。', group: '治理与合规', domain: 'security', component: DebtView, icon: 'FileText', purpose: '追踪高风险技术债务与治理优先级。', whenToUse: '规划补位和治理投入时。' },
+  { id: 'L4Health', path: '/l4-health', label: 'L4 域健康', subtitle: '实时监控 L4 域健康状态、趋势分析和风险评估。', group: '治理与合规', domain: 'security', component: L4HealthView, icon: 'Heart', purpose: '查看 L4 域健康状态与风险。', whenToUse: '比单页看得更全时。', hidden: true },
+  { id: 'Debt', path: '/debt', label: '债务治理', subtitle: '全自动审计技术债务评分，追踪高危风险。', group: '治理与合规', domain: 'security', component: DebtView, icon: 'FileText', purpose: '追踪高风险技术债务与治理优先级。', whenToUse: '规划补位和治理投入时。', hidden: true },
   { id: 'Harness', path: '/harness', label: 'Harness 合规', subtitle: '8 阶段 DAG 全生命周期合规管理与 12 章节检查。', group: '治理与合规', domain: 'execution', component: HarnessDashboard, icon: 'ShieldCheck', purpose: 'Harness 准入→验收全链路治理。', whenToUse: 'BET 交付合规审查时。' },
   { id: 'Intent', path: '/intent', label: 'Intent 编译器', subtitle: '自然语言→结构化 Spec 编译与历史管理。', group: '治理与合规', domain: 'execution', component: IntentCompiler, icon: 'Zap', purpose: '把模糊需求编译成可执行 Spec。', whenToUse: '把想法转成结构化任务时。' },
-  { id: 'GovernanceSelfCheck', path: '/governance-self-check', label: '治理自检', subtitle: '架构漂移、混沌演练、画布服务、SSOT 状态自检。', group: '治理与合规', domain: 'security', component: GovernanceSelfCheck, icon: 'Activity', purpose: '一键运行全量治理自检。', whenToUse: '定期治理巡检时。' },
-  { id: 'CommandAudit', path: '/command-audit', label: '命令评分卡', subtitle: '全量命令 15 维质量评分看板。', group: '治理与合规', domain: 'system', component: AuditDashboard, icon: 'ClipboardCheck', purpose: '全量命令 15 维质量评分看板。', whenToUse: '评估命令质量、发现薄弱命令时。' },
-  { id: 'GovernancePulse', path: '/governance-pulse', label: '治理脉搏', subtitle: 'P74 工作流沉默治理 + 战略追踪。', group: '治理与合规', domain: 'security', component: PulseView, icon: 'Activity', purpose: 'P74 工作流沉默治理与战略追踪。', whenToUse: '发现工作流沉默或战略脱节时。' },
-  { id: 'Sandbox', path: '/sandbox', label: '隔离沙箱', subtitle: '在线执行测试或运行未校验的任务指令。', group: '治理与合规', domain: 'compute', component: SandboxTerminal, icon: 'Terminal', purpose: '隔离执行验证、复现和临时实验。', whenToUse: '先试再动生产面时。' },
-  { id: 'Console', path: '/console', label: '控制台', subtitle: 'BOS 调用 / MOF 校验 / Harness 运行 — 交互式控制平面。', group: '治理与合规', domain: 'execution', component: ConsolePage, icon: 'SquareTerminal', purpose: '从只读仪表盘升级为可执行控制平面。', whenToUse: '需要真正调用 BOS、跑 MOF 校验或发起 Harness 运行时。' },
-  { id: 'Performance', path: '/performance', label: '性能监控', subtitle: 'CPU/内存/磁盘/网络实时监控。', group: '治理与合规', domain: 'system', component: PerformanceMonitorPage, icon: 'Activity', purpose: '查看 CPU、内存、网络与系统性能。', whenToUse: '系统慢、负载高时。' },
+  { id: 'GovernanceSelfCheck', path: '/governance-self-check', label: '治理自检', subtitle: '架构漂移、混沌演练、画布服务、SSOT 状态自检。', group: '治理与合规', domain: 'security', component: GovernanceSelfCheck, icon: 'Activity', purpose: '一键运行全量治理自检。', whenToUse: '定期治理巡检时。', hidden: true },
+  { id: 'CommandAudit', path: '/command-audit', label: '命令评分卡', subtitle: '全量命令 15 维质量评分看板。', group: '治理与合规', domain: 'system', component: AuditDashboard, icon: 'ClipboardCheck', purpose: '全量命令 15 维质量评分看板。', whenToUse: '评估命令质量、发现薄弱命令时。', hidden: true },
+  { id: 'GovernancePulse', path: '/governance-pulse', label: '治理脉搏', subtitle: 'P74 工作流沉默治理 + 战略追踪。', group: '治理与合规', domain: 'security', component: PulseView, icon: 'Activity', purpose: 'P74 工作流沉默治理与战略追踪。', whenToUse: '发现工作流沉默或战略脱节时。', hidden: true },
+  { id: 'Sandbox', path: '/sandbox', label: '隔离沙箱', subtitle: '在线执行测试或运行未校验的任务指令。', group: '治理与合规', domain: 'compute', component: SandboxTerminal, icon: 'Terminal', purpose: '隔离执行验证、复现和临时实验。', whenToUse: '先试再动生产面时。', hidden: true },
+  { id: 'Console', path: '/console', label: '控制台', subtitle: 'BOS 调用 / MOF 校验 / Harness 运行 — 交互式控制平面。', group: '治理与合规', domain: 'execution', component: ConsolePage, icon: 'SquareTerminal', purpose: '从只读仪表盘升级为可执行控制平面。', whenToUse: '需要真正调用 BOS、跑 MOF 校验或发起 Harness 运行时。', hidden: true },
+  { id: 'Performance', path: '/performance', label: '性能监控', subtitle: 'CPU/内存/磁盘/网络实时监控。', group: '治理与合规', domain: 'system', component: PerformanceMonitorPage, icon: 'Activity', purpose: '查看 CPU、内存、网络与系统性能。', whenToUse: '系统慢、负载高时。', hidden: true },
   { id: 'Settings', path: '/settings', label: '系统设置', subtitle: '配置网格路由、API Token 与治理阈值。', group: '治理与合规', domain: 'system', component: SettingsView, icon: 'Settings', purpose: '配置网格路由、凭据和治理阈值。', whenToUse: '准备挂载新应用或修配置时。' },
 
   // ── 工作台（保留，未消化的 workbench 页）──
   { id: 'EcosWorkflow', path: '/workbench/ecos-workflow', label: 'eCOS 工作流', group: '工作台', domain: 'execution', component: EcosWorkflowWorkbench, icon: 'GitBranch', hidden: true },
   { id: 'InfrastructureOps', path: '/workbench/infrastructure-ops', label: '基础设施运维', group: '工作台', domain: 'compute', component: InfrastructureOpsWorkbench, icon: 'Server', hidden: true },
   { id: 'KnowledgeExecution', path: '/workbench/knowledge-execution', label: '知识执行', group: '工作台', domain: 'memory', component: KnowledgeExecutionWorkbench, icon: 'BookOpen', hidden: true },
-  { id: 'KOSWorkbench', path: '/workbench/kos', label: 'KOS 工作台', group: '工作台', domain: 'memory', component: KOSWorkbench, icon: 'Database', hidden: true },
   { id: 'MemoryInjectorView', path: '/workbench/memory-injector', label: '记忆注入', group: '工作台', domain: 'memory', component: MemoryInjector, icon: 'Brain', hidden: true },
   { id: 'PlatformControl', path: '/workbench/platform-control', label: '平台控制', group: '工作台', domain: 'security', component: PlatformControlWorkbench, icon: 'MonitorCog', hidden: true },
   { id: 'RuntimeOps', path: '/workbench/runtime-ops', label: '运行时运维', group: '工作台', domain: 'compute', component: RuntimeOpsWorkbench, icon: 'Cpu', hidden: true },
@@ -266,6 +265,7 @@ export const ROUTE_REDIRECTS: Record<string, string> = {
   '/digital-brain': '/brain',
   '/workbench/governance-domain': '/governance-domain',
   '/workbench/system-assurance': '/governance-domain',
+  '/workbench/kos': '/',
 };
 
 /** Get route by tab ID */

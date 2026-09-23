@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "Running Hermes Console baseline build check..."
+echo "Running Cockpit UI baseline build check..."
 
 cd "$(dirname "$0")/.."
 
@@ -34,7 +34,7 @@ echo "6. Waiting for server to start..."
 sleep 3
 
 echo "7. Checking for 200 OK..."
-HTTP_STATUS=$(curl --noproxy "*" -o /dev/null -s -w "%{http_code}\n" http://localhost:$PORT/hermes/)
+HTTP_STATUS=$(curl --noproxy "*" -o /dev/null -s -w "%{http_code}\n" http://localhost:$PORT/)
 
 if [ "$HTTP_STATUS" -ne 200 ]; then
     echo "❌ Baseline check failed! Received HTTP $HTTP_STATUS."
