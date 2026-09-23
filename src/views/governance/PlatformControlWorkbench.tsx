@@ -3,6 +3,7 @@ import React, { useMemo, useState } from 'react';
 import { Activity, AlertTriangle, ClipboardCheck, Cpu, Gift, RefreshCw, Settings2, TerminalSquare } from 'lucide-react';
 import { openCockpitNavigationTarget, type CockpitNavigationTarget } from '../../components/cockpitNavigation';
 import { useArchHealth, useBosMetrics, usePipelines, useQuests, useCreateTask } from '../../api/hooks';
+import GovernanceBaseBridgeBanner from '../../components/common/GovernanceBaseBridgeBanner';
 
 interface ArchHealthPayload {
   system?: {
@@ -244,6 +245,10 @@ export default function PlatformControlWorkbench({
 
   return (
     <section className="platform-workbench antd-card">
+      <GovernanceBaseBridgeBanner
+        workbenchName={title}
+        sourceModule="projects/cockpit/governance"
+      />
       <div className="section-header" style={{ marginBottom: 0 }}>
         <div>
           <h2>{title}</h2>

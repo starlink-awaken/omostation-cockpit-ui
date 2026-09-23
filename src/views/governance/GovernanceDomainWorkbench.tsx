@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { AppWindow, ClipboardCheck, Compass, Layers, ShieldCheck } from 'lucide-react';
 import { openCockpitNavigationTarget, type CockpitNavigationTarget } from '../../components/cockpitNavigation';
 import { useSystemMap, useDebt, useOmoStatus, useL4Health, useCreateTask } from '../../api/hooks';
+import GovernanceBaseBridgeBanner from '../../components/common/GovernanceBaseBridgeBanner';
 
 interface RoadmapItem {
   id: string;
@@ -304,6 +305,10 @@ export default function GovernanceDomainWorkbench({
 
   return (
     <section className="governance-workbench antd-card">
+      <GovernanceBaseBridgeBanner
+        workbenchName={title}
+        sourceModule="projects/cockpit/governance"
+      />
       <div className="section-header" style={{ marginBottom: 0 }}>
         <div>
           <h2>{title}</h2>
