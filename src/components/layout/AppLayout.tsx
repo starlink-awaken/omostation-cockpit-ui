@@ -4,7 +4,7 @@ import { ROUTES, ROUTE_REDIRECTS, getVisibleRoutes, getRouteById, getRouteByPath
 import { useLiveTelemetry } from '../../api/liveTelemetry';
 import Breadcrumb from '../common/Breadcrumb';
 import { RouteErrorBoundary } from '../common/RouteErrorBoundary';
-import { CommandPalette, useCommandPalette, useKeyboardShortcuts } from '../common/CommandPalette';
+import { CommandPalette, useCommandPalette, useKeyboardShortcuts, type CommandItem } from '../common/CommandPalette';
 import QuickActionsPanel, { useQuickActions } from '../common/QuickActionsPanel';
 import { useCockpitStore } from '../../store';
 import { useApprovalQueue } from '../../api/hooks/swarm';
@@ -94,6 +94,63 @@ export function AppLayout() {
   const searchQuery = useCockpitStore((s) => s.search.query);
   const setSearchQuery = useCockpitStore((s) => s.search.setQuery);
 
+  // Command palette items including route-level and granular panorama sub-views
+  const allCommands = React.useMemo<CommandItem[]>(() => {
+    const routeCommands: CommandItem[] = ROUTES.map((r) => ({
+      id: r.id,
+      label: r.label,
+      description: r.subtitle || r.label,
+      keywords: r.keywords,
+      group: r.group,
+      action: () => goTo(r.id),
+    }));
+
+    const panoramaSubCommands: CommandItem[] = [
+      {
+        id: 'panorama-gates',
+        label: '治理全景: 门禁矩阵全景',
+        description: 'A1-A9、RF0、RC-DL 全局 11 门禁裁决与拦截详情',
+        keywords: ['panorama', '全景', '门禁', 'gates', 'a1', 'rf0', 'rc-dl', 'matrix'],
+        group: 'govern',
+        action: () => navigate('/panorama?tab=gates'),
+      },
+      {
+        id: 'panorama-guardian',
+        label: '治理全景: 74s 哨兵大屏巡检',
+        description: '四维健康度评分、74s 倒计时心跳脉冲与自愈工作流',
+        keywords: ['panorama', '全景', '哨兵', '74s', 'guardian', '倒计时', '自愈', '健康度'],
+        group: 'govern',
+        action: () => navigate('/panorama?tab=guardian'),
+      },
+      {
+        id: 'panorama-topology',
+        label: '治理全景: 道法术器架构拓扑',
+        description: 'DFSQ/v1 道法术器四层图谱与 COMP-WS-omo 唯一 S 槽位',
+        keywords: ['panorama', '全景', '道法术器', 'dfsq', '拓扑', 'topology', 's槽位'],
+        group: 'govern',
+        action: () => navigate('/panorama?tab=topology'),
+      },
+      {
+        id: 'panorama-bcos',
+        label: '治理全景: BCOS 认知进化链',
+        description: '世代进化仪表盘、自蒸馏知识提炼与历代治理轨迹',
+        keywords: ['panorama', '全景', 'bcos', '进化', '自蒸馏', 'epoch', '知识'],
+        group: 'govern',
+        action: () => navigate('/panorama?tab=bcos'),
+      },
+      {
+        id: 'panorama-hero',
+        label: '治理全景: 夏明星在位签署抽屉',
+        description: '夏明星主权在位签署、治理批次核准与历史抽屉',
+        keywords: ['panorama', '全景', '夏明星', '在位签署', '签署', 'hero'],
+        group: 'govern',
+        action: () => navigate('/panorama?tab=hero'),
+      },
+    ];
+
+    return [...routeCommands, ...panoramaSubCommands];
+  }, [goTo, navigate]);
+
   // Command palette
   const {
     isOpen: isCommandPaletteOpen,
@@ -101,9 +158,7 @@ export function AppLayout() {
     open: openCommandPalette,
     openWithQuery,
     close: closeCommandPalette,
-  } = useCommandPalette(
-    ROUTES.map((r) => ({ id: r.id, label: r.label, description: r.label, action: () => goTo(r.id) })),
-  );
+  } = useCommandPalette(allCommands);
 
   // Quick actions
   const { isOpen: isQuickActionsOpen, open: openQuickActions, close: closeQuickActions } = useQuickActions();
@@ -118,6 +173,12 @@ export function AppLayout() {
         action: () => (isCommandPaletteOpen ? closeCommandPalette() : openCommandPalette()),
       },
       { key: 'j', ctrl: true, description: '快捷操作', action: openQuickActions },
+      {
+        key: 'p',
+        ctrl: true,
+        description: '治理全景大屏',
+        action: () => goTo('Panorama'),
+      },
       {
         key: ' ',
         ctrl: true,
