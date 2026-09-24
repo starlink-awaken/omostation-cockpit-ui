@@ -148,7 +148,7 @@ const DecisionInboxView = lazy(() => import('./views/business/DecisionInboxView'
 // eslint-disable-next-line react-refresh/only-export-components
 const SwarmDashboard = lazy(() => import('./views/compute/SwarmDashboard'));
 // eslint-disable-next-line react-refresh/only-export-components
-const PanoramaHeroView = lazy(() => import('./views/panorama/PanoramaHeroView'));
+const PanoramaMasterView = lazy(() => import('./views/panorama/PanoramaMasterView'));
 
 export type SurfaceDomainType =
   | 'overview'
@@ -183,7 +183,7 @@ export interface RouteConfig {
 
 export const ROUTES: RouteConfig[] = [
   // ── 态势感知 (Situation Awareness) ──
-  { id: 'Panorama', path: '/panorama', label: '知行全景', subtitle: '执掌者全景视界：14源全天候真值、11全局门禁阵列、三年战略规划台账。', group: '态势感知', domain: 'overview', component: PanoramaHeroView, icon: 'Activity', purpose: '执掌者全景态势、实时门禁与台账全景。', whenToUse: '执掌者总览、宏观决策与每日巡检。' },
+  { id: 'Panorama', path: '/panorama', label: '体系全景', subtitle: '单一人类总控入口：11大系统门禁、74s哨兵巡航、道法术器拓扑与BCOS认知进化。', group: '态势感知', domain: 'overview', component: PanoramaMasterView, icon: 'Sparkles', purpose: '单一人类总控入口，门禁矩阵与全屏大屏。', whenToUse: '体系全局巡检、门禁与哨兵实时管控。' },
   { id: 'Home', path: '/', label: '首页', subtitle: '系统健康总览、实时告警、关键指标趋势。', group: '态势感知', domain: 'overview', component: HomePage, icon: 'LayoutDashboard', purpose: '健康、告警、任务、指标趋势的日常总览。', whenToUse: '每天先看这里。' },
   { id: 'Overview', path: '/overview', label: '概览中心', subtitle: '实时监控 eCOS v6 微服务环境，掌握集群全貌。', group: '态势感知', domain: 'overview', component: OverviewPage, icon: 'LayoutDashboard', purpose: '查看服务节点、运行状态和集群概貌。', whenToUse: '每天巡检、出问题先看。' },
   { id: 'Topology', path: '/topology', label: '全局拓扑', subtitle: '可视化服务间的调用流向与网格状态。', group: '态势感知', domain: 'system', component: TopologyView, icon: 'Network', purpose: '查看服务调用流向与拓扑结构。', whenToUse: '排查影响范围时。' },
