@@ -145,5 +145,60 @@ describe('PanoramaMasterView Master Deck', () => {
 
     fireEvent.click(wallboardBtn);
     expect(screen.getByText(/退出大屏/i)).toBeInTheDocument();
+    expect(screen.getByText(/已开启沉浸大屏模式/i)).toBeInTheDocument();
+  });
+
+  it('toggles auto-rotation mode via button', () => {
+    renderComponent();
+
+    const rotateBtn = screen.getByRole('button', { name: /开启大屏轮播/i });
+    fireEvent.click(rotateBtn);
+
+    expect(screen.getByText(/巡检轮播中/i)).toBeInTheDocument();
+    expect(screen.getByText(/自动巡航轮播已开启/i)).toBeInTheDocument();
+
+    // Toggle off
+    fireEvent.click(rotateBtn);
+    expect(screen.getByText(/自动轮播 \(按 A\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/自动巡航轮播已暂停/i)).toBeInTheDocument();
+  });
+
+  it('toggles modes via keyboard shortcuts A and F', () => {
+    renderComponent();
+
+    // Press A to toggle auto-rotation
+    fireEvent.keyDown(window, { key: 'a' });
+    expect(screen.getByText(/自动巡航轮播已开启/i)).toBeInTheDocument();
+
+    // Press F to toggle wallboard mode
+    fireEvent.keyDown(window, { key: 'f' });
+    expect(screen.getByText(/已开启沉浸大屏模式/i)).toBeInTheDocument();
+  });
+
+  it('switches tabs directly via number keys 1-5', () => {
+    renderComponent();
+
+    // Press 2 for guardian
+    fireEvent.keyDown(window, { key: '2' });
+    expect(screen.getByText('74s 哨兵常态守护与健康大屏')).toBeInTheDocument();
+    expect(screen.getByText(/切换至: 74s 哨兵大屏/i)).toBeInTheDocument();
+
+    // Press 3 for topology
+    fireEvent.keyDown(window, { key: '3' });
+    expect(screen.getByText('道法术器架构拓扑中枢')).toBeInTheDocument();
+    expect(screen.getByText(/切换至: 架构拓扑/i)).toBeInTheDocument();
+  });
+
+  it('pauses auto-rotation upon user mouse movement', () => {
+    const { container } = renderComponent();
+
+    // Turn on auto-rotation
+    const rotateBtn = screen.getByRole('button', { name: /开启大屏轮播/i });
+    fireEvent.click(rotateBtn);
+    expect(screen.getByText(/巡检轮播中/i)).toBeInTheDocument();
+
+    // Trigger mouse move to simulate user interaction
+    fireEvent.mouseMove(container.firstChild as Element);
+    expect(screen.getByText(/轮播挂起\(交互中\)/i)).toBeInTheDocument();
   });
 });
