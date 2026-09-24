@@ -113,7 +113,7 @@ describe('PanoramaMasterView Master Deck', () => {
   it('switches to guardian wallboard tab', () => {
     renderComponent();
 
-    const guardianTab = screen.getByRole('button', { name: /74s 哨兵大屏/i });
+    const guardianTab = screen.getByRole('tab', { name: /74s 哨兵大屏/i });
     fireEvent.click(guardianTab);
 
     expect(screen.getByText('74s 哨兵常态守护与健康大屏')).toBeInTheDocument();
@@ -122,7 +122,7 @@ describe('PanoramaMasterView Master Deck', () => {
   it('switches to architecture topology tab', () => {
     renderComponent();
 
-    const topologyTab = screen.getByRole('button', { name: /架构拓扑/i });
+    const topologyTab = screen.getByRole('tab', { name: /架构拓扑/i });
     fireEvent.click(topologyTab);
 
     expect(screen.getByText('道法术器架构拓扑中枢')).toBeInTheDocument();
@@ -131,7 +131,7 @@ describe('PanoramaMasterView Master Deck', () => {
   it('switches to bcos evolution chain tab', () => {
     renderComponent();
 
-    const bcosTab = screen.getByRole('button', { name: /BCOS 进化链/i });
+    const bcosTab = screen.getByRole('tab', { name: /BCOS 进化链/i });
     fireEvent.click(bcosTab);
 
     expect(screen.getByText('BCOS 主权进化链与学习图谱')).toBeInTheDocument();

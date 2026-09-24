@@ -249,6 +249,7 @@ export function PanoramaMasterView() {
               });
             }}
             aria-label={isAutoRotate ? '暂停大屏轮播' : '开启大屏轮播'}
+            aria-pressed={isAutoRotate}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
               isAutoRotate
                 ? isUserInteracting
@@ -281,6 +282,7 @@ export function PanoramaMasterView() {
               });
             }}
             aria-label="切换沉浸式大屏模式"
+            aria-pressed={isWallboardMode}
             className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
               isWallboardMode
                 ? 'bg-amber-600 hover:bg-amber-500 text-white shadow-amber-950/50'
@@ -303,7 +305,11 @@ export function PanoramaMasterView() {
       </div>
 
       {/* Main Tab Navigation */}
-      <div className="flex items-center justify-between gap-2 p-1.5 rounded-2xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-md overflow-x-auto">
+      <div
+        role="tablist"
+        aria-label="治理全景视图选择"
+        className="flex items-center justify-between gap-2 p-1.5 rounded-2xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-md overflow-x-auto"
+      >
         <div className="flex items-center gap-2">
           {TABS.map((tab, idx) => {
             const Icon = tab.icon;
@@ -311,6 +317,11 @@ export function PanoramaMasterView() {
             return (
               <button
                 key={tab.id}
+                id={`tab-${tab.id}`}
+                role="tab"
+                aria-selected={isActive}
+                aria-controls={`tabpanel-${tab.id}`}
+                tabIndex={isActive ? 0 : -1}
                 type="button"
                 onClick={() => handleTabChange(tab.id)}
                 className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
@@ -337,7 +348,13 @@ export function PanoramaMasterView() {
       </div>
 
       {/* Tab Panels */}
-      <div className="transition-all animate-fade-in">
+      <div
+        role="tabpanel"
+        id={`tabpanel-${activeTab}`}
+        aria-labelledby={`tab-${activeTab}`}
+        tabIndex={0}
+        className="transition-all animate-fade-in focus:outline-none"
+      >
         {activeTab === 'gates' && <GatesMatrixView />}
         {activeTab === 'guardian' && <GuardianInspectionWallboard />}
         {activeTab === 'topology' && <SystemTopologyWallboard />}
