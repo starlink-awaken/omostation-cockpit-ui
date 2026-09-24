@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   ShieldCheck,
@@ -10,6 +10,9 @@ import {
   Minimize2,
   Activity,
   Sparkles,
+  Play,
+  Pause,
+  Clock,
 } from 'lucide-react';
 import { GatesMatrixView } from './GatesMatrixView';
 import { GuardianInspectionWallboard } from './GuardianInspectionWallboard';
@@ -60,13 +63,32 @@ const TABS: PanoramaTabConfig[] = [
   },
 ];
 
+const ROTATION_TABS: PanoramaTabId[] = ['gates', 'guardian', 'topology', 'bcos'];
+const ROTATION_INTERVAL_MS = 25000;
+const INTERACTION_PAUSE_MS = 12000;
+
 export function PanoramaMasterView() {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = (searchParams.get('tab') as PanoramaTabId) || 'gates';
   const [activeTab, setActiveTab] = useState<PanoramaTabId>(initialTab);
   const [isWallboardMode, setIsWallboardMode] = useState<boolean>(false);
+  const [isAutoRotate, setIsAutoRotate] = useState<boolean>(false);
+  const [isUserInteracting, setIsUserInteracting] = useState<boolean>(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const interactionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data, isFallback } = useGovernancePanorama();
+
+  // Show a toast message with automatic dismissal
+  const showToast = useCallback((msg: string) => {
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    setToastMessage(msg);
+    toastTimeoutRef.current = setTimeout(() => {
+      setToastMessage(null);
+    }, 2400);
+  }, []);
 
   // Sync tab with URL query parameter
   useEffect(() => {
@@ -76,23 +98,92 @@ export function PanoramaMasterView() {
     }
   }, [searchParams, activeTab]);
 
-  const handleTabChange = (tabId: PanoramaTabId) => {
+  const handleTabChange = useCallback((tabId: PanoramaTabId) => {
     setActiveTab(tabId);
     setSearchParams({ tab: tabId });
-  };
+  }, [setSearchParams]);
 
-  // Keyboard shortcut: press 'F' to toggle wallboard mode
+  // Handle user interaction pause for auto-rotation
+  const registerUserInteraction = useCallback(() => {
+    if (!isAutoRotate) return;
+    setIsUserInteracting(true);
+    if (interactionTimeoutRef.current) clearTimeout(interactionTimeoutRef.current);
+    interactionTimeoutRef.current = setTimeout(() => {
+      setIsUserInteracting(false);
+    }, INTERACTION_PAUSE_MS);
+  }, [isAutoRotate]);
+
+  // Auto-rotation timer effect
+  useEffect(() => {
+    if (!isAutoRotate || isUserInteracting) return;
+
+    const timer = setInterval(() => {
+      setActiveTab((current) => {
+        const currentIndex = ROTATION_TABS.indexOf(current);
+        const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % ROTATION_TABS.length : 0;
+        const nextTab = ROTATION_TABS[nextIndex];
+        setSearchParams({ tab: nextTab });
+        return nextTab;
+      });
+    }, ROTATION_INTERVAL_MS);
+
+    return () => clearInterval(timer);
+  }, [isAutoRotate, isUserInteracting, setSearchParams]);
+
+  // Keyboard shortcut listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (
-        (e.key === 'f' || e.key === 'F') &&
-        !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)
-      ) {
-        setIsWallboardMode((prev) => !prev);
+      if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) {
+        return;
+      }
+
+      // F: Toggle full wallboard mode
+      if (e.key === 'f' || e.key === 'F') {
+        setIsWallboardMode((prev) => {
+          const next = !prev;
+          showToast(next ? '已开启沉浸大屏模式 (按 F 退出)' : '已退出沉浸大屏模式');
+          return next;
+        });
+        return;
+      }
+
+      // A: Toggle auto-rotation mode
+      if (e.key === 'a' || e.key === 'A') {
+        setIsAutoRotate((prev) => {
+          const next = !prev;
+          showToast(next ? '自动巡航轮播已开启 (25s 周期)' : '自动巡航轮播已暂停');
+          return next;
+        });
+        return;
+      }
+
+      // Number keys 1-5: Direct tab switch
+      const tabKeys: Record<string, PanoramaTabId> = {
+        '1': 'gates',
+        '2': 'guardian',
+        '3': 'topology',
+        '4': 'bcos',
+        '5': 'macro',
+      };
+
+      if (tabKeys[e.key]) {
+        const targetTab = tabKeys[e.key];
+        handleTabChange(targetTab);
+        const targetLabel = TABS.find((t) => t.id === targetTab)?.label || targetTab;
+        showToast(`切换至: ${targetLabel}`);
       }
     };
+
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleTabChange, showToast]);
+
+  // Clean up timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (interactionTimeoutRef.current) clearTimeout(interactionTimeoutRef.current);
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    };
   }, []);
 
   const totalGates = data?.gates?.length ?? 11;
@@ -101,6 +192,8 @@ export function PanoramaMasterView() {
 
   return (
     <div
+      onMouseMove={registerUserInteraction}
+      onClick={registerUserInteraction}
       className={`min-h-screen text-slate-100 transition-all ${
         isWallboardMode
           ? 'fixed inset-0 z-50 overflow-y-auto bg-slate-950 p-6 md:p-10'
@@ -134,7 +227,7 @@ export function PanoramaMasterView() {
           </div>
         </div>
 
-        {/* Quick Indicators & Wallboard Toggle */}
+        {/* Quick Indicators, Auto-rotate & Wallboard Toggle */}
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2 bg-slate-950/60 px-3 py-1.5 rounded-xl border border-slate-800/80 text-xs font-mono">
             <Activity className="w-4 h-4 text-emerald-400" />
@@ -145,9 +238,48 @@ export function PanoramaMasterView() {
             <strong className="text-cyan-300">{passedGates}/{totalGates}</strong>
           </div>
 
+          {/* Auto Rotation Button */}
           <button
             type="button"
-            onClick={() => setIsWallboardMode((prev) => !prev)}
+            onClick={() => {
+              setIsAutoRotate((prev) => {
+                const next = !prev;
+                showToast(next ? '自动巡航轮播已开启 (25s 周期)' : '自动巡航轮播已暂停');
+                return next;
+              });
+            }}
+            aria-label={isAutoRotate ? '暂停大屏轮播' : '开启大屏轮播'}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+              isAutoRotate
+                ? isUserInteracting
+                  ? 'bg-amber-600/30 text-amber-300 border border-amber-500/40'
+                  : 'bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 shadow-sm shadow-emerald-500/20'
+                : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700'
+            }`}
+          >
+            {isAutoRotate ? (
+              <>
+                <Pause className="w-3.5 h-3.5" />
+                <span>{isUserInteracting ? '轮播挂起(交互中)' : '巡检轮播中 (按 A)'}</span>
+              </>
+            ) : (
+              <>
+                <Play className="w-3.5 h-3.5" />
+                <span>自动轮播 (按 A)</span>
+              </>
+            )}
+          </button>
+
+          {/* Wallboard Toggle Button */}
+          <button
+            type="button"
+            onClick={() => {
+              setIsWallboardMode((prev) => {
+                const next = !prev;
+                showToast(next ? '已开启沉浸大屏模式 (按 F 退出)' : '已退出沉浸大屏模式');
+                return next;
+              });
+            }}
             aria-label="切换沉浸式大屏模式"
             className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
               isWallboardMode
@@ -171,36 +303,59 @@ export function PanoramaMasterView() {
       </div>
 
       {/* Main Tab Navigation */}
-      <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-md overflow-x-auto">
-        {TABS.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => handleTabChange(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
-                isActive
-                  ? 'bg-gradient-to-r from-cyan-950/80 to-indigo-950/80 text-cyan-300 border border-cyan-500/40 shadow-inner'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 border border-transparent'
-              }`}
-            >
-              <Icon className={`w-4 h-4 ${isActive ? 'text-cyan-300' : 'text-slate-500'}`} />
-              <span>{tab.label}</span>
-            </button>
-          );
-        })}
+      <div className="flex items-center justify-between gap-2 p-1.5 rounded-2xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-md overflow-x-auto">
+        <div className="flex items-center gap-2">
+          {TABS.map((tab, idx) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => handleTabChange(tab.id)}
+                className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                  isActive
+                    ? 'bg-gradient-to-r from-cyan-950/80 to-indigo-950/80 text-cyan-300 border border-cyan-500/40 shadow-inner'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 border border-transparent'
+                }`}
+              >
+                <Icon className={`w-4 h-4 ${isActive ? 'text-cyan-300' : 'text-slate-500'}`} />
+                <span>{tab.label}</span>
+                <span className="text-[10px] opacity-40 font-mono">[{idx + 1}]</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Rotation indicator info */}
+        {isAutoRotate && (
+          <div className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-950/40 border border-emerald-500/30 text-[11px] text-emerald-300 font-mono">
+            <Clock className="w-3.5 h-3.5 animate-spin" style={{ animationDuration: '6s' }} />
+            <span>25s 自动轮巡</span>
+          </div>
+        )}
       </div>
 
       {/* Tab Panels */}
-      <div className="transition-all">
+      <div className="transition-all animate-fade-in">
         {activeTab === 'gates' && <GatesMatrixView />}
         {activeTab === 'guardian' && <GuardianInspectionWallboard />}
         {activeTab === 'topology' && <SystemTopologyWallboard />}
         {activeTab === 'bcos' && <BcosEvolutionChainView />}
         {activeTab === 'macro' && <PanoramaHeroView />}
       </div>
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-slate-900/90 text-cyan-300 border border-cyan-500/40 shadow-2xl backdrop-blur-xl text-xs font-semibold animate-fade-in"
+        >
+          <Sparkles className="w-4 h-4 text-cyan-400" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
     </div>
   );
 }
