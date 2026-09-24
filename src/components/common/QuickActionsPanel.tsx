@@ -23,6 +23,7 @@ import {
   Bell,
   RefreshCw,
   Download,
+  Compass,
 } from 'lucide-react';
 import { openCockpitNavigationTarget } from '../cockpitNavigation';
 
@@ -79,6 +80,14 @@ const DEFAULT_ACTIONS: QuickAction[] = [
     label: '查看拓扑',
     icon: <Network size={16} />,
     action: () => openCockpitNavigationTarget({ tab: 'Topology' }),
+    category: '监控',
+  },
+  {
+    id: 'view-panorama',
+    label: '查看治理全景',
+    icon: <Compass size={16} />,
+    shortcut: 'Ctrl+P',
+    action: () => openCockpitNavigationTarget({ tab: 'Panorama' }),
     category: '监控',
   },
   {

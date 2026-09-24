@@ -52,6 +52,32 @@ describe('CommandPalette', () => {
     expect(screen.getByText('Tasks')).toBeInTheDocument()
   })
 
+  it('filters commands by keywords and renders group badge', () => {
+    render(
+      <CommandPalette
+        isOpen={true}
+        onClose={vi.fn()}
+        commands={[
+          { id: '1', label: 'Home', action: vi.fn() },
+          {
+            id: 'panorama',
+            label: '治理全景',
+            group: 'govern',
+            keywords: ['74s', '哨兵', 'gates'],
+            action: vi.fn(),
+          },
+        ]}
+      />
+    )
+
+    const input = screen.getByPlaceholderText('输入命令...')
+    fireEvent.change(input, { target: { value: '74s' } })
+
+    expect(screen.queryByText('Home')).not.toBeInTheDocument()
+    expect(screen.getByText('治理全景')).toBeInTheDocument()
+    expect(screen.getByText('[govern]')).toBeInTheDocument()
+  })
+
   it('executes selected command on Enter', () => {
     const action = vi.fn()
     const onClose = vi.fn()

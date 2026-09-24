@@ -100,33 +100,34 @@ export function Sidebar({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5 text-slate-200 font-medium">
             <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400"></span>
-            <span>知行治理底座</span>
+            <span>治理主权全景</span>
           </div>
-          <span className="font-mono text-[10px] text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/20">
-            43191
+          <span className="font-mono text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+            NATIVE
           </span>
         </div>
         <p className="text-[11px] text-slate-400">
-          74s 哨兵守护 · 11 全局门禁
+          74s 哨兵大屏 · 11 全局门禁矩阵
         </p>
         <div className="flex items-center gap-1.5 pt-1">
+          <button
+            type="button"
+            onClick={() => onNavigate('Panorama')}
+            className="flex-1 py-1 px-2 rounded bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 transition-colors text-[11px] font-medium text-center"
+            aria-label="打开全景大屏"
+          >
+            全景大屏
+          </button>
           {onOpenGuardianInspection && (
             <button
               type="button"
               onClick={onOpenGuardianInspection}
               className="flex-1 py-1 px-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors text-[11px] font-medium text-center"
+              aria-label="打开哨兵速查抽屉"
             >
               速查
             </button>
           )}
-          <a
-            href="http://localhost:43191/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 py-1 px-2 rounded bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 transition-colors text-[11px] font-medium text-center"
-          >
-            监造台 ↗
-          </a>
         </div>
       </div>
     </aside>

@@ -54,16 +54,20 @@ export function useKeyboardShortcuts({ shortcuts, enabled = true }: UseKeyboardS
   }, [handleKeyDown]);
 }
 
+export interface CommandItem {
+  id: string;
+  label: string;
+  description?: string;
+  shortcut?: string;
+  keywords?: string[];
+  group?: string;
+  action: () => void;
+}
+
 interface CommandPaletteProps {
   isOpen: boolean;
   onClose: () => void;
-  commands: Array<{
-    id: string;
-    label: string;
-    description?: string;
-    shortcut?: string;
-    action: () => void;
-  }>;
+  commands: CommandItem[];
   /** Pre-fill the search query when opening */
   initialQuery?: string;
 }
@@ -72,10 +76,16 @@ export function CommandPalette({ isOpen, onClose, commands, initialQuery = '' }:
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  const filteredCommands = commands.filter(cmd =>
-    cmd.label.toLowerCase().includes(query.toLowerCase()) ||
-    cmd.description?.toLowerCase().includes(query.toLowerCase())
-  );
+  const filteredCommands = commands.filter((cmd) => {
+    const q = query.toLowerCase().trim();
+    if (!q) return true;
+    return (
+      cmd.label.toLowerCase().includes(q) ||
+      (cmd.description && cmd.description.toLowerCase().includes(q)) ||
+      (cmd.group && cmd.group.toLowerCase().includes(q)) ||
+      (cmd.keywords && cmd.keywords.some((k) => k.toLowerCase().includes(q)))
+    );
+  });
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
@@ -146,7 +156,14 @@ export function CommandPalette({ isOpen, onClose, commands, initialQuery = '' }:
                 }}
                 onMouseEnter={() => setSelectedIndex(index)}
               >
-                <div className="command-item-label">{cmd.label}</div>
+                <div className="command-item-label">
+                  <span>{cmd.label}</span>
+                  {cmd.group && (
+                    <span className="command-item-group-tag" style={{ marginLeft: 8, fontSize: '0.75rem', opacity: 0.6 }}>
+                      [{cmd.group}]
+                    </span>
+                  )}
+                </div>
                 {cmd.description && (
                   <div className="command-item-description">{cmd.description}</div>
                 )}
