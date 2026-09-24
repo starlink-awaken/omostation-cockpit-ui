@@ -66,6 +66,81 @@ export interface PostureMetrics {
   last_patrol_at?: string;
 }
 
+export interface KnowledgeHealthData {
+  total: number;
+  fresh: number;
+  stale: number;
+  orphaned: number;
+  freshness_pct: number;
+  coverage_pct: number;
+  orphan_pct: number;
+  stale_docs?: Array<{ path: string; age_days: number }>;
+}
+
+export interface ExperienceGraphData {
+  nodes_by_type: Record<string, number>;
+  internal_refs: number;
+  hotspots: Array<{ type: string; count: number }>;
+  connectivity_pct: number;
+}
+
+export interface WorkspaceHygieneData {
+  total_worktrees: number;
+  worktrees?: Array<{ path: string; branch?: string }>;
+  total_locks: number;
+  orphan_locks?: string[];
+  remote_canonical?: boolean;
+}
+
+export interface LaunchdJobItem {
+  name: string;
+  label: string;
+  schedule?: string;
+  loaded: boolean;
+  state?: string;
+  pid?: number | null;
+  last_exit_code?: number | null;
+  last_exit_ok?: boolean;
+  verdict: 'PASS' | 'FAILED';
+}
+
+export interface LaunchdHealthData {
+  available: boolean;
+  verdict: 'PASS' | 'FAILED' | 'EMPTY';
+  loaded: number;
+  failed: number;
+  jobs: LaunchdJobItem[];
+}
+
+export interface SceneConnectorsData {
+  total: number;
+  available: string[];
+  wired_to_scenes: string[];
+  unwired_available: string[];
+}
+
+export interface AgentBriefData {
+  claims_activation_readiness?: {
+    available: boolean;
+    readiness: string;
+  };
+  value_proof_readiness?: {
+    available: boolean;
+    status: string;
+  };
+  next_actions?: Array<{
+    id: string;
+    title: string;
+    domain?: string;
+    priority?: string;
+  }>;
+  unfinished_objectives?: Array<{
+    id: string;
+    title?: string;
+    status?: string;
+  }>;
+}
+
 export interface PanoramaOverviewPayload {
   generated_at: string;
   mode: string;
@@ -81,4 +156,12 @@ export interface PanoramaOverviewPayload {
     in_progress: number;
     blocked: number;
   };
+  // Tier 2 Deep Telemetry
+  knowledge_health?: KnowledgeHealthData;
+  experience_graph?: ExperienceGraphData;
+  workspace?: WorkspaceHygieneData;
+  launchd_health?: LaunchdHealthData;
+  connectors?: SceneConnectorsData;
+  agent_visibility?: AgentBriefData;
 }
+

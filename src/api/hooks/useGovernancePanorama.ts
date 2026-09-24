@@ -210,6 +210,80 @@ export const FALLBACK_PANORAMA_DATA: PanoramaOverviewPayload = {
       },
     ],
   },
+  knowledge_health: {
+    total: 342,
+    fresh: 318,
+    stale: 24,
+    orphaned: 0,
+    freshness_pct: 93.0,
+    coverage_pct: 98.5,
+    orphan_pct: 0.0,
+    stale_docs: [
+      { path: 'docs/reports/archive-2026-08.md', age_days: 94 },
+    ],
+  },
+  experience_graph: {
+    nodes_by_type: {
+      pitfall: 14,
+      decision: 48,
+      retro: 62,
+      pattern: 28,
+      adr: 35,
+    },
+    internal_refs: 412,
+    hotspots: [
+      { type: 'retro', count: 62 },
+      { type: 'decision', count: 48 },
+      { type: 'adr', count: 35 },
+      { type: 'pattern', count: 28 },
+      { type: 'pitfall', count: 14 },
+    ],
+    connectivity_pct: 76.5,
+  },
+  workspace: {
+    total_worktrees: 2,
+    worktrees: [
+      { path: '/Users/xiamingxing/Workspace', branch: 'main' },
+    ],
+    total_locks: 0,
+    orphan_locks: [],
+    remote_canonical: true,
+  },
+  launchd_health: {
+    available: true,
+    verdict: 'PASS',
+    loaded: 8,
+    failed: 0,
+    jobs: [
+      { name: 'zhixing-sunset-redirector', label: 'com.omostation.sunset-redirector', loaded: true, verdict: 'PASS', pid: 4821 },
+      { name: 'guardian-74s-pulse', label: 'com.omostation.guardian-pulse', loaded: true, verdict: 'PASS', pid: 4822 },
+      { name: 'ssot-integrity-patrol', label: 'com.omostation.ssot-patrol', loaded: true, verdict: 'PASS', pid: 4825 },
+      { name: 'remote-hygiene-guard', label: 'com.omostation.remote-hygiene', loaded: true, verdict: 'PASS', pid: 4828 },
+    ],
+  },
+  connectors: {
+    total: 5,
+    available: ['apple_mail', 'applenotes', 'netease_mailmaster', 'terminal_pty', 'system_event'],
+    wired_to_scenes: ['apple_mail', 'applenotes', 'netease_mailmaster'],
+    unwired_available: ['terminal_pty', 'system_event'],
+  },
+  agent_visibility: {
+    claims_activation_readiness: {
+      available: true,
+      readiness: 'AUTHORIZED_CANONICAL',
+    },
+    value_proof_readiness: {
+      available: true,
+      status: 'VERIFIED',
+    },
+    next_actions: [
+      { id: 'ACT-01', title: '全景大屏与深度遥测双轨终验', domain: 'governance', priority: 'P0' },
+      { id: 'ACT-02', title: '常驻 Agent 机器权威信封对齐', domain: 'swarm', priority: 'P1' },
+    ],
+    unfinished_objectives: [
+      { id: 'BET-Y2Q2-T10-166', title: '治理协议与文档 SSOT 锚定', status: 'IN_PROGRESS' },
+    ],
+  },
 };
 
 export interface GovernancePanoramaFetchResult {

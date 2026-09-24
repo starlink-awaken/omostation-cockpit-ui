@@ -13,13 +13,16 @@ import {
   Play,
   Pause,
   Clock,
+  Database,
 } from 'lucide-react';
 import { GatesMatrixView } from './GatesMatrixView';
 import { GuardianInspectionWallboard } from './GuardianInspectionWallboard';
 import { SystemTopologyWallboard } from './SystemTopologyWallboard';
 import { BcosEvolutionChainView } from './BcosEvolutionChainView';
 import PanoramaHeroView from './PanoramaHeroView';
+import { DeepTelemetryDrawer } from './DeepTelemetryDrawer';
 import { useGovernancePanorama } from '../../api/hooks/useGovernancePanorama';
+
 
 export type PanoramaTabId = 'gates' | 'guardian' | 'topology' | 'bcos' | 'macro';
 
@@ -73,8 +76,10 @@ export function PanoramaMasterView() {
   const [activeTab, setActiveTab] = useState<PanoramaTabId>(initialTab);
   const [isWallboardMode, setIsWallboardMode] = useState<boolean>(false);
   const [isAutoRotate, setIsAutoRotate] = useState<boolean>(false);
+  const [isTelemetryDrawerOpen, setIsTelemetryDrawerOpen] = useState<boolean>(false);
   const [isUserInteracting, setIsUserInteracting] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
 
   const interactionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -156,6 +161,17 @@ export function PanoramaMasterView() {
         });
         return;
       }
+
+      // D: Toggle deep telemetry drawer
+      if (e.key === 'd' || e.key === 'D') {
+        setIsTelemetryDrawerOpen((prev) => {
+          const next = !prev;
+          showToast(next ? '已开启深度遥测透视抽屉' : '已关闭深度遥测透视抽屉');
+          return next;
+        });
+        return;
+      }
+
 
       // Number keys 1-5: Direct tab switch
       const tabKeys: Record<string, PanoramaTabId> = {
@@ -271,7 +287,26 @@ export function PanoramaMasterView() {
             )}
           </button>
 
+          {/* Deep Telemetry Drawer Button */}
+          <button
+            type="button"
+            onClick={() => {
+              setIsTelemetryDrawerOpen((prev) => !prev);
+            }}
+            aria-label="切换深度遥测抽屉"
+            aria-expanded={isTelemetryDrawerOpen}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+              isTelemetryDrawerOpen
+                ? 'bg-cyan-600/30 text-cyan-300 border border-cyan-500/40 shadow-sm shadow-cyan-500/20'
+                : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700'
+            }`}
+          >
+            <Database className="w-3.5 h-3.5 text-cyan-400" />
+            <span>深度遥测 (按 D)</span>
+          </button>
+
           {/* Wallboard Toggle Button */}
+
           <button
             type="button"
             onClick={() => {
@@ -373,8 +408,16 @@ export function PanoramaMasterView() {
           <span>{toastMessage}</span>
         </div>
       )}
+
+      {/* Deep Telemetry Drawer */}
+      <DeepTelemetryDrawer
+        isOpen={isTelemetryDrawerOpen}
+        onClose={() => setIsTelemetryDrawerOpen(false)}
+        data={data}
+      />
     </div>
   );
+
 }
 
 export default PanoramaMasterView;

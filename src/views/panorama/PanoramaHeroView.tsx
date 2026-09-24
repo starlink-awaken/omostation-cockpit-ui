@@ -10,11 +10,16 @@ import {
   Database,
   ArrowRight,
   ArrowUpRight,
-  Sparkles
+  Sparkles,
+  Bot,
+  Compass,
+  Clock,
 } from 'lucide-react';
 import { useLiveTelemetry } from '../../api/liveTelemetry';
 import { useApprovalQueue } from '../../api/hooks/swarm';
+import { useGovernancePanorama } from '../../api/hooks/useGovernancePanorama';
 import InPlaceDecisionDrawer from './InPlaceDecisionDrawer';
+
 
 const GATE_ROUTE_MAP: Record<string, string> = {
   A1: '/workflows',
@@ -41,10 +46,13 @@ export default function PanoramaHeroView() {
   const navigate = useNavigate();
   const telemetry = useLiveTelemetry();
   const { data: queueData } = useApprovalQueue();
+  const { data: panoramaData } = useGovernancePanorama();
   const [isDecisionDrawerOpen, setIsDecisionDrawerOpen] = useState(false);
 
+  const agentVis = panoramaData?.agent_visibility;
   const pendingCount = queueData?.queue?.length ?? 0;
   const completionPct = Math.round((telemetry.betStats.done / (telemetry.betStats.total || 1)) * 100);
+
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-8 space-y-8 animate-fade-in">
@@ -320,8 +328,107 @@ export default function PanoramaHeroView() {
         </div>
       </section>
 
+      {/* 🤖 常驻 Agent 机器权威信封与 Next Actions (Agent Brief & Action Stream) */}
+      <section className="space-y-4 pt-4 border-t border-slate-800/80">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Bot className="w-5 h-5 text-indigo-400" />
+            <h2 className="text-lg font-semibold text-white">Agent 机器权威与推荐行动 (Agent Brief)</h2>
+          </div>
+          <span className="text-xs px-2.5 py-1 rounded-full bg-indigo-950/70 border border-indigo-500/30 text-indigo-300 font-mono">
+            SSOT: runtime/dashboard/agent-brief.json
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Authority Readiness Card */}
+          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-3">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+              机器准入与价值就绪
+            </span>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs py-2 px-3 rounded-lg bg-slate-950/60 border border-slate-800">
+                <span className="text-slate-400">Claims 激活准入:</span>
+                <span className="font-mono font-bold text-emerald-400">
+                  {agentVis?.claims_activation_readiness?.readiness ?? 'AUTHORIZED_CANONICAL'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-xs py-2 px-3 rounded-lg bg-slate-950/60 border border-slate-800">
+                <span className="text-slate-400">价值凭证状态:</span>
+                <span className="font-mono font-bold text-cyan-400">
+                  {agentVis?.value_proof_readiness?.status ?? 'VERIFIED'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Next Actions Card */}
+          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-3">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block flex items-center justify-between">
+              <span>推荐下一步行动 (Next Actions)</span>
+              <Compass className="w-3.5 h-3.5 text-cyan-400" />
+            </span>
+            <div className="space-y-2">
+              {agentVis?.next_actions && agentVis.next_actions.length > 0 ? (
+                agentVis.next_actions.map((act) => (
+                  <div
+                    key={act.id}
+                    className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800 text-xs flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="px-1.5 py-0.5 rounded bg-indigo-950 text-indigo-300 font-mono text-[10px] border border-indigo-800">
+                        {act.priority || 'P1'}
+                      </span>
+                      <span className="font-medium text-slate-200 truncate max-w-[180px]">
+                        {act.title}
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-slate-500 font-mono">{act.id}</span>
+                  </div>
+                ))
+              ) : (
+                <div className="text-xs text-slate-500 text-center py-4">无挂起行动</div>
+              )}
+            </div>
+          </div>
+
+          {/* Unfinished Objectives Card */}
+          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-3">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block flex items-center justify-between">
+              <span>进行中目标 (Unfinished BETs)</span>
+              <Clock className="w-3.5 h-3.5 text-amber-400" />
+            </span>
+            <div className="space-y-2">
+              {agentVis?.unfinished_objectives && agentVis.unfinished_objectives.length > 0 ? (
+                agentVis.unfinished_objectives.map((obj) => (
+                  <div
+                    key={obj.id}
+                    className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800 text-xs flex items-center justify-between"
+                  >
+                    <div className="truncate max-w-[200px]">
+                      <span className="font-bold text-amber-300 font-mono block text-[11px]">
+                        {obj.id}
+                      </span>
+                      <span className="text-slate-400 text-[10px] truncate block">
+                        {obj.title || 'SSOT 治理目标交付中'}
+                      </span>
+                    </div>
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-amber-950/60 text-amber-300 border border-amber-800/60">
+                      {obj.status || 'DOING'}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <div className="text-xs text-slate-500 text-center py-4">全量目标已交付</div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* 🧭 四大主权业务域快速直达 (规范化 useNavigate) */}
       <section className="space-y-4 pt-4 border-t border-slate-800/80">
+
         <h2 className="text-lg font-semibold text-white">主权座舱四域核心</h2>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <button 
