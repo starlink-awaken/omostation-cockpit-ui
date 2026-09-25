@@ -13,13 +13,12 @@ import {
   Sparkles,
   Bot,
   Compass,
-  Clock,
+  Clock
 } from 'lucide-react';
 import { useLiveTelemetry } from '../../api/liveTelemetry';
 import { useApprovalQueue } from '../../api/hooks/swarm';
 import { useGovernancePanorama } from '../../api/hooks/useGovernancePanorama';
 import InPlaceDecisionDrawer from './InPlaceDecisionDrawer';
-
 
 const GATE_ROUTE_MAP: Record<string, string> = {
   A1: '/workflows',
@@ -53,58 +52,55 @@ export default function PanoramaHeroView() {
   const pendingCount = queueData?.queue?.length ?? 0;
   const completionPct = Math.round((telemetry.betStats.done / (telemetry.betStats.total || 1)) * 100);
 
+  const gatesList = telemetry.gates || [];
+  const circuitPulses = telemetry.lastPulse?.circuit_pulses || [];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-8 space-y-8 animate-fade-in">
-      {/* 👑 主权执掌者最高控制权 Banner */}
-      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-950/60 via-indigo-950/40 to-slate-900 border border-blue-500/20 p-6 md:p-8 shadow-2xl backdrop-blur-md">
-        <div className="absolute top-0 right-0 -mt-8 -mr-8 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-        
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-          <div className="space-y-2">
-            <div 
-              role="button"
-              tabIndex={0}
-              onClick={() => setIsDecisionDrawerOpen(true)}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsDecisionDrawerOpen(true); } }}
-              className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-400/30 text-blue-400 text-xs font-semibold tracking-wider uppercase cursor-pointer hover:bg-blue-500/20 transition-colors"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              主权执掌者视界 · 夏明星态势导读与署名自进化舱
-            </div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white flex items-center gap-3">
-              人类意志最高控制权 (Human In Command)
+    <div className="space-y-4 text-slate-100 animate-fade-in font-sans">
+      {/* 👑 主权执掌者极简中枢条 (Sovereign Focus Strip) */}
+      <section className="relative overflow-hidden rounded-xl bg-[#111827]/90 border border-slate-800/80 p-4 md:p-5 shadow-lg backdrop-blur-xl">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-400/30 text-indigo-300 text-xs font-semibold tracking-wider uppercase font-mono">
+                <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+                夏明星主权在位
+              </span>
               <button
                 type="button"
                 onClick={() => setIsDecisionDrawerOpen(true)}
+                title="点击打开主权执掌者决策闸门"
                 className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium cursor-pointer transition-all duration-200 hover:scale-105 ${
                   pendingCount > 0
-                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-lg shadow-amber-500/20 animate-pulse'
+                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm animate-pulse'
                     : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:border-emerald-400/60'
                 }`}
-                title="点击打开主权执掌者决策闸门"
               >
                 <span className={`w-1.5 h-1.5 rounded-full ${pendingCount > 0 ? 'bg-amber-400' : 'bg-emerald-400'}`} />
                 <span>{pendingCount > 0 ? `${pendingCount} 项待决 · 点击裁决` : '0 项待决 · 全域绿灯'}</span>
               </button>
+            </div>
+            <h1 className="text-xl md:text-2xl font-black tracking-tight text-white flex items-center gap-2">
+              人类意志最高控制权 (Human In Command)
             </h1>
-            <p className="text-sm text-slate-300 max-w-3xl leading-relaxed">
-              智能体提炼的草案与治理自愈提案在此呈递。每一次物理批准或修改都会作为强化学习样本，固化进个人主权时间账本与知识库。
+            <p className="text-xs text-slate-400 max-w-2xl leading-normal">
+              智能体提炼的草案与治理自愈提案在此呈递。每一次物理批准或修改均固化进个人主权时间账本与知识库。
             </p>
           </div>
 
-          <div className="flex items-center gap-3 self-start md:self-center">
+          {/* 宏观双核遥测状态徽章 */}
+          <div className="flex items-center gap-3 self-start lg:self-center">
             <div 
               role="button"
               tabIndex={0}
               onClick={() => navigate('/observability')}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/observability'); } }}
               title="点击查看可观测与遥测连接详情"
-              className="px-4 py-2.5 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-blue-500/40 text-center cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
+              className="px-3.5 py-2 rounded-lg bg-[#0b0f19]/80 border border-slate-800 hover:border-indigo-500/40 text-center cursor-pointer transition-all"
             >
-              <div className="text-xs text-slate-400">实时连接</div>
-              <div className="text-sm font-semibold flex items-center justify-center gap-1.5 mt-0.5">
-                <span className={`w-2 h-2 rounded-full ${telemetry.connected ? 'bg-emerald-400 shadow-lg shadow-emerald-500/50' : 'bg-amber-400'}`} />
+              <div className="text-[10px] text-slate-400 font-mono">实时遥测源</div>
+              <div className="text-xs font-bold flex items-center justify-center gap-1.5 mt-0.5 font-mono">
+                <span className={`w-1.5 h-1.5 rounded-full ${telemetry.connected ? 'bg-emerald-400 shadow-sm' : 'bg-amber-400'}`} />
                 {telemetry.connected ? '43191 SSE' : '本地静态模式'}
               </div>
             </div>
@@ -114,10 +110,10 @@ export default function PanoramaHeroView() {
               onClick={() => navigate('/compute')}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/compute'); } }}
               title="点击查看算力与模型调配"
-              className="px-4 py-2.5 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-indigo-500/40 text-center cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
+              className="px-3.5 py-2 rounded-lg bg-[#0b0f19]/80 border border-slate-800 hover:border-indigo-500/40 text-center cursor-pointer transition-all"
             >
-              <div className="text-xs text-slate-400">算力星系</div>
-              <div className="text-sm font-semibold text-blue-400 mt-0.5">
+              <div className="text-[10px] text-slate-400 font-mono">AetherForge 算力</div>
+              <div className="text-xs font-bold text-cyan-400 mt-0.5 font-mono">
                 {telemetry.vramUsage}
               </div>
             </div>
@@ -125,33 +121,33 @@ export default function PanoramaHeroView() {
         </div>
       </section>
 
-      {/* 🎯 态势总览三栏卡片 (支持下钻) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* 🎯 态势总览三栏紧凑卡片 (支持下钻，保留测试选择器) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div 
           role="button"
           tabIndex={0}
           onClick={() => navigate('/scenes')}
           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/scenes'); } }}
-          className="group bg-slate-900/60 hover:bg-slate-900/90 border border-slate-800/80 hover:border-blue-500/40 rounded-xl p-5 backdrop-blur-sm relative overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/10"
+          className="group bg-[#111827]/80 hover:bg-[#111827] border border-slate-800/80 hover:border-indigo-500/40 rounded-xl p-3.5 backdrop-blur-sm cursor-pointer transition-all"
         >
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400 group-hover:bg-blue-500/20 transition-colors">
-                <Activity className="w-5 h-5" />
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-md bg-indigo-500/10 text-indigo-400">
+                <Activity className="w-4 h-4" />
               </div>
               <div>
-                <h2 className="text-sm font-medium text-slate-400">系统当下在忙什么？</h2>
-                <p className="text-base font-semibold text-white">5 大业务域 · 12 主权旅程</p>
+                <h2 className="text-xs font-medium text-slate-400">系统当下在忙什么？</h2>
+                <p className="text-sm font-bold text-white">5 大业务域 · 12 主权旅程</p>
               </div>
             </div>
-            <ArrowUpRight className="w-4 h-4 text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <ArrowUpRight className="w-3.5 h-3.5 text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
-          <p className="text-xs text-slate-400 leading-relaxed">
+          <p className="text-[11px] text-slate-400 leading-normal line-clamp-2">
             端侧已就绪 16 模型星系，4 大动态回路全速巡检。Resident Guardian 每 {telemetry.guardianCadence}s 发送一次自愈心跳。
           </p>
-          <div className="mt-3 text-[11px] text-blue-400 flex items-center gap-1 font-medium">
+          <div className="mt-2 text-[10px] text-indigo-300 flex items-center gap-1 font-semibold">
             <span>进入业务场景总览</span>
-            <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+            <ArrowRight className="w-2.5 h-2.5 group-hover:translate-x-0.5 transition-transform" />
           </div>
         </div>
 
@@ -160,32 +156,29 @@ export default function PanoramaHeroView() {
           tabIndex={0}
           onClick={() => navigate('/system-map')}
           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/system-map'); } }}
-          className="group bg-slate-900/60 hover:bg-slate-900/90 border border-slate-800/80 hover:border-emerald-500/40 rounded-xl p-5 backdrop-blur-sm relative overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/10"
+          className="group bg-[#111827]/80 hover:bg-[#111827] border border-slate-800/80 hover:border-emerald-500/40 rounded-xl p-3.5 backdrop-blur-sm cursor-pointer transition-all"
         >
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 group-hover:bg-emerald-500/20 transition-colors">
-                <CheckCircle2 className="w-5 h-5" />
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-md bg-emerald-500/10 text-emerald-400">
+                <CheckCircle2 className="w-4 h-4" />
               </div>
               <div>
-                <h2 className="text-sm font-medium text-slate-400">战略规划台账进度</h2>
-                <p className="text-base font-semibold text-white">443 / 443 全部达成 (100%)</p>
+                <h2 className="text-xs font-medium text-slate-400">战略规划台账进度</h2>
+                <p className="text-sm font-bold text-emerald-400 font-mono">443 / 443 全部达成 (100%)</p>
               </div>
             </div>
-            <ArrowUpRight className="w-4 h-4 text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <ArrowUpRight className="w-3.5 h-3.5 text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
-          <div className="space-y-1.5">
-            <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-              <div className="bg-emerald-500 h-full rounded-full transition-all duration-500" style={{ width: `${completionPct}%` }} />
-            </div>
-            <div className="flex justify-between text-[11px] text-slate-400">
-              <span>已完成: 443 (大满贯)</span>
-              <span>受阻: 0 (清零)</span>
-            </div>
+          <div className="w-full bg-slate-950 rounded-full h-1.5 mb-2 overflow-hidden border border-slate-800">
+            <div className="bg-emerald-500 h-1.5 rounded-full transition-all duration-500" style={{ width: `${completionPct}%` }} />
           </div>
-          <div className="mt-3 text-[11px] text-emerald-400 flex items-center gap-1 font-medium">
-            <span>穿透系统地图与全量台账</span>
-            <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+          <p className="text-[11px] text-slate-400 leading-normal">
+            Phase 1-8 治理底座与 Harness 8 阶段全部收敛，闭环交付验证。
+          </p>
+          <div className="mt-2 text-[10px] text-emerald-300 flex items-center gap-1 font-semibold">
+            <span>查看完整交付脉络</span>
+            <ArrowRight className="w-2.5 h-2.5 group-hover:translate-x-0.5 transition-transform" />
           </div>
         </div>
 
@@ -194,298 +187,319 @@ export default function PanoramaHeroView() {
           tabIndex={0}
           onClick={() => navigate('/harness')}
           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/harness'); } }}
-          className="group bg-slate-900/60 hover:bg-slate-900/90 border border-slate-800/80 hover:border-indigo-500/40 rounded-xl p-5 backdrop-blur-sm relative overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-indigo-500/10"
+          className="group bg-[#111827]/80 hover:bg-[#111827] border border-slate-800/80 hover:border-cyan-500/40 rounded-xl p-3.5 backdrop-blur-sm cursor-pointer transition-all"
         >
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400 group-hover:bg-indigo-500/20 transition-colors">
-                <ShieldCheck className="w-5 h-5" />
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-md bg-cyan-500/10 text-cyan-400">
+                <ShieldCheck className="w-4 h-4" />
               </div>
               <div>
-                <h2 className="text-sm font-medium text-slate-400">不可违背规则与治理</h2>
-                <p className="text-base font-semibold text-white">11 / 11 核心门禁全绿</p>
+                <h2 className="text-xs font-medium text-slate-400">不可违背规则与治理</h2>
+                <p className="text-sm font-bold text-cyan-400 font-mono">11 / 11 核心门禁全绿</p>
               </div>
             </div>
-            <ArrowUpRight className="w-4 h-4 text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <ArrowUpRight className="w-3.5 h-3.5 text-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
-          <p className="text-xs text-slate-400 leading-relaxed">
-            物理隔离 PASW 强制生效，7720+ 条规则全天候守护，A1~A9 全量门禁达成 100% PASS。
+          <p className="text-[11px] text-slate-400 leading-normal">
+            A1-A9、RF0、RC-DL 11 大系统门禁三轴证据链持续通过，零未授权变更。
           </p>
-          <div className="mt-3 text-[11px] text-indigo-400 flex items-center gap-1 font-medium">
-            <span>进入 Harness 全生命周期合规</span>
-            <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+          <div className="mt-2 text-[10px] text-cyan-300 flex items-center gap-1 font-semibold">
+            <span>进入治理合规验证台</span>
+            <ArrowRight className="w-2.5 h-2.5 group-hover:translate-x-0.5 transition-transform" />
           </div>
         </div>
       </div>
 
-      {/* 🛡️ 11 大全局核心运行门禁阵列 (支持点击下钻) */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-emerald-400" />
-            <h2 className="text-lg font-semibold text-white">全局 11 大核心运行门禁阵列</h2>
-            <span className="text-xs px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              100% PASS
-            </span>
-          </div>
-          <div className="flex items-center gap-3 text-xs">
-            <span className="text-slate-400">点击卡片可下钻 · 读源 43191</span>
-            <a
-              href="http://localhost:43191/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1 transition-colors"
-            >
-              <span>进入知行监造台</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </a>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
-          {telemetry.gates.map((g) => {
-            const targetRoute = GATE_ROUTE_MAP[g.id] || '/overview';
-            return (
-              <div 
-                key={g.id} 
-                role="button"
-                tabIndex={0}
-                onClick={() => navigate(targetRoute)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    navigate(targetRoute);
-                  }
-                }}
-                aria-label={`门禁 ${g.id}: ${g.title}，点击下钻`}
-                className="group bg-slate-900/50 hover:bg-slate-900/90 border border-slate-800/80 hover:border-emerald-500/50 rounded-xl p-3.5 transition-all duration-200 cursor-pointer hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/10 relative overflow-hidden"
-              >
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="font-mono text-xs font-bold text-slate-300 group-hover:text-emerald-400 transition-colors flex items-center gap-1">
-                    {g.id}
-                    <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-emerald-400" />
-                  </span>
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-400">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    {g.verdict}
-                  </span>
-                </div>
-                <div className="text-xs font-medium text-slate-200 truncate group-hover:text-white" title={g.title}>{g.title}</div>
-                <div className="text-[11px] text-slate-400 truncate mt-1" title={g.detail}>{g.detail}</div>
+      {/* 🍱 主战位两栏 Bento Grid (7:5 黄金比例布局) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+        {/* 左主栏 (7 列: 门禁脉冲、业务价值回路、四大业务域) */}
+        <div className="lg:col-span-7 space-y-4">
+          {/* 11 大核心系统门禁矩阵 */}
+          <section className="bg-[#111827]/80 border border-slate-800/80 rounded-xl p-4 backdrop-blur-sm">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-cyan-400" />
+                <h2 className="text-xs font-bold text-slate-300 uppercase tracking-wider font-mono">
+                  11 大宪法级系统门禁矩阵
+                </h2>
               </div>
-            );
-          })}
-        </div>
-      </section>
+              <span className="text-[10px] text-emerald-400 font-mono bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">
+                11/11 PASS
+              </span>
+            </div>
 
-      {/* ⚡ 4 大业务回路实时观测 (支持点击下钻) */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Zap className="w-5 h-5 text-amber-400" />
-          <h2 className="text-lg font-semibold text-white">4 大业务闭环回路实时脉冲</h2>
-          <span className="text-xs text-slate-400 ml-auto">点击回路进入对应领域控制面</span>
-        </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+              {gatesList.map((gate) => {
+                const targetRoute = GATE_ROUTE_MAP[gate.id] || '/panorama';
+                const gateName = (gate as { name?: string }).name || gate.title || '';
+                return (
+                  <button
+                    key={gate.id}
+                    type="button"
+                    onClick={() => navigate(targetRoute)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        navigate(targetRoute);
+                      }
+                    }}
+                    aria-label={`门禁 ${gate.id}: ${gateName}`}
+                    className="p-2.5 rounded-lg bg-[#0b0f19]/70 hover:bg-slate-900 border border-slate-800 hover:border-cyan-500/40 text-left transition-all group flex flex-col justify-between"
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-bold font-mono text-cyan-300 group-hover:text-cyan-200">
+                        {gate.id}
+                      </span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    </div>
+                    <div className="text-[11px] font-medium text-slate-300 truncate" title={gateName}>
+                      {gateName}
+                    </div>
+                    <div className="text-[10px] text-slate-500 font-mono mt-1">
+                      {gate.verdict}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {telemetry.lastPulse?.circuit_pulses.map((cp, idx) => {
-            const targetRoute = LOOP_ROUTE_MAP[cp.loop] || '/bcos';
-            return (
-              <div 
-                key={idx} 
-                role="button"
-                tabIndex={0}
-                onClick={() => navigate(targetRoute)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    navigate(targetRoute);
-                  }
-                }}
-                aria-label={`业务回路 ${cp.loop}，点击下钻`}
-                className="group bg-slate-900/50 hover:bg-slate-900/90 border border-slate-800/80 hover:border-blue-500/50 rounded-xl p-4 flex flex-col justify-between transition-all duration-200 cursor-pointer hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/10"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-mono text-slate-400 uppercase group-hover:text-blue-300 transition-colors flex items-center gap-1">
-                      {cp.loop.replace('_', ' ')}
-                      <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-blue-400" />
-                    </span>
-                    <span className="text-xs px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono">
-                      {cp.status}
-                    </span>
-                  </div>
-                  <div className="text-sm font-semibold text-slate-100">
-                    {cp.adherence ? `遵从度: ${cp.adherence}` : cp.compliance ? `合规率: ${cp.compliance}` : cp.rules ? `规约: ${cp.rules}` : `模式: ${cp.mode}`}
-                  </div>
-                </div>
-                <div className="text-[11px] text-slate-400 mt-2 flex items-center justify-between">
-                  <span>周期 #{telemetry.lastPulse?.cycle || 1} · 脉冲正常</span>
-                  <span className="text-[10px] text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">进入回路 →</span>
-                </div>
+          {/* 4 大业务价值回路态势 */}
+          <section className="bg-[#111827]/80 border border-slate-800/80 rounded-xl p-4 backdrop-blur-sm">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Zap className="w-4 h-4 text-amber-400" />
+                <h2 className="text-xs font-bold text-slate-300 uppercase tracking-wider font-mono">
+                  业务与治理四阶闭环回路
+                </h2>
               </div>
-            );
-          })}
-        </div>
-      </section>
+              <span className="text-[10px] text-slate-500 font-mono">74s 脉冲同步</span>
+            </div>
 
-      {/* 🤖 常驻 Agent 机器权威信封与 Next Actions (Agent Brief & Action Stream) */}
-      <section className="space-y-4 pt-4 border-t border-slate-800/80">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Bot className="w-5 h-5 text-indigo-400" />
-            <h2 className="text-lg font-semibold text-white">Agent 机器权威与推荐行动 (Agent Brief)</h2>
-          </div>
-          <span className="text-xs px-2.5 py-1 rounded-full bg-indigo-950/70 border border-indigo-500/30 text-indigo-300 font-mono">
-            SSOT: runtime/dashboard/agent-brief.json
-          </span>
+            <div className="grid grid-cols-2 gap-2.5">
+              {circuitPulses.map((cp) => {
+                const targetRoute = LOOP_ROUTE_MAP[cp.loop] || '/panorama';
+                return (
+                  <button
+                    key={cp.loop}
+                    type="button"
+                    onClick={() => navigate(targetRoute)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        navigate(targetRoute);
+                      }
+                    }}
+                    aria-label={`业务回路 ${cp.loop}`}
+                    className="p-3 rounded-lg bg-[#0b0f19]/70 hover:bg-slate-900 border border-slate-800 hover:border-amber-500/40 text-left transition-all group"
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-mono font-bold text-slate-300 group-hover:text-amber-300 capitalize">
+                        {cp.loop.replace('_', ' ')}
+                      </span>
+                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20 font-mono">
+                        {cp.status}
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-slate-400">
+                      {cp.adherence ? `遵从度: ${cp.adherence}` : cp.compliance ? `合规率: ${cp.compliance}` : `模式: ${cp.mode}`}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* 四大主权业务域快速直达 */}
+          <section className="bg-[#111827]/80 border border-slate-800/80 rounded-xl p-4 backdrop-blur-sm">
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider font-mono mb-3">
+              主权座舱四域核心直达
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <button 
+                type="button"
+                onClick={() => navigate('/overview')}
+                aria-label="态势感知"
+                className="p-3 rounded-lg bg-[#0b0f19]/70 hover:bg-slate-900 border border-slate-800 hover:border-blue-500/50 text-left transition-all"
+              >
+                <Layers className="w-4 h-4 text-blue-400 mb-1.5" />
+                <div className="text-xs font-bold text-white">态势感知</div>
+                <p className="text-[10px] text-slate-500 mt-0.5 truncate">全景拓扑与指标</p>
+              </button>
+
+              <button 
+                type="button"
+                onClick={() => navigate('/compute')}
+                aria-label="主权算力"
+                className="p-3 rounded-lg bg-[#0b0f19]/70 hover:bg-slate-900 border border-slate-800 hover:border-indigo-500/50 text-left transition-all"
+              >
+                <Cpu className="w-4 h-4 text-indigo-400 mb-1.5" />
+                <div className="text-xs font-bold text-white">主权算力</div>
+                <p className="text-[10px] text-slate-500 mt-0.5 truncate">AetherForge 显存</p>
+              </button>
+
+              <button 
+                type="button"
+                onClick={() => navigate('/scenes')}
+                aria-label="业务闭环"
+                className="p-3 rounded-lg bg-[#0b0f19]/70 hover:bg-slate-900 border border-slate-800 hover:border-emerald-500/50 text-left transition-all"
+              >
+                <Sparkles className="w-4 h-4 text-emerald-400 mb-1.5" />
+                <div className="text-xs font-bold text-white">业务闭环</div>
+                <p className="text-[10px] text-slate-500 mt-0.5 truncate">5 域场景卡</p>
+              </button>
+
+              <button 
+                type="button"
+                onClick={() => navigate('/governance-domain')}
+                aria-label="治理与合规"
+                className="p-3 rounded-lg bg-[#0b0f19]/70 hover:bg-slate-900 border border-slate-800 hover:border-amber-500/50 text-left transition-all"
+              >
+                <Database className="w-4 h-4 text-amber-400 mb-1.5" />
+                <div className="text-xs font-bold text-white">治理与合规</div>
+                <p className="text-[10px] text-slate-500 mt-0.5 truncate">GaC 门禁与契约</p>
+              </button>
+            </div>
+          </section>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Authority Readiness Card */}
-          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-3">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-              机器准入与价值就绪
-            </span>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs py-2 px-3 rounded-lg bg-slate-950/60 border border-slate-800">
-                <span className="text-slate-400">Claims 激活准入:</span>
-                <span className="font-mono font-bold text-emerald-400">
+        {/* 右主栏 (5 列: Agent Brief 机器权威、推荐行动、深度遥测概览) */}
+        <div className="lg:col-span-5 space-y-4">
+          {/* Agent Brief 机器权威面板 */}
+          <section className="bg-[#111827]/80 border border-slate-800/80 rounded-xl p-4 backdrop-blur-sm space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+              <div className="flex items-center gap-2">
+                <Bot className="w-4 h-4 text-indigo-400" />
+                <h2 className="text-xs font-bold text-slate-300 uppercase tracking-wider font-mono">
+                  Agent Brief 机器权威信封
+                </h2>
+              </div>
+              <span className="text-[10px] text-slate-500 font-mono">
+                agent-brief.json
+              </span>
+            </div>
+
+            {/* Claims 准入与价值就绪 */}
+            <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+              <div className="p-2.5 rounded-lg bg-[#0b0f19]/70 border border-slate-800">
+                <span className="text-[10px] text-slate-500 block mb-0.5">Claims 激活准入</span>
+                <span className="font-bold text-emerald-400 text-xs">
                   {agentVis?.claims_activation_readiness?.readiness ?? 'AUTHORIZED_CANONICAL'}
                 </span>
               </div>
-              <div className="flex items-center justify-between text-xs py-2 px-3 rounded-lg bg-slate-950/60 border border-slate-800">
-                <span className="text-slate-400">价值凭证状态:</span>
-                <span className="font-mono font-bold text-cyan-400">
+              <div className="p-2.5 rounded-lg bg-[#0b0f19]/70 border border-slate-800">
+                <span className="text-[10px] text-slate-500 block mb-0.5">价值凭证状态</span>
+                <span className="font-bold text-cyan-400 text-xs">
                   {agentVis?.value_proof_readiness?.status ?? 'VERIFIED'}
                 </span>
               </div>
             </div>
-          </div>
 
-          {/* Next Actions Card */}
-          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-3">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block flex items-center justify-between">
-              <span>推荐下一步行动 (Next Actions)</span>
-              <Compass className="w-3.5 h-3.5 text-cyan-400" />
-            </span>
-            <div className="space-y-2">
-              {agentVis?.next_actions && agentVis.next_actions.length > 0 ? (
-                agentVis.next_actions.map((act) => (
-                  <div
-                    key={act.id}
-                    className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800 text-xs flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="px-1.5 py-0.5 rounded bg-indigo-950 text-indigo-300 font-mono text-[10px] border border-indigo-800">
-                        {act.priority || 'P1'}
-                      </span>
-                      <span className="font-medium text-slate-200 truncate max-w-[180px]">
-                        {act.title}
+            {/* Next Actions */}
+            <div>
+              <span className="text-[11px] font-semibold text-slate-400 mb-2 flex items-center justify-between">
+                <span>推荐下一步行动 (Next Actions)</span>
+                <Compass className="w-3.5 h-3.5 text-cyan-400" />
+              </span>
+              <div className="space-y-1.5">
+                {agentVis?.next_actions && agentVis.next_actions.length > 0 ? (
+                  agentVis.next_actions.map((act) => (
+                    <div
+                      key={act.id}
+                      className="p-2 rounded-lg bg-[#0b0f19]/70 border border-slate-800 text-xs flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-2 truncate">
+                        <span className="px-1.5 py-0.2 rounded bg-indigo-950 text-indigo-300 font-mono text-[10px] border border-indigo-800">
+                          {act.priority || 'P1'}
+                        </span>
+                        <span className="font-medium text-slate-200 truncate">
+                          {act.title}
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-slate-500 font-mono flex-shrink-0 ml-2">{act.id}</span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-xs text-slate-500 text-center py-2">无挂起行动</div>
+                )}
+              </div>
+            </div>
+
+            {/* Unfinished Objectives */}
+            <div>
+              <span className="text-[11px] font-semibold text-slate-400 mb-2 flex items-center justify-between">
+                <span>进行中目标 (Unfinished BETs)</span>
+                <Clock className="w-3.5 h-3.5 text-amber-400" />
+              </span>
+              <div className="space-y-1.5">
+                {agentVis?.unfinished_objectives && agentVis.unfinished_objectives.length > 0 ? (
+                  agentVis.unfinished_objectives.map((obj) => (
+                    <div
+                      key={obj.id}
+                      className="p-2 rounded-lg bg-[#0b0f19]/70 border border-slate-800 text-xs flex items-center justify-between"
+                    >
+                      <div className="truncate">
+                        <span className="font-bold text-amber-300 font-mono text-[11px]">
+                          {obj.id}
+                        </span>
+                        <span className="text-slate-400 text-[10px] truncate block">
+                          {obj.title || 'SSOT 治理目标交付中'}
+                        </span>
+                      </div>
+                      <span className="px-1.5 py-0.2 rounded text-[10px] font-mono bg-amber-950/60 text-amber-300 border border-amber-800/60 flex-shrink-0 ml-2">
+                        {obj.status || 'DOING'}
                       </span>
                     </div>
-                    <span className="text-[10px] text-slate-500 font-mono">{act.id}</span>
-                  </div>
-                ))
-              ) : (
-                <div className="text-xs text-slate-500 text-center py-4">无挂起行动</div>
-              )}
+                  ))
+                ) : (
+                  <div className="text-xs text-slate-500 text-center py-2">全量目标已交付</div>
+                )}
+              </div>
             </div>
-          </div>
+          </section>
 
-          {/* Unfinished Objectives Card */}
-          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-3">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block flex items-center justify-between">
-              <span>进行中目标 (Unfinished BETs)</span>
-              <Clock className="w-3.5 h-3.5 text-amber-400" />
-            </span>
-            <div className="space-y-2">
-              {agentVis?.unfinished_objectives && agentVis.unfinished_objectives.length > 0 ? (
-                agentVis.unfinished_objectives.map((obj) => (
-                  <div
-                    key={obj.id}
-                    className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800 text-xs flex items-center justify-between"
-                  >
-                    <div className="truncate max-w-[200px]">
-                      <span className="font-bold text-amber-300 font-mono block text-[11px]">
-                        {obj.id}
-                      </span>
-                      <span className="text-slate-400 text-[10px] truncate block">
-                        {obj.title || 'SSOT 治理目标交付中'}
-                      </span>
-                    </div>
-                    <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-amber-950/60 text-amber-300 border border-amber-800/60">
-                      {obj.status || 'DOING'}
-                    </span>
-                  </div>
-                ))
-              ) : (
-                <div className="text-xs text-slate-500 text-center py-4">全量目标已交付</div>
-              )}
+          {/* 深度遥测速览卡片 (直通抽屉) */}
+          <section className="bg-[#111827]/80 border border-slate-800/80 rounded-xl p-4 backdrop-blur-sm space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+              <div className="flex items-center gap-2">
+                <Database className="w-4 h-4 text-cyan-400" />
+                <h2 className="text-xs font-bold text-slate-300 uppercase tracking-wider font-mono">
+                  系统底座与知识健康
+                </h2>
+              </div>
+              <span className="text-[10px] text-cyan-400 font-mono">按 D 键展开抽屉</span>
             </div>
-          </div>
+
+            <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+              <div className="p-2.5 rounded-lg bg-[#0b0f19]/70 border border-slate-800">
+                <span className="text-[10px] text-slate-500 block mb-0.5">知识新鲜度</span>
+                <span className="font-bold text-emerald-400 text-sm">
+                  {panoramaData?.knowledge_health?.freshness_pct ?? 93}%
+                </span>
+                <span className="text-[10px] text-slate-500 block">342 篇总文档</span>
+              </div>
+              <div className="p-2.5 rounded-lg bg-[#0b0f19]/70 border border-slate-800">
+                <span className="text-[10px] text-slate-500 block mb-0.5">经验图谱连通性</span>
+                <span className="font-bold text-cyan-400 text-sm">
+                  {panoramaData?.experience_graph?.connectivity_pct ?? 76.5}%
+                </span>
+                <span className="text-[10px] text-slate-500 block">412 内部连接</span>
+              </div>
+            </div>
+
+            <div className="p-2.5 rounded-lg bg-[#0b0f19]/70 border border-slate-800 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                <span className="text-slate-300">8 个 Launchd 守护进程运行正常</span>
+              </div>
+              <span className="text-[10px] font-mono text-slate-500">零僵尸锁</span>
+            </div>
+          </section>
         </div>
-      </section>
+      </div>
 
-      {/* 🧭 四大主权业务域快速直达 (规范化 useNavigate) */}
-      <section className="space-y-4 pt-4 border-t border-slate-800/80">
-
-        <h2 className="text-lg font-semibold text-white">主权座舱四域核心</h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <button 
-            type="button"
-            onClick={() => navigate('/overview')}
-            className="group p-4 rounded-xl bg-slate-900/40 hover:bg-slate-900/80 border border-slate-800 hover:border-blue-500/50 transition-all text-left cursor-pointer hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/10"
-          >
-            <div className="flex items-center justify-between text-blue-400 mb-2">
-              <Layers className="w-5 h-5" />
-              <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-            </div>
-            <div className="text-sm font-semibold text-white">态势感知</div>
-            <p className="text-xs text-slate-400 mt-1">443 台账规划、全局拓扑与可观测性</p>
-          </button>
-
-          <button 
-            type="button"
-            onClick={() => navigate('/compute')}
-            className="group p-4 rounded-xl bg-slate-900/40 hover:bg-slate-900/80 border border-slate-800 hover:border-indigo-500/50 transition-all text-left cursor-pointer hover:-translate-y-0.5 hover:shadow-lg hover:shadow-indigo-500/10"
-          >
-            <div className="flex items-center justify-between text-indigo-400 mb-2">
-              <Cpu className="w-5 h-5" />
-              <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-            </div>
-            <div className="text-sm font-semibold text-white">主权算力</div>
-            <p className="text-xs text-slate-400 mt-1">AetherForge 显存、Swarm 蜂群与节点拓扑</p>
-          </button>
-
-          <button 
-            type="button"
-            onClick={() => navigate('/scenes')}
-            className="group p-4 rounded-xl bg-slate-900/40 hover:bg-slate-900/80 border border-slate-800 hover:border-emerald-500/50 transition-all text-left cursor-pointer hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/10"
-          >
-            <div className="flex items-center justify-between text-emerald-400 mb-2">
-              <Sparkles className="w-5 h-5" />
-              <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-            </div>
-            <div className="text-sm font-semibold text-white">业务闭环</div>
-            <p className="text-xs text-slate-400 mt-1">5 大业务域场景卡、5 级生命周期与自适应学习</p>
-          </button>
-
-          <button 
-            type="button"
-            onClick={() => navigate('/governance-domain')}
-            className="group p-4 rounded-xl bg-slate-900/40 hover:bg-slate-900/80 border border-slate-800 hover:border-amber-500/50 transition-all text-left cursor-pointer hover:-translate-y-0.5 hover:shadow-lg hover:shadow-amber-500/10"
-          >
-            <div className="flex items-center justify-between text-amber-400 mb-2">
-              <Database className="w-5 h-5" />
-              <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-            </div>
-            <div className="text-sm font-semibold text-white">治理与合规</div>
-            <p className="text-xs text-slate-400 mt-1">GaC 门禁规则、MOF 规约与 Kairon/GBrain 架构</p>
-          </button>
-        </div>
-      </section>
-
-      {/* In-place Decision Drawer */}
+      {/* 原位主权决策裁决抽屉 */}
       <InPlaceDecisionDrawer 
         isOpen={isDecisionDrawerOpen}
         onClose={() => setIsDecisionDrawerOpen(false)}

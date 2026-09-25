@@ -249,7 +249,7 @@ export function AppLayout() {
         <div className="content-area">
           {activeTab !== 'Home' && activeTab !== 'Panorama' && <Breadcrumb items={breadcrumbItems} />}
 
-          <div key={activeTab} className="hero-section animate-fade-in">
+          <div key={activeTab} className={activeTab === 'Panorama' ? 'sr-only' : 'hero-section animate-fade-in'}>
             <h1 className="hero-title">{hero.title}</h1>
             <p className="hero-subtitle">{hero.subtitle}</p>
           </div>

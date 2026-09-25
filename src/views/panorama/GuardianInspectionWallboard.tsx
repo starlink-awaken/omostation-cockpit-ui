@@ -10,13 +10,10 @@ import {
   Zap,
   Server,
   Layers,
-  HeartHandshake,
   Clock,
-  ChevronRight,
   Filter,
 } from 'lucide-react';
 import { useGuardianStatus } from '../../api/hooks/useGovernancePanorama';
-import type { GuardianPulse, SubsystemHealth, GovernanceAlert } from '../../api/types/panorama';
 import { SkeletonCard } from '../../components/ui/Skeleton';
 import { useToast } from '../../components/common/Toast';
 
@@ -78,31 +75,31 @@ export function GuardianInspectionWallboard() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 font-sans text-slate-100">
       {/* Top Banner & Control */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 p-4 rounded-xl bg-[#111827]/80 border border-slate-800/80 backdrop-blur-md">
         <div>
-          <div className="flex items-center gap-3">
-            <h2 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-              <Radio className="w-6 h-6 text-emerald-400 animate-pulse" />
+          <div className="flex items-center gap-2.5">
+            <Radio className="w-5 h-5 text-emerald-400 animate-pulse" />
+            <h2 className="text-base font-bold tracking-tight text-white flex items-center gap-2">
               74s 哨兵常态守护与健康大屏
             </h2>
             {isFallback && (
-              <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono">
                 静态容灾快照
               </span>
             )}
           </div>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-0.5 text-xs text-slate-400">
             常态化驻留守护核心回路，提供秒级心跳探针、故障自动熔断与自愈流水线
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-slate-800/70 border border-slate-700/60 px-3.5 py-1.5 rounded-xl">
-            <Clock className="w-4 h-4 text-cyan-400" />
+        <div className="flex items-center gap-2.5 self-start lg:self-center">
+          <div className="flex items-center gap-2 bg-[#0b0f19]/80 border border-slate-800 px-3 py-1 rounded-lg">
+            <Clock className="w-3.5 h-3.5 text-cyan-400" />
             <span className="text-xs text-slate-300">
-              下轮巡检倒计时: <strong className="text-cyan-300 font-mono text-sm">{cycleTime}s</strong>
+              下轮巡检倒计时: <strong className="text-cyan-300 font-mono text-xs">{cycleTime}s</strong>
             </span>
           </div>
 
@@ -111,7 +108,7 @@ export function GuardianInspectionWallboard() {
             onClick={handleTriggerInspection}
             disabled={isRefreshing || isLoading}
             aria-label="触发全量巡检"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-50 transition-colors shadow-sm shadow-emerald-950"
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-50 transition-colors shadow-sm cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
             {isRefreshing ? '巡查中...' : '立即全局巡检'}
@@ -121,15 +118,15 @@ export function GuardianInspectionWallboard() {
 
       {/* Hero Stats Matrix */}
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4" role="status" aria-label="Loading guardian stats...">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3" role="status" aria-label="Loading guardian stats...">
           {Array.from({ length: 4 }).map((_, i) => (
             <SkeletonCard key={i} />
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {/* Health Score */}
-          <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-900/90 to-slate-950/80 border border-slate-800/80 flex flex-col justify-between backdrop-blur-md">
+          <div className="p-4 rounded-xl bg-gradient-to-br from-[#111827]/90 to-slate-950/80 border border-slate-800/80 flex flex-col justify-between backdrop-blur-md">
             <div className="flex items-center justify-between text-xs text-slate-400">
               <span>体系综合健康指数</span>
               <Activity className="w-4 h-4 text-emerald-400" />
@@ -149,52 +146,52 @@ export function GuardianInspectionWallboard() {
           </div>
 
           {/* Pulse Cadence */}
-          <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800/80 flex flex-col justify-between backdrop-blur-md">
+          <div className="p-4 rounded-xl bg-[#111827]/80 border border-slate-800/80 flex flex-col justify-between backdrop-blur-md">
             <div className="flex items-center justify-between text-xs text-slate-400">
               <span>哨兵扫描心跳周期</span>
               <Radio className="w-4 h-4 text-cyan-400" />
             </div>
-            <div className="mt-3 flex items-baseline gap-2">
-              <span className="text-3xl font-extrabold tracking-tight text-white font-mono">
+            <div className="mt-2.5 flex items-baseline gap-2">
+              <span className="text-2xl font-black tracking-tight text-white font-mono">
                 {guardian?.pulseIntervalSec ?? 74}
               </span>
-              <span className="text-xs text-slate-400">秒 / 循环</span>
+              <span className="text-xs text-slate-400 font-mono">秒 / 循环</span>
             </div>
-            <div className="mt-3 text-[11px] text-slate-500">
+            <div className="mt-2 text-[11px] text-slate-500">
               精准对齐 74s 常态守护心跳
             </div>
           </div>
 
           {/* Subsystems Count */}
-          <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800/80 flex flex-col justify-between backdrop-blur-md">
+          <div className="p-4 rounded-xl bg-[#111827]/80 border border-slate-800/80 flex flex-col justify-between backdrop-blur-md">
             <div className="flex items-center justify-between text-xs text-slate-400">
               <span>已纳管子系统</span>
               <Layers className="w-4 h-4 text-indigo-400" />
             </div>
-            <div className="mt-3 flex items-baseline gap-2">
-              <span className="text-3xl font-extrabold tracking-tight text-white font-mono">
+            <div className="mt-2.5 flex items-baseline gap-2">
+              <span className="text-2xl font-black tracking-tight text-white font-mono">
                 {subsystems.length}
               </span>
-              <span className="text-xs text-indigo-400">4/4 在线</span>
+              <span className="text-xs text-indigo-400 font-mono">4/4 在线</span>
             </div>
-            <div className="mt-3 text-[11px] text-slate-500">
+            <div className="mt-2 text-[11px] text-slate-500">
               守卫、台账、BCOS、网格全量就绪
             </div>
           </div>
 
           {/* Active Alerts */}
-          <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800/80 flex flex-col justify-between backdrop-blur-md">
+          <div className="p-4 rounded-xl bg-[#111827]/80 border border-slate-800/80 flex flex-col justify-between backdrop-blur-md">
             <div className="flex items-center justify-between text-xs text-slate-400">
               <span>实时未决告警</span>
               <AlertTriangle className="w-4 h-4 text-amber-400" />
             </div>
-            <div className="mt-3 flex items-baseline gap-2">
-              <span className="text-3xl font-extrabold tracking-tight text-white font-mono">
+            <div className="mt-2.5 flex items-baseline gap-2">
+              <span className="text-2xl font-black tracking-tight text-white font-mono">
                 {alerts.length}
               </span>
               <span className="text-xs text-emerald-400 font-medium">无阻断级风险</span>
             </div>
-            <div className="mt-3 text-[11px] text-slate-500">
+            <div className="mt-2 text-[11px] text-slate-500">
               所有已知债均处于熔断可控态
             </div>
           </div>

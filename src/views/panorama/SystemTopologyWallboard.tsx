@@ -3,19 +3,15 @@ import {
   Compass,
   Cpu,
   Layers,
-  Sparkles,
   ShieldCheck,
   RefreshCw,
-  GitBranch,
-  Network,
   Database,
-  Terminal,
   Workflow,
   CheckCircle2,
   Box,
 } from 'lucide-react';
 import { useSystemTopology } from '../../api/hooks/useGovernancePanorama';
-import type { DfsqLayer, TopologyNode } from '../../api/types/panorama';
+import type { TopologyNode } from '../../api/types/panorama';
 import { SkeletonCard } from '../../components/ui/Skeleton';
 import { useToast } from '../../components/common/Toast';
 
@@ -93,33 +89,33 @@ export function SystemTopologyWallboard() {
   const activeSlot = slots.find((s) => s.status === 'ACTIVE') ?? slots[0];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 font-sans text-slate-100">
       {/* Top Banner & Control */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 p-4 rounded-xl bg-[#111827]/80 border border-slate-800/80 backdrop-blur-md">
         <div>
-          <div className="flex items-center gap-3">
-            <h2 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-              <Layers className="w-6 h-6 text-indigo-400" />
+          <div className="flex items-center gap-2.5">
+            <Layers className="w-5 h-5 text-indigo-400" />
+            <h2 className="text-base font-bold tracking-tight text-white flex items-center gap-2">
               道法术器架构拓扑中枢
             </h2>
             {isFallback && (
-              <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono">
                 静态容灾快照
               </span>
             )}
           </div>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-0.5 text-xs text-slate-400">
             DFSQ/v1 经典分层与主权计算图谱，唯一合规调度槽位驱动全域 Agent 协同
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 self-start lg:self-center">
           <button
             type="button"
             onClick={handleRefresh}
             disabled={isRefreshing || isLoading}
             aria-label="刷新拓扑状态"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white disabled:opacity-50 transition-colors shadow-sm shadow-indigo-950"
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white disabled:opacity-50 transition-colors shadow-sm cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
             {isRefreshing ? '更新中...' : '刷新拓扑'}
@@ -129,7 +125,7 @@ export function SystemTopologyWallboard() {
 
       {/* Active S-Slot Highlight Banner */}
       {activeSlot && (
-        <div className="p-4 rounded-2xl bg-gradient-to-r from-cyan-950/40 via-indigo-950/30 to-slate-900/40 border border-cyan-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 backdrop-blur-md">
+        <div className="p-3.5 rounded-xl bg-gradient-to-r from-cyan-950/40 via-indigo-950/30 to-slate-900/40 border border-cyan-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 backdrop-blur-md">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-xl bg-cyan-950/80 border border-cyan-500/40 text-cyan-300">
               <Box className="w-5 h-5" />

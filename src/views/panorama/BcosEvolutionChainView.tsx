@@ -3,16 +3,12 @@ import {
   Sparkles,
   GitCommit,
   Brain,
-  Zap,
-  Activity,
   RefreshCw,
   Clock,
-  ArrowUpRight,
   TrendingUp,
   BookmarkCheck,
 } from 'lucide-react';
 import { useBcosEvolution } from '../../api/hooks/useGovernancePanorama';
-import type { BcosEvolutionRecord } from '../../api/types/panorama';
 import { SkeletonCard } from '../../components/ui/Skeleton';
 import { useToast } from '../../components/common/Toast';
 
@@ -40,33 +36,33 @@ export function BcosEvolutionChainView() {
   const distillationCount = bcos?.selfDistillationCount ?? 142;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 font-sans text-slate-100">
       {/* Top Banner & Control */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 p-4 rounded-xl bg-[#111827]/80 border border-slate-800/80 backdrop-blur-md">
         <div>
-          <div className="flex items-center gap-3">
-            <h2 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-              <Brain className="w-6 h-6 text-purple-400" />
+          <div className="flex items-center gap-2.5">
+            <Brain className="w-5 h-5 text-purple-400" />
+            <h2 className="text-base font-bold tracking-tight text-white flex items-center gap-2">
               BCOS 主权进化链与学习图谱
             </h2>
             {isFallback && (
-              <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono">
                 静态容灾快照
               </span>
             )}
           </div>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-0.5 text-xs text-slate-400">
             全域知识结晶、MOS 踩坑信念反向萃取与认知操作系统自治自进化轨迹
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 self-start lg:self-center">
           <button
             type="button"
             onClick={handleRefresh}
             disabled={isRefreshing || isLoading}
             aria-label="刷新进化图谱"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-purple-600 hover:bg-purple-500 text-white disabled:opacity-50 transition-colors shadow-sm shadow-purple-950"
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-purple-600 hover:bg-purple-500 text-white disabled:opacity-50 transition-colors shadow-sm cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
             {isRefreshing ? '计算中...' : '刷新进化链'}
@@ -76,26 +72,26 @@ export function BcosEvolutionChainView() {
 
       {/* Metrics Row */}
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4" role="status" aria-label="Loading bcos metrics...">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3" role="status" aria-label="Loading bcos metrics...">
           {Array.from({ length: 3 }).map((_, i) => (
             <SkeletonCard key={i} />
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {/* Current Epoch */}
-          <div className="p-5 rounded-2xl bg-gradient-to-br from-purple-950/40 via-slate-900/80 to-slate-900/90 border border-purple-500/30 flex flex-col justify-between backdrop-blur-md">
+          <div className="p-4 rounded-xl bg-gradient-to-br from-purple-950/40 via-[#111827]/80 to-slate-900/90 border border-purple-500/30 flex flex-col justify-between backdrop-blur-md">
             <div className="flex items-center justify-between text-xs text-purple-300 font-medium">
               <span>当前主权进化世代</span>
               <Sparkles className="w-4 h-4 text-purple-400" />
             </div>
-            <div className="mt-3 flex items-baseline gap-2">
-              <span className="text-3xl font-black tracking-tight text-white font-mono">
+            <div className="mt-2.5 flex items-baseline gap-2">
+              <span className="text-2xl font-black tracking-tight text-white font-mono">
                 Epoch {epoch}
               </span>
               <span className="text-xs text-purple-400 font-medium">当前代</span>
             </div>
-            <div className="mt-3 text-[11px] text-slate-400">
+            <div className="mt-2 text-[11px] text-slate-400">
               知识自净化与行为决策策略已稳固
             </div>
           </div>

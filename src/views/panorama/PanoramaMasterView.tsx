@@ -23,7 +23,6 @@ import PanoramaHeroView from './PanoramaHeroView';
 import { DeepTelemetryDrawer } from './DeepTelemetryDrawer';
 import { useGovernancePanorama } from '../../api/hooks/useGovernancePanorama';
 
-
 export type PanoramaTabId = 'gates' | 'guardian' | 'topology' | 'bcos' | 'macro';
 
 export interface PanoramaTabConfig {
@@ -72,14 +71,12 @@ const INTERACTION_PAUSE_MS = 12000;
 
 export function PanoramaMasterView() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialTab = (searchParams.get('tab') as PanoramaTabId) || 'gates';
-  const [activeTab, setActiveTab] = useState<PanoramaTabId>(initialTab);
+  const activeTab = (searchParams.get('tab') as PanoramaTabId) || 'gates';
   const [isWallboardMode, setIsWallboardMode] = useState<boolean>(false);
   const [isAutoRotate, setIsAutoRotate] = useState<boolean>(false);
   const [isTelemetryDrawerOpen, setIsTelemetryDrawerOpen] = useState<boolean>(false);
   const [isUserInteracting, setIsUserInteracting] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-
 
   const interactionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -95,16 +92,7 @@ export function PanoramaMasterView() {
     }, 2400);
   }, []);
 
-  // Sync tab with URL query parameter
-  useEffect(() => {
-    const tabFromUrl = searchParams.get('tab') as PanoramaTabId;
-    if (tabFromUrl && tabFromUrl !== activeTab) {
-      setActiveTab(tabFromUrl);
-    }
-  }, [searchParams, activeTab]);
-
   const handleTabChange = useCallback((tabId: PanoramaTabId) => {
-    setActiveTab(tabId);
     setSearchParams({ tab: tabId });
   }, [setSearchParams]);
 
@@ -123,17 +111,14 @@ export function PanoramaMasterView() {
     if (!isAutoRotate || isUserInteracting) return;
 
     const timer = setInterval(() => {
-      setActiveTab((current) => {
-        const currentIndex = ROTATION_TABS.indexOf(current);
-        const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % ROTATION_TABS.length : 0;
-        const nextTab = ROTATION_TABS[nextIndex];
-        setSearchParams({ tab: nextTab });
-        return nextTab;
-      });
+      const currentIndex = ROTATION_TABS.indexOf(activeTab);
+      const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % ROTATION_TABS.length : 0;
+      const nextTab = ROTATION_TABS[nextIndex];
+      setSearchParams({ tab: nextTab });
     }, ROTATION_INTERVAL_MS);
 
     return () => clearInterval(timer);
-  }, [isAutoRotate, isUserInteracting, setSearchParams]);
+  }, [isAutoRotate, isUserInteracting, activeTab, setSearchParams]);
 
   // Keyboard shortcut listener
   useEffect(() => {
@@ -171,7 +156,6 @@ export function PanoramaMasterView() {
         });
         return;
       }
-
 
       // Number keys 1-5: Direct tab switch
       const tabKeys: Record<string, PanoramaTabId> = {
@@ -212,49 +196,104 @@ export function PanoramaMasterView() {
       onClick={registerUserInteraction}
       className={`min-h-screen text-slate-100 transition-all ${
         isWallboardMode
-          ? 'fixed inset-0 z-50 overflow-y-auto bg-slate-950 p-6 md:p-10'
-          : 'space-y-6'
+          ? 'fixed inset-0 z-50 overflow-y-auto bg-[#0b0f19] p-4 md:p-6'
+          : 'space-y-4'
       }`}
     >
-      {/* Top Cockpit Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 rounded-2xl bg-gradient-to-r from-slate-900/90 via-slate-900/80 to-indigo-950/40 border border-slate-800/80 shadow-2xl backdrop-blur-xl">
-        <div className="flex items-center gap-3.5">
-          <div className="p-3 rounded-2xl bg-gradient-to-br from-cyan-950 to-indigo-950 border border-cyan-500/40 text-cyan-300 shadow-md">
-            <Sparkles className="w-6 h-6 animate-pulse" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-xl md:text-2xl font-black tracking-tight text-white flex items-center gap-2">
-                织星体系全景控制舱
-              </h1>
-              {isFallback ? (
-                <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono">
-                  静态容灾双模态
-                </span>
-              ) : (
-                <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
-                  LIVE 实时遥测态
-                </span>
-              )}
+      {/* 👑 Sovereign Integrated Master Dock (合并型极简高精浮动控制栏) */}
+      <header
+        role="navigation"
+        aria-label="主权全景中枢导引栏"
+        className="sticky top-0 z-40 flex flex-wrap items-center justify-between gap-3 px-4 py-2 rounded-xl bg-[#111827]/90 border border-slate-800/80 backdrop-blur-xl shadow-lg shadow-black/40"
+      >
+        {/* 左侧：微型品牌与全局态势感知 */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 pr-3 border-r border-slate-800/80">
+            <div className="w-7 h-7 rounded-lg bg-indigo-950/80 border border-indigo-500/40 flex items-center justify-center text-indigo-300 shadow-inner">
+              <Sparkles className="w-3.5 h-3.5 animate-pulse" />
             </div>
-            <p className="mt-1 text-xs md:text-sm text-slate-400">
-              单一人类总控入口 · 门禁矩阵 · 74s 哨兵巡航 · 道法术器 DFSQ 拓扑 · BCOS 认知进化
-            </p>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-black tracking-wide text-white uppercase font-mono">
+                  织星体系全景控制舱
+                </span>
+                {isFallback ? (
+                  <span className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono">
+                    静态容灾
+                  </span>
+                ) : (
+                  <span className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
+                    LIVE
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* 姿态微卡 */}
+          <div className="hidden sm:flex items-center gap-2 text-xs font-mono bg-[#0b0f19]/80 px-2.5 py-1 rounded-lg border border-slate-800/80">
+            <Activity className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="text-slate-400 text-[11px]">健康度:</span>
+            <strong className="text-emerald-300">{healthScore.toFixed(1)}%</strong>
+            <span className="text-slate-700">|</span>
+            <span className="text-slate-400 text-[11px]">门禁:</span>
+            <strong className="text-cyan-300">{passedGates}/{totalGates}</strong>
           </div>
         </div>
 
-        {/* Quick Indicators, Auto-rotate & Wallboard Toggle */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2 bg-slate-950/60 px-3 py-1.5 rounded-xl border border-slate-800/80 text-xs font-mono">
-            <Activity className="w-4 h-4 text-emerald-400" />
-            <span className="text-slate-400">健康度:</span>
-            <strong className="text-emerald-300">{healthScore.toFixed(1)}%</strong>
-            <span className="text-slate-600">|</span>
-            <span className="text-slate-400">门禁:</span>
-            <strong className="text-cyan-300">{passedGates}/{totalGates}</strong>
-          </div>
+        {/* 中间：视界切换 Segmented Controls (5大核心视界) */}
+        <div
+          role="tablist"
+          aria-label="治理全景视图选择"
+          className="flex items-center gap-1 p-1 rounded-xl bg-[#0b0f19]/90 border border-slate-800/80 overflow-x-auto"
+        >
+          {TABS.map((tab, idx) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                id={`tab-${tab.id}`}
+                role="tab"
+                aria-selected={isActive}
+                aria-controls={`tabpanel-${tab.id}`}
+                tabIndex={isActive ? 0 : -1}
+                type="button"
+                onClick={() => handleTabChange(tab.id)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
+                  isActive
+                    ? 'bg-gradient-to-r from-indigo-900/60 to-blue-900/60 text-cyan-300 border border-cyan-500/40 shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900 border border-transparent'
+                }`}
+              >
+                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-cyan-300' : 'text-slate-500'}`} />
+                <span>{tab.label}</span>
+                <span className="text-[10px] opacity-40 font-mono">[{idx + 1}]</span>
+              </button>
+            );
+          })}
+        </div>
 
-          {/* Auto Rotation Button */}
+        {/* 右侧：紧凑工具操作组 */}
+        <div className="flex items-center gap-2">
+          {/* 深度遥测抽屉按钮 */}
+          <button
+            type="button"
+            onClick={() => setIsTelemetryDrawerOpen((prev) => !prev)}
+            aria-label="切换深度遥测抽屉"
+            aria-expanded={isTelemetryDrawerOpen}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              isTelemetryDrawerOpen
+                ? 'bg-cyan-600/30 text-cyan-300 border border-cyan-500/40 shadow-sm'
+                : 'bg-slate-900/80 hover:bg-slate-800 text-slate-300 border border-slate-800'
+            }`}
+          >
+            <Database className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="hidden sm:inline">深度遥测</span>
+            <span className="text-[10px] font-mono text-slate-400">[D]</span>
+          </button>
+
+          {/* 自动轮播按钮 */}
           <button
             type="button"
             onClick={() => {
@@ -266,12 +305,12 @@ export function PanoramaMasterView() {
             }}
             aria-label={isAutoRotate ? '暂停大屏轮播' : '开启大屏轮播'}
             aria-pressed={isAutoRotate}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
               isAutoRotate
                 ? isUserInteracting
                   ? 'bg-amber-600/30 text-amber-300 border border-amber-500/40'
-                  : 'bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 shadow-sm shadow-emerald-500/20'
-                : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700'
+                  : 'bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 shadow-sm'
+                : 'bg-slate-900/80 hover:bg-slate-800 text-slate-300 border border-slate-800'
             }`}
           >
             {isAutoRotate ? (
@@ -287,26 +326,7 @@ export function PanoramaMasterView() {
             )}
           </button>
 
-          {/* Deep Telemetry Drawer Button */}
-          <button
-            type="button"
-            onClick={() => {
-              setIsTelemetryDrawerOpen((prev) => !prev);
-            }}
-            aria-label="切换深度遥测抽屉"
-            aria-expanded={isTelemetryDrawerOpen}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-              isTelemetryDrawerOpen
-                ? 'bg-cyan-600/30 text-cyan-300 border border-cyan-500/40 shadow-sm shadow-cyan-500/20'
-                : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700'
-            }`}
-          >
-            <Database className="w-3.5 h-3.5 text-cyan-400" />
-            <span>深度遥测 (按 D)</span>
-          </button>
-
-          {/* Wallboard Toggle Button */}
-
+          {/* 沉浸大屏壁挂模式按钮 */}
           <button
             type="button"
             onClick={() => {
@@ -318,72 +338,40 @@ export function PanoramaMasterView() {
             }}
             aria-label="切换沉浸式大屏模式"
             aria-pressed={isWallboardMode}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
               isWallboardMode
-                ? 'bg-amber-600 hover:bg-amber-500 text-white shadow-amber-950/50'
-                : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
+                ? 'bg-amber-600 hover:bg-amber-500 text-white'
+                : 'bg-slate-900/80 hover:bg-slate-800 text-slate-300 border border-slate-800'
             }`}
           >
             {isWallboardMode ? (
               <>
-                <Minimize2 className="w-4 h-4" />
+                <Minimize2 className="w-3.5 h-3.5" />
                 <span>退出大屏 (按 F)</span>
               </>
             ) : (
               <>
-                <Maximize2 className="w-4 h-4" />
+                <Maximize2 className="w-3.5 h-3.5" />
                 <span>沉浸大屏 (按 F)</span>
               </>
             )}
           </button>
         </div>
-      </div>
+      </header>
 
-      {/* Main Tab Navigation */}
-      <div
-        role="tablist"
-        aria-label="治理全景视图选择"
-        className="flex items-center justify-between gap-2 p-1.5 rounded-2xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-md overflow-x-auto"
-      >
-        <div className="flex items-center gap-2">
-          {TABS.map((tab, idx) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                id={`tab-${tab.id}`}
-                role="tab"
-                aria-selected={isActive}
-                aria-controls={`tabpanel-${tab.id}`}
-                tabIndex={isActive ? 0 : -1}
-                type="button"
-                onClick={() => handleTabChange(tab.id)}
-                className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
-                  isActive
-                    ? 'bg-gradient-to-r from-cyan-950/80 to-indigo-950/80 text-cyan-300 border border-cyan-500/40 shadow-inner'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 border border-transparent'
-                }`}
-              >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-cyan-300' : 'text-slate-500'}`} />
-                <span>{tab.label}</span>
-                <span className="text-[10px] opacity-40 font-mono">[{idx + 1}]</span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Rotation indicator info */}
-        {isAutoRotate && (
-          <div className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-950/40 border border-emerald-500/30 text-[11px] text-emerald-300 font-mono">
+      {/* Rotation indicator info bar (when active) */}
+      {isAutoRotate && (
+        <div className="flex items-center justify-between px-3.5 py-1.5 rounded-lg bg-emerald-950/40 border border-emerald-500/30 text-[11px] text-emerald-300 font-mono">
+          <div className="flex items-center gap-2">
             <Clock className="w-3.5 h-3.5 animate-spin" style={{ animationDuration: '6s' }} />
-            <span>25s 自动轮巡</span>
+            <span>自动巡航模式运行中 · 25 秒自动切换视界 · 移动鼠标静默避让 12 秒</span>
           </div>
-        )}
-      </div>
+          <span className="text-[10px] text-slate-400">当前视界: {TABS.find(t => t.id === activeTab)?.label}</span>
+        </div>
+      )}
 
       {/* Tab Panels */}
-      <div
+      <main
         role="tabpanel"
         id={`tabpanel-${activeTab}`}
         aria-labelledby={`tab-${activeTab}`}
@@ -395,14 +383,14 @@ export function PanoramaMasterView() {
         {activeTab === 'topology' && <SystemTopologyWallboard />}
         {activeTab === 'bcos' && <BcosEvolutionChainView />}
         {activeTab === 'macro' && <PanoramaHeroView />}
-      </div>
+      </main>
 
       {/* Toast Notification */}
       {toastMessage && (
         <div
           role="status"
           aria-live="polite"
-          className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-slate-900/90 text-cyan-300 border border-cyan-500/40 shadow-2xl backdrop-blur-xl text-xs font-semibold animate-fade-in"
+          className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2 rounded-xl bg-[#111827]/95 text-cyan-300 border border-cyan-500/40 shadow-2xl backdrop-blur-xl text-xs font-semibold animate-fade-in"
         >
           <Sparkles className="w-4 h-4 text-cyan-400" />
           <span>{toastMessage}</span>
@@ -417,7 +405,6 @@ export function PanoramaMasterView() {
       />
     </div>
   );
-
 }
 
 export default PanoramaMasterView;
