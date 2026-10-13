@@ -132,7 +132,7 @@ export function SovereignCopilotDrawer({
         role: 'assistant',
         content: `【本地离线推理】针对问题「${textToSend}」：\n- 当前页面 **${
           currentRoute?.label ?? '控制台'
-        }** 处于自治监督态。\n- 底层 43191 守护进程持续巡检中，未发现致命阻断。`,
+        }** 的本地推理服务当前不可用。\n- 本地回答未读取实时运行状态；请以全景页展示的数据来源、新鲜度和告警为准。`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages((prev) => [...prev, assistantMsg]);

@@ -41,9 +41,9 @@ const TABS: PanoramaTabConfig[] = [
   },
   {
     id: 'guardian',
-    label: '74s 哨兵大屏',
+    label: '哨兵观测',
     icon: Radio,
-    description: '持续心跳巡航、健康雷达与自愈流水线',
+    description: '展示 BFF 提供的 Guardian 状态、观测时间和告警证据',
   },
   {
     id: 'topology',
@@ -69,6 +69,12 @@ const ROTATION_TABS: PanoramaTabId[] = ['gates', 'guardian', 'topology', 'bcos']
 const ROTATION_INTERVAL_MS = 25000;
 const INTERACTION_PAUSE_MS = 12000;
 
+function formatSourceAge(sourceAgeMs: number | null | undefined): string {
+  if (sourceAgeMs == null) return '来源时间未知';
+  if (sourceAgeMs < 60_000) return '不足 1 分钟';
+  return `${Math.floor(sourceAgeMs / 60_000)} 分钟`;
+}
+
 export function PanoramaMasterView() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = (searchParams.get('tab') as PanoramaTabId) || 'gates';
@@ -81,7 +87,15 @@ export function PanoramaMasterView() {
   const interactionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const { data, isFallback } = useGovernancePanorama();
+  const {
+    data,
+    isFallback,
+    sourceState,
+    sourceObservedAt,
+    sourceAgeMs,
+    sourceFailure,
+    partialFacets,
+  } = useGovernancePanorama();
 
   // Show a toast message with automatic dismissal
   const showToast = useCallback((msg: string) => {
@@ -186,9 +200,15 @@ export function PanoramaMasterView() {
     };
   }, []);
 
-  const totalGates = data?.gates?.length ?? 11;
-  const passedGates = data?.gates?.filter((g) => g.verdict === 'PASS').length ?? 11;
-  const healthScore = data?.guardian?.healthScore ?? 99.4;
+  const resolvedSourceState = sourceState ?? (isFallback ? 'UNKNOWN' : 'LIVE');
+  const sourceUnavailable = isFallback || resolvedSourceState === 'UNKNOWN' || resolvedSourceState === 'STALE';
+  const postureUnavailable = sourceUnavailable || partialFacets?.includes('posture') || partialFacets?.includes('guardian');
+  const gatesUnavailable = isFallback || resolvedSourceState === 'UNKNOWN' || partialFacets?.includes('gates');
+  const gatesAreStale = resolvedSourceState === 'STALE';
+  const totalGates = gatesUnavailable ? 0 : data?.gates?.length ?? 0;
+  const passedGates = gatesUnavailable ? 0 : data?.gates?.filter((g) => g.verdict === 'PASS').length ?? 0;
+  const healthScore = data?.guardian?.healthScore;
+  const sourceLabel = resolvedSourceState;
 
   return (
     <div
@@ -217,13 +237,13 @@ export function PanoramaMasterView() {
                 <span className="text-xs font-black tracking-wide text-white uppercase font-mono">
                   织星体系全景控制舱
                 </span>
-                {isFallback ? (
-                  <span className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono">
-                    静态容灾
-                  </span>
-                ) : (
+                {resolvedSourceState === 'LIVE' && !isFallback ? (
                   <span className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
                     LIVE
+                  </span>
+                ) : (
+                  <span className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono">
+                    {sourceLabel}
                   </span>
                 )}
               </div>
@@ -232,12 +252,16 @@ export function PanoramaMasterView() {
 
           {/* 姿态微卡 */}
           <div className="hidden sm:flex items-center gap-2 text-xs font-mono bg-[#0b0f19]/80 px-2.5 py-1 rounded-lg border border-slate-800/80">
-            <Activity className="w-3.5 h-3.5 text-emerald-400" />
+            <Activity className={`w-3.5 h-3.5 ${postureUnavailable ? 'text-amber-400' : 'text-emerald-400'}`} />
             <span className="text-slate-400 text-[11px]">健康度:</span>
-            <strong className="text-emerald-300">{healthScore.toFixed(1)}%</strong>
+            <strong className={postureUnavailable ? 'text-amber-300' : 'text-emerald-300'}>
+              {postureUnavailable || typeof healthScore !== 'number' ? 'UNKNOWN' : `${healthScore.toFixed(1)}%`}
+            </strong>
             <span className="text-slate-700">|</span>
-            <span className="text-slate-400 text-[11px]">门禁:</span>
-            <strong className="text-cyan-300">{passedGates}/{totalGates}</strong>
+            <span className="text-slate-400 text-[11px]">{gatesAreStale ? '门禁（历史快照）:' : '门禁:'}</span>
+            <strong className={gatesUnavailable || gatesAreStale ? 'text-amber-300' : 'text-cyan-300'}>
+              {gatesUnavailable ? 'UNKNOWN' : `${passedGates}/${totalGates}`}
+            </strong>
           </div>
         </div>
 
@@ -359,6 +383,19 @@ export function PanoramaMasterView() {
         </div>
       </header>
 
+      {resolvedSourceState !== 'LIVE' && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="flex flex-wrap items-center gap-x-2 gap-y-1 px-3.5 py-2 rounded-lg bg-amber-950/40 border border-amber-500/30 text-[11px] text-amber-200"
+        >
+          <strong className="font-mono">治理来源 {sourceLabel}</strong>
+          <span>{sourceFailure ?? '未获得可验证的实时数据。'}</span>
+          <span className="text-amber-300/80">{sourceObservedAt ? `最后生成: ${sourceObservedAt}` : '最后生成时间: 未知'}</span>
+          <span className="text-amber-300/80">来源年龄: {formatSourceAge(sourceAgeMs)}</span>
+        </div>
+      )}
+
       {/* Rotation indicator info bar (when active) */}
       {isAutoRotate && (
         <div className="flex items-center justify-between px-3.5 py-1.5 rounded-lg bg-emerald-950/40 border border-emerald-500/30 text-[11px] text-emerald-300 font-mono">
@@ -402,6 +439,11 @@ export function PanoramaMasterView() {
         isOpen={isTelemetryDrawerOpen}
         onClose={() => setIsTelemetryDrawerOpen(false)}
         data={data}
+        sourceState={resolvedSourceState}
+        sourceFailure={sourceFailure}
+        sourceObservedAt={sourceObservedAt}
+        sourceAgeMs={sourceAgeMs}
+        partialFacets={partialFacets}
       />
     </div>
   );

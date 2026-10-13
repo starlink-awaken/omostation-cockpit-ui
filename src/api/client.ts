@@ -31,10 +31,11 @@ export async function apiFetch<T>(
   options: ApiRequestOptions = {}
 ): Promise<ApiResponse<T>> {
   const { timeout = 30000, signal, headers = {} } = options;
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    timeoutId = setTimeout(() => controller.abort(), timeout);
 
     // Combine external signal with timeout controller
     if (signal) {
@@ -50,8 +51,6 @@ export async function apiFetch<T>(
       signal: controller.signal,
     });
 
-    clearTimeout(timeoutId);
-
     if (!response.ok) {
       return {
         data: null,
@@ -70,6 +69,8 @@ export async function apiFetch<T>(
       return { data: null, error: error.message, ok: false };
     }
     return { data: null, error: 'Unknown error', ok: false };
+  } finally {
+    if (timeoutId !== undefined) clearTimeout(timeoutId);
   }
 }
 
@@ -82,10 +83,11 @@ export async function apiPost<T>(
   options: ApiRequestOptions = {}
 ): Promise<ApiResponse<T>> {
   const { timeout = 30000, signal, headers = {} } = options;
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    timeoutId = setTimeout(() => controller.abort(), timeout);
 
     if (signal) {
       signal.addEventListener('abort', () => controller.abort());
@@ -101,8 +103,6 @@ export async function apiPost<T>(
       signal: controller.signal,
     });
 
-    clearTimeout(timeoutId);
-
     if (!response.ok) {
       return {
         data: null,
@@ -121,6 +121,8 @@ export async function apiPost<T>(
       return { data: null, error: error.message, ok: false };
     }
     return { data: null, error: 'Unknown error', ok: false };
+  } finally {
+    if (timeoutId !== undefined) clearTimeout(timeoutId);
   }
 }
 
@@ -133,10 +135,11 @@ export async function apiPut<T>(
   options: ApiRequestOptions = {}
 ): Promise<ApiResponse<T>> {
   const { timeout = 30000, signal, headers = {} } = options;
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    timeoutId = setTimeout(() => controller.abort(), timeout);
 
     if (signal) {
       signal.addEventListener('abort', () => controller.abort());
@@ -152,8 +155,6 @@ export async function apiPut<T>(
       signal: controller.signal,
     });
 
-    clearTimeout(timeoutId);
-
     if (!response.ok) {
       return {
         data: null,
@@ -172,6 +173,8 @@ export async function apiPut<T>(
       return { data: null, error: error.message, ok: false };
     }
     return { data: null, error: 'Unknown error', ok: false };
+  } finally {
+    if (timeoutId !== undefined) clearTimeout(timeoutId);
   }
 }
 
@@ -183,10 +186,11 @@ export async function apiDelete<T>(
   options: ApiRequestOptions = {}
 ): Promise<ApiResponse<T>> {
   const { timeout = 30000, signal, headers = {} } = options;
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    timeoutId = setTimeout(() => controller.abort(), timeout);
 
     if (signal) {
       signal.addEventListener('abort', () => controller.abort());
@@ -201,8 +205,6 @@ export async function apiDelete<T>(
       signal: controller.signal,
     });
 
-    clearTimeout(timeoutId);
-
     if (!response.ok) {
       return {
         data: null,
@@ -221,5 +223,7 @@ export async function apiDelete<T>(
       return { data: null, error: error.message, ok: false };
     }
     return { data: null, error: 'Unknown error', ok: false };
+  } finally {
+    if (timeoutId !== undefined) clearTimeout(timeoutId);
   }
 }

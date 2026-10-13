@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   ShieldCheck, 
@@ -15,7 +15,6 @@ import {
   Compass,
   Clock
 } from 'lucide-react';
-import { useLiveTelemetry } from '../../api/liveTelemetry';
 import { useApprovalQueue } from '../../api/hooks/swarm';
 import { useGovernancePanorama } from '../../api/hooks/useGovernancePanorama';
 import InPlaceDecisionDrawer from './InPlaceDecisionDrawer';
@@ -34,26 +33,76 @@ const GATE_ROUTE_MAP: Record<string, string> = {
   'RC-DL': '/compute',
 };
 
-const LOOP_ROUTE_MAP: Record<string, string> = {
-  value_reinforcement: '/bcos',
-  execution_control: '/workflows',
-  meta_governance: '/governance-domain',
-  physical_isolation: '/sandbox',
-};
+function formatTelemetryAge(sourceAgeMs: number | null | undefined): string {
+  if (sourceAgeMs == null) return '来源时间未知';
+  if (sourceAgeMs < 60_000) return '不足 1 分钟';
+  return `${Math.floor(sourceAgeMs / 60_000)} 分钟`;
+}
+
+function gateDotClass(verdict: string): string {
+  switch (verdict) {
+    case 'PASS':
+      return 'bg-emerald-400';
+    case 'FAIL':
+    case 'BLOCKED':
+      return 'bg-rose-400';
+    case 'WARN':
+    case 'PENDING':
+      return 'bg-amber-400';
+    default:
+      return 'bg-slate-500';
+  }
+}
 
 export default function PanoramaHeroView() {
   const navigate = useNavigate();
-  const telemetry = useLiveTelemetry();
   const { data: queueData } = useApprovalQueue();
-  const { data: panoramaData } = useGovernancePanorama();
+  const {
+    data: panoramaData,
+    isFallback,
+    sourceState,
+    sourceFailure,
+    sourceObservedAt,
+    sourceAgeMs,
+    partialFacets = [],
+  } = useGovernancePanorama();
   const [isDecisionDrawerOpen, setIsDecisionDrawerOpen] = useState(false);
 
-  const agentVis = panoramaData?.agent_visibility;
+  const sourceTrustworthy = !isFallback && sourceState === 'LIVE';
+  const gatesVerified = !isFallback && sourceState !== 'UNKNOWN' && !partialFacets.includes('gates');
+  const guardianVerified = !isFallback && sourceState !== 'UNKNOWN' && !partialFacets.includes('guardian');
+  const knowledgeHealthVerified = !isFallback
+    && sourceState !== 'UNKNOWN'
+    && !partialFacets.includes('knowledge_health')
+    && panoramaData.knowledge_health !== undefined;
+  const experienceGraphVerified = !isFallback
+    && sourceState !== 'UNKNOWN'
+    && !partialFacets.includes('experience_graph')
+    && panoramaData.experience_graph !== undefined;
+  const snapshotFacetLabel = sourceState === 'STALE' ? '历史快照' : sourceState === 'PARTIAL' ? '已验证快照字段' : '实时快照';
+  const agentVisibilityVerified = sourceTrustworthy
+    && !partialFacets.includes('agent_visibility')
+    && panoramaData.agent_visibility !== undefined;
+  const agentVis = agentVisibilityVerified ? panoramaData.agent_visibility : undefined;
   const pendingCount = queueData?.queue?.length ?? 0;
-  const completionPct = Math.round((telemetry.betStats.done / (telemetry.betStats.total || 1)) * 100);
-
-  const gatesList = telemetry.gates || [];
-  const circuitPulses = telemetry.lastPulse?.circuit_pulses || [];
+  const gatesList = gatesVerified ? panoramaData.gates : [];
+  const directObservationLabels = [
+    ['evolution', '进化提案枚举'],
+    ['workspace', '工作区枚举'],
+    ['knowledge_health', '知识健康'],
+    ['experience_graph', '经验图谱'],
+    ['connectors', '连接器'],
+    ['bos_verifier', 'BOS 校验'],
+  ] as const;
+  const directObservations = directObservationLabels.flatMap(([key, label]) => {
+    const observation = panoramaData.facet_observations?.[key];
+    return observation ? [{ key, label, observation }] : [];
+  });
+  const gateHeader = sourceTrustworthy && gatesVerified
+    ? `${gatesList.filter((gate) => gate.verdict === 'PASS').length}/${gatesList.length} PASS`
+    : sourceState === 'STALE' && gatesVerified
+      ? `历史快照 · ${formatTelemetryAge(sourceAgeMs)}`
+      : 'UNKNOWN';
 
   return (
     <div className="space-y-4 text-slate-100 animate-fade-in font-sans">
@@ -77,7 +126,7 @@ export default function PanoramaHeroView() {
                 }`}
               >
                 <span className={`w-1.5 h-1.5 rounded-full ${pendingCount > 0 ? 'bg-amber-400' : 'bg-emerald-400'}`} />
-                <span>{pendingCount > 0 ? `${pendingCount} 项待决 · 点击裁决` : '0 项待决 · 全域绿灯'}</span>
+                <span>{sourceTrustworthy ? (pendingCount > 0 ? `${pendingCount} 项待决 · 点击裁决` : '0 项待决 · 队列已加载') : '治理来源未获当前验证 · 待决状态未验证'}</span>
               </button>
             </div>
             <h1 className="text-xl md:text-2xl font-black tracking-tight text-white flex items-center gap-2">
@@ -98,10 +147,10 @@ export default function PanoramaHeroView() {
               title="点击查看可观测与遥测连接详情"
               className="px-3.5 py-2 rounded-lg bg-[#0b0f19]/80 border border-slate-800 hover:border-indigo-500/40 text-center cursor-pointer transition-all"
             >
-              <div className="text-[10px] text-slate-400 font-mono">实时遥测源</div>
+              <div className="text-[10px] text-slate-400 font-mono">治理数据源</div>
               <div className="text-xs font-bold flex items-center justify-center gap-1.5 mt-0.5 font-mono">
-                <span className={`w-1.5 h-1.5 rounded-full ${telemetry.connected ? 'bg-emerald-400 shadow-sm' : 'bg-amber-400'}`} />
-                {telemetry.connected ? '43191 SSE' : '本地静态模式'}
+                <span className={`w-1.5 h-1.5 rounded-full ${sourceTrustworthy ? 'bg-emerald-400 shadow-sm' : 'bg-amber-400'}`} />
+                {sourceTrustworthy ? 'Cockpit BFF LIVE' : `Cockpit BFF ${sourceState ?? 'UNKNOWN'}`}
               </div>
             </div>
             <div 
@@ -114,12 +163,64 @@ export default function PanoramaHeroView() {
             >
               <div className="text-[10px] text-slate-400 font-mono">AetherForge 算力</div>
               <div className="text-xs font-bold text-cyan-400 mt-0.5 font-mono">
-                {telemetry.vramUsage}
+                UNKNOWN
               </div>
             </div>
           </div>
         </div>
       </section>
+
+      {!sourceTrustworthy && (
+        <div role="status" className="rounded-lg border border-amber-500/30 bg-amber-950/30 px-3.5 py-2 text-xs text-amber-200">
+          <strong className="font-mono">Cockpit 治理投影 {sourceState ?? 'UNKNOWN'}</strong>
+          {sourceState === 'STALE'
+            ? `：最后观察 ${sourceObservedAt ?? '未知'}，来源年龄 ${formatTelemetryAge(sourceAgeMs)}。当前 KPI 未获实时验证。`
+            : `：${sourceFailure ?? '未获得可验证的治理投影。'}`}
+        </div>
+      )}
+
+      {directObservations.length > 0 && (
+        <section aria-label="直接观测分面状态" className="rounded-lg border border-slate-800 bg-[#111827]/70 px-3.5 py-3">
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-xs font-semibold text-slate-300">直接观测分面</h2>
+            <span className="text-[10px] text-slate-500">分面时间独立于整体投影时间</span>
+          </div>
+          <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+            {directObservations.map(({ key, label, observation }) => {
+              const ageMs = observation.age_ms ?? null;
+              const stateClass = observation.state === 'LIVE'
+                ? 'border-emerald-500/25 bg-emerald-500/5 text-emerald-300'
+                : observation.state === 'STALE'
+                  ? 'border-amber-500/25 bg-amber-500/5 text-amber-300'
+                  : 'border-slate-700 bg-slate-900/70 text-slate-400';
+              const observationValue = observation.value;
+              const sourceRef = observation.provenance?.source_ref ?? 'source unavailable';
+              const sourceDigest = observation.source_digest ?? '';
+              const valueSummary = key === 'evolution' && typeof observationValue?.total === 'number'
+                ? `${observationValue.total} 个提案路径`
+                : key === 'workspace' && typeof observationValue?.total_worktrees === 'number' && typeof observationValue?.total_lock_files === 'number'
+                  ? `${observationValue.total_worktrees} 个 worktree · ${observationValue.total_lock_files} 个 lock 文件`
+                  : null;
+              return (
+                <div key={key} className={`rounded-md border px-2.5 py-2 ${stateClass}`}>
+                  <div className="flex items-center justify-between gap-2 text-[11px]">
+                    <span className="font-medium">{label}</span>
+                    <span className="font-mono">{observation.state}</span>
+                  </div>
+                  <div className="mt-1 text-[10px] opacity-75">
+                    {ageMs === null ? '观察时间未知' : `观察于 ${formatTelemetryAge(ageMs)}`}
+                    {observation.error_class ? ` · ${observation.error_class}` : ''}
+                  </div>
+                  {valueSummary && <div className="mt-1 text-[10px]">{valueSummary}</div>}
+                  <div className="mt-1 truncate text-[9px] opacity-60" title={sourceRef}>
+                    {sourceRef}{sourceDigest ? ` · ${sourceDigest.slice(0, 12)}` : ''}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* 🎯 态势总览三栏紧凑卡片 (支持下钻，保留测试选择器) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -137,13 +238,15 @@ export default function PanoramaHeroView() {
               </div>
               <div>
                 <h2 className="text-xs font-medium text-slate-400">系统当下在忙什么？</h2>
-                <p className="text-sm font-bold text-white">5 大业务域 · 12 主权旅程</p>
+                <p className="text-sm font-bold text-white">{sourceTrustworthy ? '当前治理投影已加载' : '治理来源 UNKNOWN'}</p>
               </div>
             </div>
             <ArrowUpRight className="w-3.5 h-3.5 text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
           <p className="text-[11px] text-slate-400 leading-normal line-clamp-2">
-            端侧已就绪 16 模型星系，4 大动态回路全速巡检。Resident Guardian 每 {telemetry.guardianCadence}s 发送一次自愈心跳。
+            {sourceTrustworthy && guardianVerified && panoramaData.guardian.interval_seconds > 0
+              ? `Guardian 的已验证巡检周期为 ${panoramaData.guardian.interval_seconds}s。运行时算力与闭环脉冲不在 BFF 契约内。`
+              : `治理投影没有可验证的业务场景、模型或心跳字段。${sourceFailure ? ` 原因: ${sourceFailure}` : ''}`}
           </p>
           <div className="mt-2 text-[10px] text-indigo-300 flex items-center gap-1 font-semibold">
             <span>进入业务场景总览</span>
@@ -165,16 +268,17 @@ export default function PanoramaHeroView() {
               </div>
               <div>
                 <h2 className="text-xs font-medium text-slate-400">战略规划台账进度</h2>
-                <p className="text-sm font-bold text-emerald-400 font-mono">443 / 443 全部达成 (100%)</p>
+                <p className="text-sm font-bold text-emerald-400 font-mono">
+                  UNKNOWN
+                </p>
               </div>
             </div>
             <ArrowUpRight className="w-3.5 h-3.5 text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
           <div className="w-full bg-slate-950 rounded-full h-1.5 mb-2 overflow-hidden border border-slate-800">
-            <div className="bg-emerald-500 h-1.5 rounded-full transition-all duration-500" style={{ width: `${completionPct}%` }} />
           </div>
           <p className="text-[11px] text-slate-400 leading-normal">
-            Phase 1-8 治理底座与 Harness 8 阶段全部收敛，闭环交付验证。
+            BFF 当前契约未提供可验证的 BET 完成度。
           </p>
           <div className="mt-2 text-[10px] text-emerald-300 flex items-center gap-1 font-semibold">
             <span>查看完整交付脉络</span>
@@ -196,13 +300,13 @@ export default function PanoramaHeroView() {
               </div>
               <div>
                 <h2 className="text-xs font-medium text-slate-400">不可违背规则与治理</h2>
-                <p className="text-sm font-bold text-cyan-400 font-mono">11 / 11 核心门禁全绿</p>
+                <p className="text-sm font-bold text-cyan-400 font-mono">{sourceTrustworthy ? '门禁状态以实时数据为准' : 'UNKNOWN'}</p>
               </div>
             </div>
             <ArrowUpRight className="w-3.5 h-3.5 text-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
           <p className="text-[11px] text-slate-400 leading-normal">
-            A1-A9、RF0、RC-DL 11 大系统门禁三轴证据链持续通过，零未授权变更。
+            {gatesVerified ? `A1-A9、RF0、RC-DL 显示为${snapshotFacetLabel}字段。` : '治理来源不可用，不能将默认门禁列表显示为通过。'}
           </p>
           <div className="mt-2 text-[10px] text-cyan-300 flex items-center gap-1 font-semibold">
             <span>进入治理合规验证台</span>
@@ -224,12 +328,17 @@ export default function PanoramaHeroView() {
                   11 大宪法级系统门禁矩阵
                 </h2>
               </div>
-              <span className="text-[10px] text-emerald-400 font-mono bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">
-                11/11 PASS
+              <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${sourceTrustworthy && gatesVerified ? 'text-emerald-400 bg-emerald-950/60 border-emerald-500/30' : sourceState === 'STALE' && gatesVerified ? 'text-amber-300 bg-amber-950/40 border-amber-500/30' : 'text-slate-300 bg-slate-800/60 border-slate-700'}`}>
+                {gateHeader}
               </span>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+              {!gatesVerified && (
+                <p className="col-span-full rounded-lg border border-amber-500/30 bg-amber-950/20 p-3 text-xs text-amber-200">
+                  治理门禁来源不可用，所有门禁状态均为 UNKNOWN。
+                </p>
+              )}
               {gatesList.map((gate) => {
                 const targetRoute = GATE_ROUTE_MAP[gate.id] || '/panorama';
                 const gateName = (gate as { name?: string }).name || gate.title || '';
@@ -251,7 +360,7 @@ export default function PanoramaHeroView() {
                       <span className="text-xs font-bold font-mono text-cyan-300 group-hover:text-cyan-200">
                         {gate.id}
                       </span>
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                      <span data-testid={`gate-${gate.id}-verdict`} className={`w-1.5 h-1.5 rounded-full ${gateDotClass(gate.verdict)}`} />
                     </div>
                     <div className="text-[11px] font-medium text-slate-300 truncate" title={gateName}>
                       {gateName}
@@ -274,40 +383,11 @@ export default function PanoramaHeroView() {
                   业务与治理四阶闭环回路
                 </h2>
               </div>
-              <span className="text-[10px] text-slate-500 font-mono">74s 脉冲同步</span>
+              <span className="text-[10px] text-slate-500 font-mono">来源观测时间</span>
             </div>
 
-            <div className="grid grid-cols-2 gap-2.5">
-              {circuitPulses.map((cp) => {
-                const targetRoute = LOOP_ROUTE_MAP[cp.loop] || '/panorama';
-                return (
-                  <button
-                    key={cp.loop}
-                    type="button"
-                    onClick={() => navigate(targetRoute)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        navigate(targetRoute);
-                      }
-                    }}
-                    aria-label={`业务回路 ${cp.loop}`}
-                    className="p-3 rounded-lg bg-[#0b0f19]/70 hover:bg-slate-900 border border-slate-800 hover:border-amber-500/40 text-left transition-all group"
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-mono font-bold text-slate-300 group-hover:text-amber-300 capitalize">
-                        {cp.loop.replace('_', ' ')}
-                      </span>
-                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20 font-mono">
-                        {cp.status}
-                      </span>
-                    </div>
-                    <div className="text-[11px] text-slate-400">
-                      {cp.adherence ? `遵从度: ${cp.adherence}` : cp.compliance ? `合规率: ${cp.compliance}` : `模式: ${cp.mode}`}
-                    </div>
-                  </button>
-                );
-              })}
+            <div className="rounded-lg border border-amber-500/30 bg-amber-950/20 p-3 text-xs text-amber-200">
+              Cockpit BFF 当前契约未提供闭环脉冲流；该状态保持 UNKNOWN。
             </div>
           </section>
 
@@ -385,13 +465,13 @@ export default function PanoramaHeroView() {
               <div className="p-2.5 rounded-lg bg-[#0b0f19]/70 border border-slate-800">
                 <span className="text-[10px] text-slate-500 block mb-0.5">Claims 激活准入</span>
                 <span className="font-bold text-emerald-400 text-xs">
-                  {agentVis?.claims_activation_readiness?.readiness ?? 'AUTHORIZED_CANONICAL'}
+                  {agentVis?.claims_activation_readiness?.readiness ?? 'UNKNOWN'}
                 </span>
               </div>
               <div className="p-2.5 rounded-lg bg-[#0b0f19]/70 border border-slate-800">
                 <span className="text-[10px] text-slate-500 block mb-0.5">价值凭证状态</span>
                 <span className="font-bold text-cyan-400 text-xs">
-                  {agentVis?.value_proof_readiness?.status ?? 'VERIFIED'}
+                  {agentVis?.value_proof_readiness?.status ?? 'UNKNOWN'}
                 </span>
               </div>
             </div>
@@ -421,7 +501,7 @@ export default function PanoramaHeroView() {
                     </div>
                   ))
                 ) : (
-                  <div className="text-xs text-slate-500 text-center py-2">无挂起行动</div>
+                  <div className="text-xs text-slate-500 text-center py-2">{agentVisibilityVerified ? '无挂起行动' : '来源未验证，无法判断行动'}</div>
                 )}
               </div>
             </div>
@@ -453,7 +533,7 @@ export default function PanoramaHeroView() {
                     </div>
                   ))
                 ) : (
-                  <div className="text-xs text-slate-500 text-center py-2">全量目标已交付</div>
+                  <div className="text-xs text-slate-500 text-center py-2">{agentVisibilityVerified ? '全量目标已交付' : '来源未验证，无法判断目标状态'}</div>
                 )}
               </div>
             </div>
@@ -474,26 +554,30 @@ export default function PanoramaHeroView() {
             <div className="grid grid-cols-2 gap-2 text-xs font-mono">
               <div className="p-2.5 rounded-lg bg-[#0b0f19]/70 border border-slate-800">
                 <span className="text-[10px] text-slate-500 block mb-0.5">知识新鲜度</span>
-                <span className="font-bold text-emerald-400 text-sm">
-                  {panoramaData?.knowledge_health?.freshness_pct ?? 93}%
+                <span className={`font-bold text-sm ${knowledgeHealthVerified ? sourceState === 'STALE' ? 'text-amber-300' : 'text-cyan-300' : 'text-slate-400'}`}>
+                  {knowledgeHealthVerified ? `${panoramaData.knowledge_health!.freshness_pct}%` : 'UNKNOWN'}
                 </span>
-                <span className="text-[10px] text-slate-500 block">342 篇总文档</span>
+                <span className="text-[10px] text-slate-500 block">{knowledgeHealthVerified ? `${panoramaData.knowledge_health!.total} 篇总文档 · ${snapshotFacetLabel}` : '文档总数未验证'}</span>
               </div>
               <div className="p-2.5 rounded-lg bg-[#0b0f19]/70 border border-slate-800">
                 <span className="text-[10px] text-slate-500 block mb-0.5">经验图谱连通性</span>
-                <span className="font-bold text-cyan-400 text-sm">
-                  {panoramaData?.experience_graph?.connectivity_pct ?? 76.5}%
+                <span className={`font-bold text-sm ${experienceGraphVerified ? sourceState === 'STALE' ? 'text-amber-300' : 'text-cyan-300' : 'text-slate-400'}`}>
+                  {experienceGraphVerified ? `${panoramaData.experience_graph!.connectivity_pct}%` : 'UNKNOWN'}
                 </span>
-                <span className="text-[10px] text-slate-500 block">412 内部连接</span>
+                <span className="text-[10px] text-slate-500 block">{experienceGraphVerified ? `${panoramaData.experience_graph!.internal_refs} 内部连接 · ${snapshotFacetLabel}` : '连接数未验证'}</span>
               </div>
             </div>
 
             <div className="p-2.5 rounded-lg bg-[#0b0f19]/70 border border-slate-800 flex items-center justify-between text-xs">
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                <span className="text-slate-300">8 个 Launchd 守护进程运行正常</span>
+                <span className={`w-2 h-2 rounded-full ${sourceTrustworthy ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+                <span className="text-slate-300">{sourceTrustworthy && panoramaData.launchd_health ? `${panoramaData.launchd_health.loaded} 个 Launchd 守护进程已报告` : 'Launchd 守护状态未验证'}</span>
               </div>
-              <span className="text-[10px] font-mono text-slate-500">零僵尸锁</span>
+              <span className="text-[10px] font-mono text-slate-500">
+                {panoramaData.facet_observations?.workspace?.state === 'LIVE'
+                  ? `锁文件 ${panoramaData.facet_observations.workspace.value?.total_lock_files ?? '—'}`
+                  : '锁文件枚举未验证'}
+              </span>
             </div>
           </section>
         </div>

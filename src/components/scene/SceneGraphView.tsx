@@ -37,7 +37,7 @@ export default function SceneGraphView() {
         <EmptyState
           icon={<GitBranch size={32} className="text-indigo-400" />}
           title="暂无场景 DAG 拓扑"
-          message="当前尚未检测到活跃场景流转数据。可在知行 43191 监造底座或场景卡评审中初始化场景。"
+          message="当前尚未检测到活跃场景流转数据。可在本工作台的场景卡评审中初始化场景。"
         />
       </div>
     );

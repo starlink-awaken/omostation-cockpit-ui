@@ -55,22 +55,28 @@ export default function TelemetryPopover({
 
   const gates = telemetry?.gates || [];
   const passedGates = gates.filter(g => g.verdict === 'PASS').length;
+  const snapshotLive = telemetry.snapshotState === 'LIVE';
+  const snapshotState = telemetry.snapshotState ?? 'UNKNOWN';
+  const bffState = telemetry.isLoading ? 'BFF CONNECTING' : telemetry.connected ? 'BFF READY' : 'BFF UNAVAILABLE';
 
   return (
     <div
       ref={popoverRef}
       className="absolute top-14 right-20 z-50 w-80 md:w-96 rounded-xl bg-slate-900/95 border border-slate-800 shadow-2xl p-4 backdrop-blur-md text-slate-100 animate-fade-in space-y-4"
       role="region"
-      aria-label="知行实时遥测态势浮窗"
+      aria-label="Cockpit 治理全景态势浮窗"
     >
       {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
         <div className="flex items-center gap-2">
-          <span className={`w-2 h-2 rounded-full ${telemetry.connected ? 'bg-emerald-400 shadow-sm shadow-emerald-400' : 'bg-cyan-400'}`} />
-          <span className="font-bold text-xs tracking-wider uppercase text-white">43191 知行实时遥测</span>
+          <span className={`w-2 h-2 rounded-full ${telemetry.connected ? 'bg-emerald-400 shadow-sm shadow-emerald-400' : 'bg-amber-400'}`} />
+          <span className="font-bold text-xs tracking-wider uppercase text-white">Cockpit 治理全景</span>
         </div>
         <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
-          {telemetry.connected ? 'SSE CONNECTED' : 'LOCAL SYNC'}
+          {bffState}
+        </span>
+        <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${snapshotLive ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-300 border-amber-500/20'}`}>
+          SNAPSHOT {snapshotState}
         </span>
       </div>
 
@@ -82,7 +88,7 @@ export default function TelemetryPopover({
             <span>算力显存</span>
           </div>
           <div className="font-bold font-mono text-white text-[11px] truncate">
-            {telemetry.vramUsage}
+            {snapshotLive ? telemetry.vramUsage : 'UNKNOWN'}
           </div>
         </div>
 
@@ -92,7 +98,7 @@ export default function TelemetryPopover({
             <span>自愈心跳</span>
           </div>
           <div className="font-bold font-mono text-white text-[11px]">
-            Guardian: {telemetry.guardianCadence}s 脉冲
+            {snapshotLive && telemetry.guardianCadence > 0 ? `Guardian: ${telemetry.guardianCadence}s` : 'UNKNOWN'}
           </div>
         </div>
       </div>
@@ -102,14 +108,14 @@ export default function TelemetryPopover({
         <div className="flex items-center justify-between text-xs text-slate-400">
           <span className="flex items-center gap-1">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-            <span>全局 11 大门禁</span>
+          <span>全局门禁</span>
           </span>
-          <span className="font-mono text-emerald-400 font-semibold text-[11px]">
-            {passedGates}/{telemetry.gates.length} PASS
+          <span className={`font-mono font-semibold text-[11px] ${snapshotLive ? 'text-emerald-400' : 'text-amber-300'}`}>
+            {snapshotLive ? `${passedGates}/${telemetry.gates.length} PASS` : 'UNKNOWN'}
           </span>
         </div>
         <div className="grid grid-cols-6 gap-1 p-2 rounded-lg bg-slate-950/40 border border-slate-800/80">
-          {telemetry.gates.map((g) => (
+          {snapshotLive ? telemetry.gates.map((g) => (
             <div 
               key={g.id}
               title={`${g.id}: ${g.title} (${g.verdict})`}
@@ -117,7 +123,7 @@ export default function TelemetryPopover({
             >
               {g.id}
             </div>
-          ))}
+          )) : <span className="col-span-6 text-center text-[11px] text-amber-300">门禁快照不可用，当前状态未知</span>}
         </div>
       </div>
 
@@ -128,13 +134,15 @@ export default function TelemetryPopover({
             <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400" />
             <span>三年台账进度</span>
           </span>
-          <span className="font-mono font-bold text-indigo-400 text-[11px]">
-            {telemetry.betStats.done} / {telemetry.betStats.total} (100%)
+          <span className={`font-mono font-bold text-[11px] ${snapshotLive ? 'text-indigo-400' : 'text-amber-300'}`}>
+            {snapshotLive ? `${telemetry.betStats.done} / ${telemetry.betStats.total} (${telemetry.betStats.total > 0 ? Math.round((telemetry.betStats.done / telemetry.betStats.total) * 100) : 0}%)` : 'UNKNOWN'}
           </span>
         </div>
-        <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden mt-1">
-          <div className="bg-indigo-500 h-full rounded-full w-full" />
-        </div>
+        {snapshotLive ? (
+          <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden mt-1">
+            <div className="bg-indigo-500 h-full" style={{ width: `${telemetry.betStats.total > 0 ? Math.min(100, Math.max(0, (telemetry.betStats.done / telemetry.betStats.total) * 100)) : 0}%` }} />
+          </div>
+        ) : <p className="mt-1 text-[10px] text-amber-300">快照不可用，完成率未验证</p>}
       </div>
 
       {/* Guardian Inspection Action */}
@@ -148,7 +156,7 @@ export default function TelemetryPopover({
           className="w-full py-1.5 px-2.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 transition-colors flex items-center justify-center gap-1.5 font-medium text-xs shadow-sm"
         >
           <ShieldCheck className="w-3.5 h-3.5" />
-          <span>展开 74s 哨兵巡检视窗</span>
+          <span>展开系统巡检视窗</span>
         </button>
       )}
 

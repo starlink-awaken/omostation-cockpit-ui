@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   X,
   BookOpen,
@@ -10,17 +10,22 @@ import {
   Lock,
   Workflow,
 } from 'lucide-react';
-import type { PanoramaOverviewPayload } from '../../api/types/panorama';
+import type { GovernancePanoramaSourceState, PanoramaDisplayPayload } from '../../api/hooks/useGovernancePanorama';
 
 export interface DeepTelemetryDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  data: PanoramaOverviewPayload;
+  data: PanoramaDisplayPayload;
+  sourceState: GovernancePanoramaSourceState;
+  sourceFailure: string | null;
+  sourceObservedAt: string | null;
+  sourceAgeMs: number | null;
+  partialFacets?: string[];
 }
 
 export type DrawerTabId = 'knowledge' | 'hygiene' | 'runtime';
 
-export function DeepTelemetryDrawer({ isOpen, onClose, data }: DeepTelemetryDrawerProps) {
+export function DeepTelemetryDrawer({ isOpen, onClose, data, sourceState, sourceFailure, sourceObservedAt, sourceAgeMs, partialFacets = [] }: DeepTelemetryDrawerProps) {
   const [activeTab, setActiveTab] = useState<DrawerTabId>('knowledge');
 
   // Handle ESC key to close
@@ -36,11 +41,23 @@ export function DeepTelemetryDrawer({ isOpen, onClose, data }: DeepTelemetryDraw
 
   if (!isOpen) return null;
 
-  const kh = data.knowledge_health;
-  const eg = data.experience_graph;
-  const ws = data.workspace;
-  const ld = data.launchd_health;
-  const conn = data.connectors;
+  const hasVerifiedFacet = (facet: string) => {
+    const observedState = data.facet_observations?.[facet]?.state;
+    return observedState === 'LIVE' || observedState === 'PARTIAL'
+      || sourceState === 'LIVE'
+      || (sourceState === 'PARTIAL' && !partialFacets.includes(facet));
+  };
+  const knowledgeAvailable = hasVerifiedFacet('knowledge_health');
+  const experienceAvailable = hasVerifiedFacet('experience_graph');
+  const workspaceAvailable = hasVerifiedFacet('workspace');
+  const launchdAvailable = hasVerifiedFacet('launchd_health');
+  const connectorsAvailable = hasVerifiedFacet('connectors');
+  const kh = knowledgeAvailable ? data.knowledge_health : undefined;
+  const eg = experienceAvailable ? data.experience_graph : undefined;
+  const ws = workspaceAvailable ? data.workspace : undefined;
+  const workspaceObservation = data.facet_observations?.workspace;
+  const ld = launchdAvailable ? data.launchd_health : undefined;
+  const conn = connectorsAvailable ? data.connectors : undefined;
 
   return (
     <div
@@ -80,6 +97,12 @@ export function DeepTelemetryDrawer({ isOpen, onClose, data }: DeepTelemetryDraw
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {sourceState !== 'LIVE' && (
+          <div role="status" className="px-6 py-2 text-xs text-amber-200 bg-amber-950/40 border-b border-amber-500/30">
+            遥测来源 {sourceState}：{sourceFailure ?? '未获得可验证数据。'} {sourceObservedAt ? `最后生成 ${sourceObservedAt}` : '最后生成时间未知'} {sourceAgeMs == null ? '' : `，来源年龄 ${Math.floor(sourceAgeMs / 60000)} 分钟`}。
+          </div>
+        )}
 
         {/* Tab Navigation */}
         <div className="flex items-center gap-1 px-6 pt-3 border-b border-slate-800/60 bg-slate-900/30">
@@ -135,21 +158,21 @@ export function DeepTelemetryDrawer({ isOpen, onClose, data }: DeepTelemetryDraw
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                   <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
                     <span className="text-[10px] text-slate-400 block mb-0.5">总文档数</span>
-                    <span className="text-lg font-bold text-white font-mono">{kh?.total ?? 0}</span>
+                    <span className="text-lg font-bold text-white font-mono">{knowledgeAvailable ? kh?.total ?? 'UNKNOWN' : 'UNKNOWN'}</span>
                   </div>
                   <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
                     <span className="text-[10px] text-slate-400 block mb-0.5">新鲜度 %</span>
                     <span className="text-lg font-bold text-emerald-400 font-mono">
-                      {kh?.freshness_pct ?? 0}%
+                      {knowledgeAvailable ? `${kh?.freshness_pct ?? 'UNKNOWN'}%` : 'UNKNOWN'}
                     </span>
                   </div>
                   <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
                     <span className="text-[10px] text-slate-400 block mb-0.5">陈旧文档</span>
-                    <span className="text-lg font-bold text-amber-400 font-mono">{kh?.stale ?? 0}</span>
+                    <span className="text-lg font-bold text-amber-400 font-mono">{knowledgeAvailable ? kh?.stale ?? 'UNKNOWN' : 'UNKNOWN'}</span>
                   </div>
                   <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
                     <span className="text-[10px] text-slate-400 block mb-0.5">孤儿率 %</span>
-                    <span className="text-lg font-bold text-slate-300 font-mono">{kh?.orphan_pct ?? 0}%</span>
+                    <span className="text-lg font-bold text-slate-300 font-mono">{knowledgeAvailable ? `${kh?.orphan_pct ?? 'UNKNOWN'}%` : 'UNKNOWN'}</span>
                   </div>
                 </div>
               </div>
@@ -165,13 +188,13 @@ export function DeepTelemetryDrawer({ isOpen, onClose, data }: DeepTelemetryDraw
                     <div>
                       <span className="text-xs text-slate-400 block">知识图谱连通性</span>
                       <span className="text-xl font-black text-cyan-300 font-mono">
-                        {eg?.connectivity_pct ?? 0}%
+                        {experienceAvailable ? `${eg?.connectivity_pct ?? 'UNKNOWN'}%` : 'UNKNOWN'}
                       </span>
                     </div>
                     <div className="text-right">
                       <span className="text-xs text-slate-400 block">内部引用连接数</span>
                       <span className="text-xl font-black text-white font-mono">
-                        {eg?.internal_refs ?? 0}
+                        {experienceAvailable ? eg?.internal_refs ?? 'UNKNOWN' : 'UNKNOWN'}
                       </span>
                     </div>
                   </div>
@@ -205,7 +228,9 @@ export function DeepTelemetryDrawer({ isOpen, onClose, data }: DeepTelemetryDraw
               <div>
                 <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
                   <GitBranch className="w-4 h-4 text-emerald-400" />
-                  活动 Worktree 清单 ({ws?.total_worktrees ?? 0})
+                  {workspaceAvailable
+                    ? `${workspaceObservation?.state === 'PARTIAL' ? '最近成功观察的' : '观察到的'} Worktree 条目 (${ws?.total_worktrees ?? 0})`
+                    : 'Worktree 状态 (UNKNOWN)'}
                 </h3>
                 <div className="space-y-2">
                   {ws?.worktrees && ws.worktrees.length > 0 ? (
@@ -225,7 +250,7 @@ export function DeepTelemetryDrawer({ isOpen, onClose, data }: DeepTelemetryDraw
                     ))
                   ) : (
                     <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800 text-center text-xs text-slate-500">
-                      无额外隔离 worktree
+                      {workspaceAvailable ? '枚举结果不判断活跃度或清理安全性' : '来源未提供已验证的 Worktree 状态'}
                     </div>
                   )}
                 </div>
@@ -234,24 +259,24 @@ export function DeepTelemetryDrawer({ isOpen, onClose, data }: DeepTelemetryDraw
               {/* Locks & Remote Hygiene */}
               <div>
                 <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                  <Lock className="w-4 h-4 text-emerald-400" />
-                  锁机制与远程卫生守卫
+                  <Lock className="w-4 h-4 text-amber-400" />
+                  Workflow lock 文件枚举
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800">
-                    <span className="text-xs text-slate-400 block mb-1">当前全局文件锁</span>
+                    <span className="text-xs text-slate-400 block mb-1">观察到的 lock 文件数</span>
                     <div className="flex items-center gap-2">
                       <span className="text-lg font-bold text-white font-mono">
-                        {ws?.total_locks ?? 0}
+                        {workspaceAvailable ? ws?.total_lock_files ?? 'UNKNOWN' : 'UNKNOWN'}
                       </span>
-                      <span className="text-[11px] text-emerald-400 font-semibold">无僵尸死锁</span>
+                      <span className="text-[11px] text-amber-300 font-semibold">{workspaceAvailable ? '未判断锁的存活或归属' : '锁文件枚举未验证'}</span>
                     </div>
                   </div>
                   <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800">
                     <span className="text-xs text-slate-400 block mb-1">Git Remote 规范性</span>
                     <div className="flex items-center gap-1.5">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                      <span className="text-xs text-emerald-300 font-bold">Origin 隔离正常</span>
+                    <CheckCircle2 className="w-4 h-4 text-amber-400" />
+                    <span className="text-xs font-bold text-amber-300">未采集 Remote 状态</span>
                     </div>
                   </div>
                 </div>
@@ -266,7 +291,7 @@ export function DeepTelemetryDrawer({ isOpen, onClose, data }: DeepTelemetryDraw
               <div>
                 <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
                   <Server className="w-4 h-4 text-purple-400" />
-                  系统 Launchd 守护进程 ({ld?.jobs.length ?? 0})
+                  {launchdAvailable ? `系统 Launchd 守护进程 (${ld?.jobs.length ?? 0})` : 'Launchd 状态 (UNKNOWN)'}
                 </h3>
                 <div className="space-y-2">
                   {ld?.jobs && ld.jobs.length > 0 ? (
@@ -287,7 +312,9 @@ export function DeepTelemetryDrawer({ isOpen, onClose, data }: DeepTelemetryDraw
                             className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${
                               job.verdict === 'PASS'
                                 ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/40'
-                                : 'bg-rose-950/80 text-rose-300 border-rose-500/40'
+                                : job.verdict === 'FAILED'
+                                  ? 'bg-rose-950/80 text-rose-300 border-rose-500/40'
+                                  : 'bg-amber-950/80 text-amber-300 border-amber-500/40'
                             }`}
                           >
                             {job.verdict}
@@ -297,7 +324,7 @@ export function DeepTelemetryDrawer({ isOpen, onClose, data }: DeepTelemetryDraw
                     ))
                   ) : (
                     <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800 text-center text-xs text-slate-500">
-                      无运行中的守护进程
+                      {launchdAvailable ? '无运行中的守护进程' : '来源未提供已验证的守护进程状态'}
                     </div>
                   )}
                 </div>
@@ -307,11 +334,11 @@ export function DeepTelemetryDrawer({ isOpen, onClose, data }: DeepTelemetryDraw
               <div>
                 <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
                   <Workflow className="w-4 h-4 text-purple-400" />
-                  场景系统连接器 ({conn?.total ?? 0})
+                  {connectorsAvailable ? `场景系统连接器 (${conn?.total ?? 0})` : '连接器状态 (UNKNOWN)'}
                 </h3>
                 <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-3">
                   <div>
-                    <span className="text-[11px] text-slate-400 block mb-1.5">已接线连接器:</span>
+                    <span className="text-[11px] text-slate-400 block mb-1.5">{connectorsAvailable ? '已接线连接器:' : '连接器清单未验证'}</span>
                     <div className="flex flex-wrap gap-1.5">
                       {conn?.wired_to_scenes.map((c) => (
                         <span
@@ -324,7 +351,7 @@ export function DeepTelemetryDrawer({ isOpen, onClose, data }: DeepTelemetryDraw
                     </div>
                   </div>
                   <div>
-                    <span className="text-[11px] text-slate-400 block mb-1.5">可用待接线:</span>
+                    <span className="text-[11px] text-slate-400 block mb-1.5">{connectorsAvailable ? '可用待接线:' : '连接器清单未验证'}</span>
                     <div className="flex flex-wrap gap-1.5">
                       {conn?.unwired_available.map((c) => (
                         <span
@@ -344,7 +371,7 @@ export function DeepTelemetryDrawer({ isOpen, onClose, data }: DeepTelemetryDraw
 
         {/* Footer */}
         <div className="px-6 py-3 border-t border-slate-800/80 bg-slate-900/60 flex items-center justify-between text-[11px] text-slate-500">
-          <span>SSOT 源: runtime/dashboard/data.json</span>
+          <span>Cockpit BFF 治理投影 · 来源与新鲜度以 source provenance 为准</span>
           <span>按 Esc 或点击遮罩退出</span>
         </div>
       </div>

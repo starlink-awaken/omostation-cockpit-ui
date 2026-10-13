@@ -76,39 +76,6 @@ interface HistoryResponse {
   total: number;
 }
 
-// ── Demo Data (fallback) ──
-
-const DEMO_RESULT: CompileResult = {
-  success: true,
-  intent_text: '',
-  dag: {
-    nodes: [
-      { id: 'entry', label: '开始', type: 'entry' },
-      { id: 'fetch', label: '获取数据', type: 'action', description: '从数据源拉取原始数据' },
-      { id: 'check', label: '数据校验', type: 'decision', description: '检查数据完整性与质量' },
-      { id: 'transform', label: '数据转换', type: 'action', description: '清洗与格式转换' },
-      { id: 'notify', label: '发送通知', type: 'action', description: '推送处理结果' },
-      { id: 'exit', label: '结束', type: 'exit' },
-    ],
-    edges: [
-      { from: 'entry', to: 'fetch' },
-      { from: 'fetch', to: 'check' },
-      { from: 'check', to: 'transform', condition: '校验通过' },
-      { from: 'check', to: 'notify', condition: '校验失败' },
-      { from: 'transform', to: 'notify' },
-      { from: 'notify', to: 'exit' },
-    ],
-  },
-  confidence: 0.87,
-  compiled_at: new Date().toISOString(),
-};
-
-const DEMO_HISTORY: HistoryItem[] = [
-  { id: 'h1', intent_text: '每天早上9点检查系统健康状态', success: true, compiled_at: '2026-09-01T08:30:00Z', node_count: 5 },
-  { id: 'h2', intent_text: '当磁盘使用率超过80%时清理日志', success: true, compiled_at: '2026-09-01T07:15:00Z', node_count: 4 },
-  { id: 'h3', intent_text: '每周五下午生成周报并发送邮件', success: false, compiled_at: '2026-08-31T16:00:00Z', node_count: 0 },
-];
-
 // ── Hooks ──
 
 function useCompileIntent() {
@@ -116,8 +83,7 @@ function useCompileIntent() {
     mutationFn: async (intentText: string) => {
       const res = await apiPost<CompileResponse>('/api/intent/compile', { intent: intentText });
       if (!res.ok || !res.data?.available) {
-        // Fallback: return demo result with user text
-        return { ...DEMO_RESULT, intent_text: intentText };
+        throw new Error(res.error ?? '意图编译服务当前不可用');
       }
       if (res.data.error || !res.data.result) {
         throw new Error(res.data.error ?? '编译失败');
@@ -133,7 +99,7 @@ function useCompileHistory() {
     queryFn: async () => {
       const res = await apiFetch<HistoryResponse>('/api/intent/history');
       if (!res.ok || !res.data?.available) {
-        return DEMO_HISTORY;
+        throw new Error(res.error ?? '编译历史服务当前不可用');
       }
       return res.data.history;
     },
@@ -236,10 +202,15 @@ export default function IntentCompiler() {
 
   const queryClient = useQueryClient();
   const compileMutation = useCompileIntent();
-  const { data: history, isLoading: historyLoading } = useCompileHistory();
+  const {
+    data: history,
+    isLoading: historyLoading,
+    error: historyError,
+  } = useCompileHistory();
 
   const handleCompile = useCallback(async () => {
     if (!inputText.trim()) return;
+    setActiveResult(null);
     try {
       const result = await compileMutation.mutateAsync(inputText.trim());
       setActiveResult(result);
@@ -442,6 +413,16 @@ export default function IntentCompiler() {
           {historyLoading ? (
             <div className="p-4">
               <SkeletonLines count={3} />
+            </div>
+          ) : historyError ? (
+            <div
+              className="p-4 rounded-lg border border-amber-200 bg-amber-50 text-center"
+              data-testid="history-unavailable"
+              role="status"
+            >
+              <p className="text-xs text-amber-800">
+                编译历史不可用：{historyError instanceof Error ? historyError.message : '暂时无法读取'}
+              </p>
             </div>
           ) : history && history.length > 0 ? (
             <div className="flex flex-col rounded-lg border border-border-subtle bg-surface-1 overflow-hidden">

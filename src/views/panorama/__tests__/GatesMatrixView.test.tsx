@@ -44,7 +44,7 @@ function renderWithToast(ui: React.ReactElement) {
 }
 
 describe('GatesMatrixView Component', () => {
-  const mockRefetch = vi.fn().mockResolvedValue({});
+  const mockRefetch = vi.fn().mockResolvedValue({ sourceState: 'LIVE' });
 
   beforeEach(() => {
     vi.restoreAllMocks();
@@ -58,7 +58,7 @@ describe('GatesMatrixView Component', () => {
     vi.spyOn(hooks, 'useGatesMatrix').mockReturnValue({
       gates: [],
       isLoading: true,
-      isFallback: false,
+      isFallback: false, sourceState: 'LIVE', sourceFailure: null, sourceObservedAt: null, sourceAgeMs: 0,
       refetch: mockRefetch,
     });
 
@@ -84,6 +84,25 @@ describe('GatesMatrixView Component', () => {
     expect(screen.getByTestId('gate-card-A1')).toBeInTheDocument();
     expect(screen.getByTestId('gate-card-A2')).toBeInTheDocument();
     expect(screen.getByTestId('gate-card-RF0')).toBeInTheDocument();
+  });
+
+  it('shows last verified gate results as a stale snapshot without implying current admission', () => {
+    vi.spyOn(hooks, 'useGatesMatrix').mockReturnValue({ gates: mockGates, isLoading: false, isFallback: false, sourceState: 'STALE', sourceFailure: 'age exceeded', sourceObservedAt: '2026-10-06T18:13:06Z', sourceAgeMs: 360001, refetch: vi.fn().mockResolvedValue({ sourceState: 'STALE', sourceFailure: 'age exceeded' }) });
+    renderWithToast(<GatesMatrixView />);
+    expect(screen.getByText(/来源 STALE/)).toBeInTheDocument();
+    expect(screen.getByText(/最后一次已验证快照/)).toBeInTheDocument();
+    expect(screen.getByTestId('gate-card-A1')).toBeInTheDocument();
+    expect(screen.getByText('通过 (PASS)')).toBeInTheDocument();
+    expect(screen.getByText(/不代表当前准入/)).toBeInTheDocument();
+  });
+
+  it('hides unverified gate verdicts while labeling a PARTIAL source', () => {
+    vi.spyOn(hooks, 'useGatesMatrix').mockReturnValue({ gates: mockGates, isLoading: false, isFallback: false, sourceState: 'PARTIAL', sourceFailure: 'field_provenance_missing', sourceObservedAt: '2026-10-07T00:00:00Z', sourceAgeMs: 12_000, partialFacets: ['gates', 'alerts', 'posture', 'guardian'], refetch: vi.fn().mockResolvedValue({ sourceState: 'PARTIAL', sourceFailure: 'field_provenance_missing' }) });
+    renderWithToast(<GatesMatrixView />);
+    expect(screen.getByText(/来源 PARTIAL/)).toBeInTheDocument();
+    expect(screen.getByText('门禁状态 UNKNOWN')).toBeInTheDocument();
+    expect(screen.queryByText('通过 (PASS)')).not.toBeInTheDocument();
+    expect(screen.queryByText(/通过 1/)).not.toBeInTheDocument();
   });
 
   it('filters abnormal gates when clicking filter tab', () => {

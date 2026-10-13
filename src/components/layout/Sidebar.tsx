@@ -107,7 +107,7 @@ export function Sidebar({
           </span>
         </div>
         <p className="text-[11px] text-slate-400">
-          74s 哨兵大屏 · 11 全局门禁矩阵
+          体系全景 · 门禁与运行状态
         </p>
         <div className="flex items-center gap-1.5 pt-1">
           <button

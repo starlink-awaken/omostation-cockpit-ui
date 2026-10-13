@@ -108,7 +108,7 @@ export default function SceneOverviewView() {
           message={
             domain
               ? `在「${domain}」业务域下尚未注册场景卡。`
-              : '当前尚未注册场景卡数据。可在知行 43191 监造底座或场景卡管理中新增。'
+              : '当前尚未注册场景卡数据。可在本工作台的场景卡评审中新增。'
           }
         />
       ) : (

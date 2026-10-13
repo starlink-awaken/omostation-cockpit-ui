@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   Compass,
   Cpu,
@@ -11,22 +11,22 @@ import {
   Box,
 } from 'lucide-react';
 import { useSystemTopology } from '../../api/hooks/useGovernancePanorama';
-import type { TopologyNode } from '../../api/types/panorama';
+import type { DisplayTopology } from '../../api/hooks/useGovernancePanorama';
 import { SkeletonCard } from '../../components/ui/Skeleton';
 import { useToast } from '../../components/common/Toast';
 
 export function SystemTopologyWallboard() {
-  const { topology, isLoading, isFallback, refetch } = useSystemTopology();
+  const { topology, isLoading, sourceState, sourceFailure, partialFacets, refetch } = useSystemTopology();
   const { showToast } = useToast();
 
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [selectedNode, setSelectedNode] = useState<TopologyNode | null>(null);
+  const [selectedNode, setSelectedNode] = useState<DisplayTopology['layers'][number]['nodes'][number] | null>(null);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      await refetch();
-      showToast('道法术器拓扑状态已更新，架构槽位合规', 'success');
+      const result = await refetch();
+      showToast(result.sourceState === 'LIVE' ? '道法术器拓扑状态已更新。' : `拓扑来源 ${result.sourceState}：${result.sourceFailure ?? '未获得可验证状态。'}`, result.sourceState === 'LIVE' ? 'success' : 'warning');
     } catch {
       showToast('拓扑状态刷新失败，已使用快照', 'warning');
     } finally {
@@ -68,7 +68,7 @@ export function SystemTopologyWallboard() {
     }
   };
 
-  const getNodeKindIcon = (kind: TopologyNode['kind']) => {
+  const getNodeKindIcon = (kind?: string) => {
     switch (kind) {
       case 'service':
         return <Workflow className="w-3.5 h-3.5 text-cyan-400" />;
@@ -84,8 +84,10 @@ export function SystemTopologyWallboard() {
     }
   };
 
-  const layers = topology?.layers ?? [];
-  const slots = topology?.slots ?? [];
+  const sourceUnavailable = sourceState === 'UNKNOWN' || sourceState === 'STALE';
+  const topologyUnavailable = sourceUnavailable || partialFacets?.includes('topology');
+  const layers = topologyUnavailable ? [] : topology.layers;
+  const slots = topologyUnavailable ? [] : topology.slots;
   const activeSlot = slots.find((s) => s.status === 'ACTIVE') ?? slots[0];
 
   return (
@@ -98,9 +100,9 @@ export function SystemTopologyWallboard() {
             <h2 className="text-base font-bold tracking-tight text-white flex items-center gap-2">
               道法术器架构拓扑中枢
             </h2>
-            {isFallback && (
+            {sourceState !== 'LIVE' && (
               <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono">
-                静态容灾快照
+                来源 {sourceState} · {sourceFailure ?? '当前拓扑未获验证'}
               </span>
             )}
           </div>
@@ -122,6 +124,12 @@ export function SystemTopologyWallboard() {
           </button>
         </div>
       </div>
+
+      {topologyUnavailable && (
+        <div role="status" className="p-4 rounded-xl bg-amber-950/30 border border-amber-500/30 text-sm text-amber-200">
+          拓扑来源 {sourceState}，不展示 Active 槽位、节点健康或分层运行状态。{sourceState === 'PARTIAL' ? '该部分投影未包含已验证的拓扑观测。' : ''}
+        </div>
+      )}
 
       {/* Active S-Slot Highlight Banner */}
       {activeSlot && (
@@ -200,7 +208,7 @@ export function SystemTopologyWallboard() {
                             </div>
                             <div className="truncate">
                               <div className="text-xs font-semibold text-slate-200 truncate">
-                                {node.label}
+                              {node.label ?? node.name}
                               </div>
                               <div className="text-[10px] text-slate-500 font-mono truncate">
                                 {node.id}
