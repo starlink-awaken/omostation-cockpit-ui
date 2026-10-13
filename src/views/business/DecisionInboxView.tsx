@@ -28,13 +28,14 @@ import {
   useRejectIntent,
   useAddIntent,
   useCreateScene,
+  usePersonalPendingReviews,
   type DecisionInboxScene,
   type ApprovalQueueItem,
 } from '../../api/hooks';
 
 // ── Tab switcher ──
 
-type Tab = 'overview' | 'scenes' | 'queue' | 'intake';
+type Tab = 'overview' | 'scenes' | 'queue' | 'intake' | 'personal';
 
 function TabButton({ id, label, icon: Icon, active, onClick }: {
   id: Tab; label: string; icon: React.FC<{ className?: string }>; active: boolean; onClick: () => void;
@@ -70,6 +71,26 @@ export default function DecisionInboxView() {
   const [newIntentPriority, setNewIntentPriority] = useState('P3');
 
   const queue = queueData?.queue ?? [];
+  const [principalInput, setPrincipalInput] = useState('');
+  const [reviewPrincipalId, setReviewPrincipalId] = useState('');
+  const personalReviews = usePersonalPendingReviews(reviewPrincipalId);
+  const personalReviewLabel = !reviewPrincipalId
+    ? '个人待审阅'
+    : personalReviews.isLoading || personalReviews.isFetching
+      ? '个人待审阅（读取中）'
+      : personalReviews.isError
+        ? '个人待审阅（读取失败）'
+        : `个人待审阅 (${personalReviews.data?.length ?? 0})`;
+
+  const loadPersonalReviews = () => {
+    const principalId = principalInput.trim();
+    if (!principalId) return;
+    if (principalId === reviewPrincipalId) {
+      void personalReviews.refetch();
+      return;
+    }
+    setReviewPrincipalId(principalId);
+  };
 
   const handleApprove = (item: ApprovalQueueItem) => {
     approve.mutate({ intent_id: item.intent_id, reviewer: 'human', note: 'Approved via cockpit-ui' });
@@ -103,6 +124,7 @@ export default function DecisionInboxView() {
         <TabButton id="overview" label="概览" icon={BarChart3} active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} />
         <TabButton id="scenes" label="场景列表" icon={List} active={activeTab === 'scenes'} onClick={() => setActiveTab('scenes')} />
         <TabButton id="queue" label={`待审批 (${queue.length})`} icon={ClipboardList} active={activeTab === 'queue'} onClick={() => setActiveTab('queue')} />
+        <TabButton id="personal" label={personalReviewLabel} icon={ClipboardList} active={activeTab === 'personal'} onClick={() => setActiveTab('personal')} />
         <TabButton id="intake" label="快速摄入" icon={Plus} active={activeTab === 'intake'} onClick={() => setActiveTab('intake')} />
       </div>
 
@@ -223,6 +245,60 @@ export default function DecisionInboxView() {
                       >
                         <XCircle className="icon" size={14} /> 拒绝
                       </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Personal review tab — read-only: no confirmation or execution action is exposed here. */}
+      {activeTab === 'personal' && (
+        <div>
+          <div className="antd-card" style={{ padding: 16, marginBottom: 16 }}>
+            <h3>个人待审阅</h3>
+            <p style={{ marginTop: 4, color: '#666' }}>输入身份 ID 查看你的待审阅事项；此处不会确认、签署或执行。</p>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                className="antd-input"
+                aria-label="Principal ID"
+                placeholder="principal:…"
+                value={principalInput}
+                onChange={(event) => setPrincipalInput(event.target.value)}
+                onKeyDown={(event) => { if (event.key === 'Enter') loadPersonalReviews(); }}
+                style={{ flex: 1 }}
+              />
+              <button className="antd-btn antd-btn-primary" onClick={loadPersonalReviews} disabled={!principalInput.trim() || personalReviews.isFetching}>
+                <RefreshCw className="icon" size={14} /> {reviewPrincipalId === principalInput.trim() ? '刷新' : '读取'}
+              </button>
+            </div>
+          </div>
+          {!reviewPrincipalId ? (
+            <div className="antd-card" style={{ padding: 24, textAlign: 'center' }}>请先输入 Principal ID 读取待审阅项</div>
+          ) : personalReviews.isLoading ? (
+            <div className="antd-card" style={{ padding: 24 }}>加载个人待审阅项中...</div>
+          ) : personalReviews.isError ? (
+            <div className="antd-card" style={{ padding: 24, borderLeft: '4px solid #ff4d4f' }}>
+              读取个人待审阅项失败：{personalReviews.error instanceof Error ? personalReviews.error.message : '未知错误'}
+            </div>
+          ) : personalReviews.data?.length === 0 ? (
+            <div className="antd-card" style={{ padding: 24, textAlign: 'center' }}>当前 Principal 没有待确认项</div>
+          ) : (
+            <div>
+              <p style={{ marginBottom: 8, color: '#888' }}>共 {personalReviews.data?.length ?? 0} 项，均需在人类确认提供方中处理。</p>
+              {personalReviews.data?.map((item) => (
+                <div key={item.episodeId} className="antd-card" style={{ padding: 16, marginBottom: 8, borderLeft: '4px solid #faad14' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                        <span style={{ fontWeight: 'bold' }}>{item.summary}</span>
+                        <span style={{ fontSize: 12, background: '#fff7e6', color: '#d46b08', padding: '2px 6px', borderRadius: 4 }}>{item.status}</span>
+                      </div>
+                      <div style={{ fontSize: 12, color: '#666', marginTop: 8 }}>角色：{item.role} · 职责：{item.responsibility}</div>
+                      <div style={{ fontSize: 12, color: '#999', marginTop: 4 }}>Episode：{item.episodeId}</div>
+                      <div style={{ fontSize: 12, color: '#999', marginTop: 4 }}>来源版本：{item.sourceVersion ?? '事件未提供'} · 来源事件：{item.sourceEventId ?? '事件未提供'}</div>
                     </div>
                   </div>
                 </div>
