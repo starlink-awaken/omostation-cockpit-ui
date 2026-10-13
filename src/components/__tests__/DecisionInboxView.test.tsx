@@ -66,4 +66,57 @@ describe('DecisionInboxView', () => {
       expect(screen.getByText('暂无场景，创建一个开始')).toBeInTheDocument();
     });
   });
+
+  it('shows a native pending card only after a Principal ID is submitted', async () => {
+    vi.mocked(fetch).mockImplementation(async (input: RequestInfo) => {
+      const url = String(input);
+      if (url.includes('/api/workflow-mesh/episode-projections')) {
+        return {
+          ok: true,
+          json: async () => ({
+            ok: true,
+            projection: {
+              inbox: [{
+                episode: 'episode_ffcc609da31d',
+                summary: '周报',
+                role: 'role:personal-steward',
+                responsibility: 'responsibility:follow-up',
+                status: 'pending_confirmation',
+              }],
+              episodes: [{
+                episode_id: 'episode_ffcc609da31d',
+                contains_event_refs: [{
+                  event_id: 'evt_51ecba49457e',
+                  payload: { request_id: 'local-signal:fixture', status: 'pending_confirmation' },
+                }],
+              }],
+            },
+          }),
+        } as Response;
+      }
+      if (url.includes('/api/decision-inbox/scenes')) {
+        return { ok: true, json: async () => ({ ok: true, scenes: [] }) } as Response;
+      }
+      if (url.includes('/api/decision-inbox/summary')) {
+        return { ok: true, json: async () => ({ ok: true, summary: { scene_count: 0, total_intents: 0, pending_intents: 0, by_source: {} } }) } as Response;
+      }
+      if (url.includes('/api/decision-inbox/approvals/queue')) {
+        return { ok: true, json: async () => ({ ok: true, queue: [], total: 0 }) } as Response;
+      }
+      return { ok: true, json: async () => ({}) } as Response;
+    });
+
+    renderWithProviders(<DecisionInboxView />);
+    fireEvent.click(screen.getByText(/个人待审阅/));
+    expect(screen.getByText('请先输入 Principal ID 读取待审阅项')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Principal ID'), { target: { value: 'principal:fixture' } });
+    fireEvent.click(screen.getByRole('button', { name: '读取' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('周报')).toBeInTheDocument();
+      expect(screen.getByText(/来源版本：local-signal:fixture/)).toBeInTheDocument();
+      expect(screen.getByText('pending_confirmation')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('确认')).not.toBeInTheDocument();
+  });
 });

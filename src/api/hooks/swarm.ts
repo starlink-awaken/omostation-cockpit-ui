@@ -63,6 +63,36 @@ export interface ApprovalQueueItem {
   evidence_count: number;
 }
 
+export interface PersonalEpisodeEventRef {
+  event_id: string;
+  emitted_at?: string;
+  payload?: Record<string, unknown>;
+}
+
+export interface PersonalEpisode {
+  episode_id: string;
+  opened_at?: string;
+  contains_event_refs?: PersonalEpisodeEventRef[];
+}
+
+export interface PersonalInboxCard {
+  episode: string;
+  summary?: string | null;
+  role?: string | null;
+  responsibility?: string | null;
+  status?: string | null;
+}
+
+export interface PersonalPendingReview {
+  episodeId: string;
+  summary: string;
+  role: string;
+  responsibility: string;
+  status: string;
+  sourceVersion: string | null;
+  sourceEventId: string | null;
+}
+
 export function useDecisionInboxScenes() {
   return useQuery({
     queryKey: ['decision-inbox-scenes'],
@@ -161,6 +191,47 @@ export function useApprovalQueue() {
       );
       if (!res.ok || !res.data) throw new Error(res.error || 'Failed to load approval queue');
       return res.data;
+    },
+    staleTime: 10000,
+  });
+}
+
+
+export function usePersonalPendingReviews(principalId: string) {
+  const normalizedPrincipalId = principalId.trim();
+  return useQuery({
+    queryKey: ['personal-pending-reviews', normalizedPrincipalId],
+    enabled: Boolean(normalizedPrincipalId),
+    queryFn: async (): Promise<PersonalPendingReview[]> => {
+      const res = await apiFetch<{
+        ok: boolean;
+        projection?: { inbox?: PersonalInboxCard[]; episodes?: PersonalEpisode[] };
+      }>(API_ENDPOINTS.workflowMeshOperations.getEpisodeProjections(normalizedPrincipalId));
+      if (!res.ok || !res.data) throw new Error(res.error || 'Failed to load personal review projection');
+
+      const episodes = new Map((res.data.projection?.episodes ?? []).map((episode) => [episode.episode_id, episode]));
+      return (res.data.projection?.inbox ?? [])
+        .filter((card) => card.status === 'pending_confirmation')
+        .map((card) => {
+          const episode = episodes.get(card.episode);
+          const matchingRef = episode?.contains_event_refs?.find((ref) => {
+            const payload = ref.payload ?? {};
+            return payload.status === 'pending_confirmation' || payload.episode_id === card.episode;
+          });
+          const payload = matchingRef?.payload ?? {};
+          const sourceVersion = ['source_version', 'source_sha256', 'content_sha256', 'request_id']
+            .map((key) => payload[key])
+            .find((value): value is string => typeof value === 'string') ?? null;
+          return {
+            episodeId: card.episode,
+            summary: card.summary ?? String(payload.summary ?? '未命名待审阅项'),
+            role: card.role ?? String(payload.role_id ?? '未提供'),
+            responsibility: card.responsibility ?? String(payload.responsibility_id ?? '未提供'),
+            status: card.status ?? String(payload.status ?? 'pending_confirmation'),
+            sourceVersion,
+            sourceEventId: matchingRef?.event_id ?? null,
+          };
+        });
     },
     staleTime: 10000,
   });
