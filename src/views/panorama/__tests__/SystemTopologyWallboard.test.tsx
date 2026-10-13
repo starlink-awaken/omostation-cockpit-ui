@@ -101,6 +101,21 @@ describe('SystemTopologyWallboard Component', () => {
     expect(screen.getByTestId('layer-card-qi')).toBeInTheDocument();
   });
 
+  it('hides active topology claims for stale data', () => {
+    vi.spyOn(hooks, 'useSystemTopology').mockReturnValue({ topology: mockTopology, isLoading: false, isFallback: false, sourceState: 'STALE', sourceFailure: 'age exceeded', sourceObservedAt: null, sourceAgeMs: 360001, refetch: vi.fn().mockResolvedValue({ sourceState: 'STALE', sourceFailure: 'age exceeded' }) });
+    renderWithToast(<SystemTopologyWallboard />);
+    expect(screen.getByText(/拓扑来源 STALE/)).toBeInTheDocument();
+    expect(screen.queryByText(/COMP-WS-omo/)).not.toBeInTheDocument();
+  });
+
+  it('hides topology claims when a PARTIAL source marks topology unverified', () => {
+    vi.spyOn(hooks, 'useSystemTopology').mockReturnValue({ topology: mockTopology, isLoading: false, isFallback: false, sourceState: 'PARTIAL', sourceFailure: 'field_provenance_missing', sourceObservedAt: '2026-10-07T00:00:00Z', sourceAgeMs: 12_000, partialFacets: ['topology'], refetch: vi.fn().mockResolvedValue({ sourceState: 'PARTIAL', sourceFailure: 'field_provenance_missing' }) });
+    renderWithToast(<SystemTopologyWallboard />);
+    expect(screen.getByText(/拓扑来源 PARTIAL/)).toBeInTheDocument();
+    expect(screen.queryByText(/COMP-WS-omo/)).not.toBeInTheDocument();
+    expect(screen.queryByTestId('layer-card-dao')).not.toBeInTheDocument();
+  });
+
   it('allows clicking a node to select it', () => {
     vi.spyOn(hooks, 'useSystemTopology').mockReturnValue({
       topology: mockTopology,

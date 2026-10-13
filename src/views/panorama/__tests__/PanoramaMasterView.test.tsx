@@ -4,6 +4,7 @@ import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { PanoramaMasterView } from '../PanoramaMasterView';
 import * as hooks from '../../../api/hooks/useGovernancePanorama';
+import { FALLBACK_PANORAMA_DATA } from '../../../api/hooks/useGovernancePanorama';
 import { ToastProvider } from '../../../components/common/Toast';
 import type { PanoramaOverviewPayload } from '../../../api/types/panorama';
 
@@ -110,13 +111,83 @@ describe('PanoramaMasterView Master Deck', () => {
     expect(screen.getByText('系统门禁全景矩阵')).toBeInTheDocument();
   });
 
+  it('renders UNKNOWN source metadata instead of inherited green health or gate counts', () => {
+    vi.spyOn(hooks, 'useGovernancePanorama').mockReturnValue({
+      data: FALLBACK_PANORAMA_DATA,
+      isLoading: false,
+      isError: false,
+      isFallback: true,
+      sourceState: 'UNKNOWN',
+      sourceObservedAt: null,
+      sourceAgeMs: null,
+      sourceFailure: 'Connection refused',
+      refetch: vi.fn(),
+    });
+
+    renderComponent();
+
+    expect(screen.getByText('治理来源 UNKNOWN')).toBeInTheDocument();
+    expect(screen.getByText('Connection refused')).toBeInTheDocument();
+    expect(screen.getByText('最后生成时间: 未知')).toBeInTheDocument();
+    expect(screen.getByText('来源年龄: 来源时间未知')).toBeInTheDocument();
+    expect(screen.getAllByText('UNKNOWN').length).toBeGreaterThan(0);
+    expect(screen.queryByText('99.4%')).not.toBeInTheDocument();
+    expect(screen.queryByText('11/11')).not.toBeInTheDocument();
+  });
+
+  it('marks posture and gate counts UNKNOWN for a PARTIAL source with unverified facets', () => {
+    vi.spyOn(hooks, 'useGovernancePanorama').mockReturnValue({
+      data: mockPanoramaData,
+      isLoading: false,
+      isError: false,
+      isFallback: false,
+      sourceState: 'PARTIAL',
+      sourceObservedAt: '2026-10-07T00:00:00Z',
+      sourceAgeMs: 12_000,
+      sourceFailure: 'field_provenance_missing',
+      partialFacets: ['gates', 'alerts', 'posture', 'guardian', 'topology'],
+      refetch: vi.fn(),
+    });
+
+    renderComponent();
+
+    expect(screen.getByText('PARTIAL')).toBeInTheDocument();
+    expect(screen.getByText('field_provenance_missing')).toBeInTheDocument();
+    expect(screen.getByText('来源年龄: 不足 1 分钟')).toBeInTheDocument();
+    expect(screen.getAllByText('UNKNOWN').length).toBeGreaterThan(0);
+    expect(screen.queryByText('1/1')).not.toBeInTheDocument();
+    expect(screen.queryByText('99.4%')).not.toBeInTheDocument();
+  });
+
+  it('shows last verified gate counts as a stale snapshot while withholding current posture', () => {
+    vi.spyOn(hooks, 'useGovernancePanorama').mockReturnValue({
+      data: mockPanoramaData,
+      isLoading: false,
+      isError: false,
+      isFallback: false,
+      sourceState: 'STALE',
+      sourceObservedAt: '2026-10-06T18:13:06Z',
+      sourceAgeMs: 7 * 60_000,
+      sourceFailure: 'projection_stale',
+      partialFacets: [],
+      refetch: vi.fn(),
+    });
+
+    renderComponent();
+
+    expect(screen.getByText(/门禁（历史快照）/)).toBeInTheDocument();
+    expect(screen.getByText('1/1')).toBeInTheDocument();
+    expect(screen.getAllByText('UNKNOWN').length).toBeGreaterThan(0);
+    expect(screen.queryByText('99.4%')).not.toBeInTheDocument();
+  });
+
   it('switches to guardian wallboard tab', () => {
     renderComponent();
 
-    const guardianTab = screen.getByRole('tab', { name: /74s 哨兵大屏/i });
+    const guardianTab = screen.getByRole('tab', { name: /哨兵观测/i });
     fireEvent.click(guardianTab);
 
-    expect(screen.getByText('74s 哨兵常态守护与健康大屏')).toBeInTheDocument();
+    expect(screen.getByText('哨兵守护与健康大屏')).toBeInTheDocument();
   });
 
   it('switches to architecture topology tab', () => {
@@ -180,8 +251,8 @@ describe('PanoramaMasterView Master Deck', () => {
 
     // Press 2 for guardian
     fireEvent.keyDown(window, { key: '2' });
-    expect(screen.getByText('74s 哨兵常态守护与健康大屏')).toBeInTheDocument();
-    expect(screen.getByText(/切换至: 74s 哨兵大屏/i)).toBeInTheDocument();
+    expect(screen.getByText('哨兵守护与健康大屏')).toBeInTheDocument();
+    expect(screen.getByText(/切换至: 哨兵观测/i)).toBeInTheDocument();
 
     // Press 3 for topology
     fireEvent.keyDown(window, { key: '3' });

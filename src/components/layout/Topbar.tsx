@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { LiveTelemetryData } from '../../api/liveTelemetry';
+import type { LiveTelemetryState } from '../../api/liveTelemetry';
 import UserMenu from '../common/UserMenu';
 import TelemetryPopover from '../common/TelemetryPopover';
 
@@ -8,7 +8,7 @@ export interface TopbarProps {
   onSearchChange: (val: string) => void;
   onOpenCommandPalette: (query?: string) => void;
   onOpenQuickActions: () => void;
-  telemetry: LiveTelemetryData;
+  telemetry: LiveTelemetryState;
   onNavigateToPanorama: () => void;
   onOpenCopilot?: () => void;
   onOpenGuardianInspection?: () => void;
@@ -25,6 +25,9 @@ export function Topbar({
   onOpenGuardianInspection,
 }: TopbarProps) {
   const [isTelemetryPopoverOpen, setIsTelemetryPopoverOpen] = useState(false);
+  const snapshotState = telemetry.snapshotState ?? 'UNKNOWN';
+  const hasCurrentSnapshot = snapshotState === 'LIVE';
+  const bffState = telemetry.isLoading ? 'BFF CONNECTING' : telemetry.connected ? 'BFF READY' : 'BFF UNAVAILABLE';
 
   return (
     <header className="topbar">
@@ -48,7 +51,7 @@ export function Topbar({
           <div
             className="topbar-telemetry-badge"
             onClick={() => setIsTelemetryPopoverOpen(!isTelemetryPopoverOpen)}
-            title="知行实时遥测 (端口 43191) - 点击展开指标浮窗"
+            title="Cockpit 治理全景数据源 - 点击展开指标浮窗"
             role="button"
             tabIndex={0}
             onKeyDown={(e) => {
@@ -56,16 +59,16 @@ export function Topbar({
                 setIsTelemetryPopoverOpen(!isTelemetryPopoverOpen);
               }
             }}
-            aria-label="知行实时遥测"
+            aria-label="Cockpit 治理全景数据源"
             aria-expanded={isTelemetryPopoverOpen}
           >
-            <span className={`telemetry-dot ${telemetry?.connected ? 'connected' : 'fallback'}`} />
-            <span className="telemetry-text">43191 {telemetry?.connected ? 'LIVE' : 'SYNC'}</span>
+            <span className={`telemetry-dot ${!telemetry.isLoading && telemetry.connected && hasCurrentSnapshot ? 'connected' : 'fallback'}`} />
+            <span className="telemetry-text">COCKPIT {bffState} · SNAPSHOT {snapshotState}</span>
             <span className="telemetry-pill">
-              门禁 {(telemetry?.gates || []).filter((g) => g.verdict === 'PASS').length}/{(telemetry?.gates || []).length}
+              门禁 {hasCurrentSnapshot ? `${telemetry.gates.filter((g) => g.verdict === 'PASS').length}/${telemetry.gates.length}` : 'UNKNOWN'}
             </span>
             <span className="telemetry-pill">
-              台账 {telemetry?.betStats?.done ?? 0}/{telemetry?.betStats?.total ?? 0}
+              台账 {hasCurrentSnapshot ? `${telemetry.betStats.done}/${telemetry.betStats.total}` : 'UNKNOWN'}
             </span>
           </div>
 
@@ -74,7 +77,7 @@ export function Topbar({
             onClose={() => setIsTelemetryPopoverOpen(false)}
             telemetry={telemetry}
             onOpenGuardianInspection={onOpenGuardianInspection}
-            onNavigate={(_path) => {
+            onNavigate={() => {
               setIsTelemetryPopoverOpen(false);
               onNavigateToPanorama();
             }}

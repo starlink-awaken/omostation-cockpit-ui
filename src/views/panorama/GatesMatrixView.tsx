@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   ShieldCheck,
   AlertTriangle,
@@ -20,7 +20,7 @@ import { useToast } from '../../components/common/Toast';
 export type GateFilterType = 'all' | 'abnormal' | 'passed';
 
 export function GatesMatrixView() {
-  const { gates, isLoading, isFallback, refetch } = useGatesMatrix();
+  const { gates, isLoading, isFallback, sourceState, sourceFailure, sourceObservedAt, partialFacets, refetch } = useGatesMatrix();
   const { showToast } = useToast();
 
   const [filter, setFilter] = useState<GateFilterType>('all');
@@ -31,8 +31,13 @@ export function GatesMatrixView() {
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      await refetch();
-      showToast('门禁全量巡检完成，体系状态健康', 'success');
+      const result = await refetch();
+      showToast(
+        result.sourceState === 'LIVE'
+          ? '门禁全量巡检完成。'
+          : `门禁来源 ${result.sourceState}：${result.sourceFailure ?? '未获得可验证状态。'}`,
+        result.sourceState === 'LIVE' ? 'success' : 'warning',
+      );
     } catch {
       showToast('门禁刷新失败，已维持上一快照', 'warning');
     } finally {
@@ -48,15 +53,19 @@ export function GatesMatrixView() {
   };
 
   // Metrics
-  const totalCount = gates.length;
-  const passedCount = gates.filter((g) => g.verdict === 'PASS').length;
-  const warnCount = gates.filter((g) => g.verdict === 'WARN').length;
-  const failCount = gates.filter((g) => g.verdict === 'FAIL').length;
-  const blockedCount = gates.filter((g) => g.verdict === 'BLOCKED').length;
+  const gatesUnavailable = isFallback || sourceState === 'UNKNOWN' || partialFacets?.includes('gates');
+  const gatesAreStale = sourceState === 'STALE';
+  const visibleGates = gatesUnavailable ? [] : gates;
+  const totalCount = gatesUnavailable ? 0 : visibleGates.length;
+  const passedCount = gatesUnavailable ? 0 : visibleGates.filter((g) => g.verdict === 'PASS').length;
+  const warnCount = gatesUnavailable ? 0 : visibleGates.filter((g) => g.verdict === 'WARN').length;
+  const failCount = gatesUnavailable ? 0 : visibleGates.filter((g) => g.verdict === 'FAIL').length;
+  const blockedCount = gatesUnavailable ? 0 : visibleGates.filter((g) => g.verdict === 'BLOCKED').length;
+  const unknownCount = gatesUnavailable ? null : visibleGates.filter((g) => g.verdict === 'UNKNOWN').length;
   const abnormalCount = warnCount + failCount + blockedCount;
 
   // Filtered Gates
-  const filteredGates = gates.filter((gate) => {
+  const filteredGates = visibleGates.filter((gate) => {
     // Verdict filter
     if (filter === 'abnormal' && gate.verdict === 'PASS') return false;
     if (filter === 'passed' && gate.verdict !== 'PASS') return false;
@@ -76,7 +85,7 @@ export function GatesMatrixView() {
     return true;
   });
 
-  const getVerdictBadge = (verdict: GateVerdict) => {
+  const getVerdictBadge = (verdict: GateVerdict | 'BLOCKED' | 'PENDING') => {
     switch (verdict) {
       case 'PASS':
         return (
@@ -106,6 +115,13 @@ export function GatesMatrixView() {
             阻塞 (BLOCKED)
           </span>
         );
+      case 'UNKNOWN':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-950/60 text-amber-300 border border-amber-500/30">
+            <AlertTriangle className="w-3.5 h-3.5 text-amber-300" />
+            未知 (UNKNOWN)
+          </span>
+        );
       case 'PENDING':
       default:
         return (
@@ -128,23 +144,34 @@ export function GatesMatrixView() {
               <h2 className="text-base font-bold tracking-tight text-white flex items-center gap-2">
                 系统门禁全景矩阵
               </h2>
-              {isFallback && (
+              {sourceState !== 'LIVE' && (
                 <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono">
-                  静态容灾快照
+                  来源 {sourceState} · {sourceFailure ?? '当前门禁未获验证'}
                 </span>
               )}
             </div>
             <p className="mt-0.5 text-xs text-slate-400">
               严格覆盖 A1~A9、RF0、RC-DL 11 大宪法级系统门禁，实时把控工程、合规与运维三轴证据链
             </p>
+            {gatesAreStale && !gatesUnavailable && (
+              <p role="status" className="mt-1 text-xs text-amber-300">
+                最后一次已验证快照 · {sourceObservedAt ?? '观察时间未知'} · 不代表当前准入，请重新巡检确认。
+              </p>
+            )}
           </div>
 
           <div className="flex items-center gap-2.5 self-start md:self-center">
             {/* Quick Metrics */}
             <div className="flex items-center gap-2 text-xs bg-[#0b0f19]/80 px-2.5 py-1 rounded-lg border border-slate-800 font-mono">
-              <span className="text-slate-400">共计 <strong className="text-slate-200">{totalCount}</strong> 项</span>
+              <span className="text-slate-400">{gatesUnavailable ? '当前门禁状态未获验证' : <>{gatesAreStale ? '历史快照' : '共计'} <strong className={gatesAreStale ? 'text-amber-300' : 'text-slate-200'}>{totalCount}</strong> 项</>}</span>
               <span className="text-slate-700">|</span>
-              <span className="text-emerald-400 font-medium">通过 {passedCount}</span>
+              {!gatesUnavailable && <span className={`${gatesAreStale ? 'text-amber-300' : 'text-emerald-400'} font-medium`}>{gatesAreStale ? '历史通过' : '通过'} {passedCount}</span>}
+              {unknownCount !== null && unknownCount > 0 && (
+                <>
+                  <span className="text-slate-700">|</span>
+                  <span className="text-amber-300 font-medium">未知 {unknownCount}</span>
+                </>
+              )}
               {abnormalCount > 0 && (
                 <>
                   <span className="text-slate-700">|</span>
@@ -180,7 +207,7 @@ export function GatesMatrixView() {
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              全部 ({totalCount})
+              全部 ({gatesUnavailable ? 'UNKNOWN' : totalCount})
             </button>
             <button
               type="button"
@@ -191,7 +218,7 @@ export function GatesMatrixView() {
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              仅异常 ({abnormalCount})
+              仅异常 ({gatesUnavailable ? 'UNKNOWN' : abnormalCount})
             </button>
             <button
               type="button"
@@ -202,7 +229,7 @@ export function GatesMatrixView() {
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              仅通过 ({passedCount})
+              仅通过 ({gatesUnavailable ? 'UNKNOWN' : passedCount})
             </button>
           </div>
 
@@ -226,6 +253,12 @@ export function GatesMatrixView() {
           {Array.from({ length: 9 }).map((_, i) => (
             <SkeletonCard key={i} />
           ))}
+        </div>
+      ) : gatesUnavailable ? (
+        <div className="p-12 text-center rounded-xl bg-amber-950/20 border border-dashed border-amber-500/30 text-amber-200" role="status">
+          <AlertTriangle className="w-8 h-8 mx-auto mb-2 text-amber-400" />
+          <p className="text-sm font-medium">门禁状态 UNKNOWN</p>
+          <p className="mt-1 text-xs text-amber-300/80">当前来源未提供门禁字段级的验证证明，不能展示 PASS、FAIL 或告警计数。</p>
         </div>
       ) : filteredGates.length === 0 ? (
         <div className="p-12 text-center rounded-xl bg-[#111827]/40 border border-dashed border-slate-800 text-slate-400" role="status">

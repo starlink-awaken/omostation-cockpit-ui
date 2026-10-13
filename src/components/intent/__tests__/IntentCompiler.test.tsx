@@ -71,7 +71,7 @@ const MOCK_HISTORY = [
 describe('IntentCompiler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Default: API unavailable → fallback to demo data
+    // Default: APIs unavailable; the UI must report this truthfully.
     apiFetch.mockResolvedValue({ ok: false, data: null, error: 'Not available' });
     apiPost.mockResolvedValue({ ok: false, data: null, error: 'Not available' });
   });
@@ -249,9 +249,8 @@ describe('IntentCompiler', () => {
       expect(screen.getByTestId('result-intent-text')).toHaveTextContent('测试意图');
     });
 
-    it('renders fallback result when API is unavailable', async () => {
+    it('shows the compile service as unavailable without rendering a demo DAG', async () => {
       const user = userEvent.setup();
-      // API unavailable → fallback to demo data
       apiPost.mockResolvedValue({ ok: false, data: null, error: 'Not available' });
 
       render(<IntentCompiler />, { wrapper: createWrapper() });
@@ -261,12 +260,49 @@ describe('IntentCompiler', () => {
       await user.click(screen.getByTestId('compile-btn'));
 
       await waitFor(() => {
-        expect(screen.getByText('编译结果')).toBeInTheDocument();
+        expect(screen.getByTestId('error-state')).toHaveTextContent('Not available');
       });
 
-      // Demo data has 6 nodes
-      const nodes = screen.getAllByTestId('dag-node');
-      expect(nodes.length).toBeGreaterThan(0);
+      expect(screen.queryByTestId('dag-node')).not.toBeInTheDocument();
+      expect(screen.queryByText('编译结果')).not.toBeInTheDocument();
+    });
+
+    it('does not keep a previous DAG visible after a later compile request fails', async () => {
+      const user = userEvent.setup();
+      apiPost
+        .mockResolvedValueOnce({ ok: true, data: { available: true, result: MOCK_COMPILE_RESULT, error: null } })
+        .mockResolvedValueOnce({ ok: false, data: null, error: 'Service unavailable' });
+
+      render(<IntentCompiler />, { wrapper: createWrapper() });
+      const input = screen.getByTestId('intent-input');
+      await user.type(input, '回退测试');
+      await user.click(screen.getByTestId('compile-btn'));
+      await waitFor(() => expect(screen.getAllByTestId('dag-node')).toHaveLength(MOCK_DAG.nodes.length));
+
+      await user.click(screen.getByTestId('compile-btn'));
+      await waitFor(() => {
+        expect(screen.getByTestId('error-state')).toHaveTextContent('Service unavailable');
+      });
+
+      expect(screen.queryByTestId('dag-node')).not.toBeInTheDocument();
+      expect(screen.queryByText('编译结果')).not.toBeInTheDocument();
+    });
+
+    it('reports an unavailable compile service in a successful HTTP response', async () => {
+      const user = userEvent.setup();
+      apiPost.mockResolvedValue({
+        ok: true,
+        data: { available: false, result: null, error: null },
+      });
+
+      render(<IntentCompiler />, { wrapper: createWrapper() });
+      await user.type(screen.getByTestId('intent-input'), '服务尚未接通');
+      await user.click(screen.getByTestId('compile-btn'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('error-state')).toHaveTextContent('意图编译服务当前不可用');
+      });
+      expect(screen.queryByTestId('dag-node')).not.toBeInTheDocument();
     });
 
     it('clears previous result when reset is clicked after compilation', async () => {
@@ -425,15 +461,31 @@ describe('IntentCompiler', () => {
       expect(screen.getByText('历史意图2')).toBeInTheDocument();
     });
 
-    it('renders fallback history when API unavailable', async () => {
+    it('reports unavailable history instead of presenting demo history as real', async () => {
       apiFetch.mockResolvedValue({ ok: false, data: null, error: 'Not available' });
 
       render(<IntentCompiler />, { wrapper: createWrapper() });
 
       await waitFor(() => {
-        // Demo history has 3 items
-        expect(screen.getAllByTestId('history-item')).toHaveLength(3);
+        expect(screen.getByTestId('history-unavailable')).toHaveTextContent('Not available');
       });
+
+      expect(screen.queryByTestId('history-item')).not.toBeInTheDocument();
+      expect(screen.queryByText('暂无编译历史')).not.toBeInTheDocument();
+    });
+
+    it('reports unavailable history in a successful HTTP response', async () => {
+      apiFetch.mockResolvedValue({
+        ok: true,
+        data: { available: false, history: [], total: 0 },
+      });
+
+      render(<IntentCompiler />, { wrapper: createWrapper() });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('history-unavailable')).toHaveTextContent('编译历史服务当前不可用');
+      });
+      expect(screen.queryByText('暂无编译历史')).not.toBeInTheDocument();
     });
 
     it('fills input when history item is clicked', async () => {

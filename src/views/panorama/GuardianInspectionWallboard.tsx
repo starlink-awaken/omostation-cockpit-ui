@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Activity,
   Radio,
@@ -19,29 +19,25 @@ import { useToast } from '../../components/common/Toast';
 
 export type AlertFilterLevel = 'all' | 'critical' | 'warn' | 'info';
 
+function observationLabel(observedAt: string | null, ageMs: number | null): string {
+  if (!observedAt || ageMs == null) return '观测时间 UNKNOWN';
+  if (ageMs < 60_000) return `观测于 ${observedAt} · 不足 1 分钟前`;
+  return `观测于 ${observedAt} · ${Math.floor(ageMs / 60_000)} 分钟前`;
+}
+
 export function GuardianInspectionWallboard() {
-  const { guardian, isLoading, isFallback, refetch } = useGuardianStatus();
+  const { guardian, isLoading, sourceState, sourceFailure, sourceObservedAt, sourceAgeMs, partialFacets, refetch } = useGuardianStatus();
   const { showToast } = useToast();
 
-  const [cycleTime, setCycleTime] = useState(guardian?.pulseIntervalSec ?? 74);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [alertFilter, setAlertFilter] = useState<AlertFilterLevel>('all');
   const [activeTab, setActiveTab] = useState<'subsystems' | 'logs'>('subsystems');
 
-  // 74s Countdown timer simulation
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCycleTime((prev) => (prev > 1 ? prev - 1 : guardian?.pulseIntervalSec ?? 74));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [guardian?.pulseIntervalSec]);
-
   const handleTriggerInspection = async () => {
     setIsRefreshing(true);
     try {
-      await refetch();
-      setCycleTime(guardian?.pulseIntervalSec ?? 74);
-      showToast('74s 哨兵已完成全局巡航，各项自愈守卫就绪', 'success');
+      const result = await refetch();
+      showToast(result.sourceState === 'LIVE' ? 'BFF 治理投影已刷新；请以观测时间与来源状态为准。' : `哨兵来源 ${result.sourceState}：${result.sourceFailure ?? '未获得可验证状态。'}`, result.sourceState === 'LIVE' ? 'success' : 'warning');
     } catch {
       showToast('巡检触发异常，系统维持保护模式', 'warning');
     } finally {
@@ -65,12 +61,18 @@ export function GuardianInspectionWallboard() {
 
   const subsystems = guardian?.subsystems ?? [];
   const alerts = guardian?.alerts ?? [];
-  const healthScore = guardian?.healthScore ?? 99.4;
+  const sourceUnavailable = sourceState === 'UNKNOWN' || sourceState === 'STALE';
+  const guardianUnavailable = sourceUnavailable || partialFacets?.includes('guardian') || partialFacets?.includes('posture');
+  const alertsUnavailable = sourceUnavailable || partialFacets?.includes('alerts');
+  const healthScore = guardian?.healthScore;
+  const reportedInterval = !guardianUnavailable && typeof guardian?.pulseIntervalSec === 'number' && guardian.pulseIntervalSec > 0
+    ? guardian.pulseIntervalSec
+    : null;
 
   const filteredAlerts = alerts.filter((alert) => {
-    if (alertFilter === 'critical') return alert.severity === 'CRITICAL';
-    if (alertFilter === 'warn') return alert.severity === 'WARN';
-    if (alertFilter === 'info') return alert.severity === 'INFO';
+    if (alertFilter === 'critical') return alert.severity === 'critical';
+    if (alertFilter === 'warn') return alert.severity === 'warning';
+    if (alertFilter === 'info') return alert.severity === 'info';
     return true;
   });
 
@@ -80,18 +82,19 @@ export function GuardianInspectionWallboard() {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 p-4 rounded-xl bg-[#111827]/80 border border-slate-800/80 backdrop-blur-md">
         <div>
           <div className="flex items-center gap-2.5">
-            <Radio className="w-5 h-5 text-emerald-400 animate-pulse" />
+            <Radio className={`w-5 h-5 ${guardianUnavailable ? 'text-amber-400' : 'text-emerald-400 animate-pulse'}`} />
             <h2 className="text-base font-bold tracking-tight text-white flex items-center gap-2">
-              74s 哨兵常态守护与健康大屏
+              哨兵守护与健康大屏
             </h2>
-            {isFallback && (
+            {sourceState !== 'LIVE' && (
               <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono">
-                静态容灾快照
+                来源 {sourceState} · {sourceFailure ?? '当前哨兵状态未获验证'}
               </span>
             )}
           </div>
           <p className="mt-0.5 text-xs text-slate-400">
-            常态化驻留守护核心回路，提供秒级心跳探针、故障自动熔断与自愈流水线
+            Cockpit BFF 治理投影；仅显示带来源与新鲜度证明的 Guardian 观测。
+            <span className="ml-1 font-mono text-slate-500">{observationLabel(sourceObservedAt, sourceAgeMs)}</span>
           </p>
         </div>
 
@@ -99,7 +102,7 @@ export function GuardianInspectionWallboard() {
           <div className="flex items-center gap-2 bg-[#0b0f19]/80 border border-slate-800 px-3 py-1 rounded-lg">
             <Clock className="w-3.5 h-3.5 text-cyan-400" />
             <span className="text-xs text-slate-300">
-              下轮巡检倒计时: <strong className="text-cyan-300 font-mono text-xs">{cycleTime}s</strong>
+              已报告巡检周期: <strong className="text-cyan-300 font-mono text-xs">{reportedInterval === null ? 'UNKNOWN' : `${reportedInterval}s`}</strong>
             </span>
           </div>
 
@@ -133,16 +136,20 @@ export function GuardianInspectionWallboard() {
             </div>
             <div className="mt-3 flex items-baseline gap-2">
               <span className="text-3xl font-extrabold tracking-tight text-white font-mono">
-                {healthScore.toFixed(1)}%
+                {guardianUnavailable || typeof healthScore !== 'number' ? 'UNKNOWN' : `${healthScore.toFixed(1)}%`}
               </span>
-              <span className="text-xs text-emerald-400 font-medium">全域最优</span>
+              <span className={`text-xs font-medium ${guardianUnavailable ? 'text-amber-300' : 'text-emerald-400'}`}>
+                {guardianUnavailable ? '未获验证' : 'BFF 已验证'}
+              </span>
             </div>
-            <div className="mt-3 w-full bg-slate-800/80 h-1.5 rounded-full overflow-hidden">
-              <div
-                className="bg-emerald-500 h-full rounded-full transition-all duration-500"
-                style={{ width: `${Math.min(healthScore, 100)}%` }}
-              />
-            </div>
+            {!guardianUnavailable && typeof healthScore === 'number' && (
+              <div className="mt-3 w-full bg-slate-800/80 h-1.5 rounded-full overflow-hidden">
+                <div
+                  className="bg-emerald-500 h-full rounded-full transition-all duration-500"
+                  style={{ width: `${Math.min(healthScore, 100)}%` }}
+                />
+              </div>
+            )}
           </div>
 
           {/* Pulse Cadence */}
@@ -153,12 +160,12 @@ export function GuardianInspectionWallboard() {
             </div>
             <div className="mt-2.5 flex items-baseline gap-2">
               <span className="text-2xl font-black tracking-tight text-white font-mono">
-                {guardian?.pulseIntervalSec ?? 74}
+                {reportedInterval === null ? 'UNKNOWN' : reportedInterval}
               </span>
               <span className="text-xs text-slate-400 font-mono">秒 / 循环</span>
             </div>
             <div className="mt-2 text-[11px] text-slate-500">
-              精准对齐 74s 常态守护心跳
+              {guardianUnavailable ? '来源不含已验证的哨兵观测，不能确认心跳周期' : `BFF 已报告 ${reportedInterval}s 巡检周期`}
             </div>
           </div>
 
@@ -170,12 +177,12 @@ export function GuardianInspectionWallboard() {
             </div>
             <div className="mt-2.5 flex items-baseline gap-2">
               <span className="text-2xl font-black tracking-tight text-white font-mono">
-                {subsystems.length}
+                {guardianUnavailable ? 'UNKNOWN' : subsystems.length}
               </span>
-              <span className="text-xs text-indigo-400 font-mono">4/4 在线</span>
+              <span className="text-xs text-indigo-400 font-mono">{guardianUnavailable ? '状态未知' : `${subsystems.length} 已报告`}</span>
             </div>
             <div className="mt-2 text-[11px] text-slate-500">
-              守卫、台账、BCOS、网格全量就绪
+              {guardianUnavailable ? '来源不含已验证的哨兵观测，无法验证子系统状态' : '子系统状态来自当前 BFF 投影'}
             </div>
           </div>
 
@@ -187,12 +194,16 @@ export function GuardianInspectionWallboard() {
             </div>
             <div className="mt-2.5 flex items-baseline gap-2">
               <span className="text-2xl font-black tracking-tight text-white font-mono">
-                {alerts.length}
+                {alertsUnavailable ? 'UNKNOWN' : alerts.length}
               </span>
-              <span className="text-xs text-emerald-400 font-medium">无阻断级风险</span>
+              <span className={`text-xs font-medium ${alertsUnavailable ? 'text-amber-300' : 'text-emerald-400'}`}>
+                {alertsUnavailable ? '告警状态未知' : '无阻断级风险'}
+              </span>
             </div>
             <div className="mt-2 text-[11px] text-slate-500">
-              所有已知债均处于熔断可控态
+              {alertsUnavailable
+                ? alerts.length > 0 ? `已观察到 ${alerts.length} 条记录；完整告警状态未知` : '数据源不可用，无法判断未决告警'
+                : '当前 BFF 已验证告警集合的记录数'}
             </div>
           </div>
         </div>
@@ -210,7 +221,7 @@ export function GuardianInspectionWallboard() {
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            四大子系统状态矩阵 ({subsystems.length})
+            四大子系统状态矩阵 ({guardianUnavailable ? 'UNKNOWN' : subsystems.length})
           </button>
           <button
             type="button"
@@ -221,7 +232,7 @@ export function GuardianInspectionWallboard() {
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            实时告警与自愈流 ({alerts.length})
+            实时告警与自愈流 ({alertsUnavailable ? 'UNKNOWN' : alerts.length})
           </button>
         </div>
 
@@ -244,6 +255,13 @@ export function GuardianInspectionWallboard() {
 
       {/* Tab Panels */}
       {activeTab === 'subsystems' ? (
+        guardianUnavailable ? (
+          <div className="p-12 text-center rounded-2xl bg-amber-950/20 border border-dashed border-amber-500/30 text-amber-200" role="status">
+            <AlertTriangle className="w-8 h-8 mx-auto mb-2 text-amber-400" />
+            <p className="text-sm font-medium">哨兵状态 UNKNOWN</p>
+            <p className="mt-1 text-xs text-amber-300/80">当前部分来源不含已验证的 Guardian 观测，不能从零值或空列表推断健康。</p>
+          </div>
+        ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {subsystems.map((sub) => (
             <div
@@ -281,19 +299,51 @@ export function GuardianInspectionWallboard() {
               </div>
 
               <div className="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between text-xs text-slate-400">
-                <span>响应延迟: <strong className="text-cyan-300 font-mono">{sub.latencyMs ?? 15}ms</strong></span>
-                <span className="text-[11px] text-slate-500">自愈回路就绪</span>
+                <span>响应延迟: <strong className="text-cyan-300 font-mono">{sub.latencyMs === undefined ? 'UNKNOWN' : `${sub.latencyMs}ms`}</strong></span>
+                <span className="text-[11px] text-slate-500">状态来自 BFF 投影</span>
               </div>
             </div>
           ))}
         </div>
+        )
       ) : (
         <div className="space-y-3">
-          {filteredAlerts.length === 0 ? (
+          {alertsUnavailable ? (
+            <>
+              <div className="p-5 rounded-2xl bg-amber-950/20 border border-dashed border-amber-500/30 text-amber-200" role="status">
+                <AlertTriangle className="w-6 h-6 mb-2 text-amber-400" />
+                <p className="text-sm font-medium">完整告警状态 UNKNOWN</p>
+                <p className="mt-1 text-xs text-amber-300/80">
+                  {alerts.length > 0
+                    ? '以下为来源中已观察到的记录，不代表当前未决告警总数。'
+                    : '不能以空列表推断“没有活动告警”。'}
+                </p>
+              </div>
+              {filteredAlerts.map((alert) => (
+                <div
+                  key={alert.id}
+                  className="p-4 rounded-xl bg-slate-900/70 border border-amber-500/20 flex items-start justify-between gap-3 text-xs"
+                >
+                  <div className="flex items-start gap-2.5">
+                    <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                    <div>
+                      <div className="font-semibold text-slate-200">{alert.message}</div>
+                      <div className="text-[11px] text-slate-500 mt-0.5 font-mono">
+                        已观察记录 · 来源: {alert.source} | 时间: {alert.timestamp}
+                      </div>
+                    </div>
+                  </div>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-950/60 text-amber-400 border border-amber-500/30">
+                    {alert.severity}
+                  </span>
+                </div>
+              ))}
+            </>
+          ) : filteredAlerts.length === 0 ? (
             <div className="p-12 text-center rounded-2xl bg-slate-900/40 border border-dashed border-slate-800 text-slate-400" role="status">
               <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-emerald-500/80" />
               <p className="text-sm font-medium text-slate-300">当前没有处于活动状态的告警</p>
-              <p className="mt-1 text-xs text-slate-500">74s 哨兵巡航全部指标健康正常</p>
+              <p className="mt-1 text-xs text-slate-500">当前 BFF 已验证告警集合为空。</p>
             </div>
           ) : (
             filteredAlerts.map((alert) => (

@@ -5,6 +5,7 @@ import TelemetryPopover from '../TelemetryPopover';
 import type { LiveTelemetryState } from '../../../api/liveTelemetry';
 
 const mockTelemetry: LiveTelemetryState = {
+  snapshotState: 'LIVE',
   connected: true,
   vramUsage: '43.2GB / 152GB',
   guardianCadence: 74,
@@ -47,10 +48,11 @@ describe('TelemetryPopover component', () => {
       />
     );
 
-    expect(screen.getByText('43191 知行实时遥测')).toBeInTheDocument();
-    expect(screen.getByText('SSE CONNECTED')).toBeInTheDocument();
+    expect(screen.getByText('Cockpit 治理全景')).toBeInTheDocument();
+    expect(screen.getByText('BFF READY')).toBeInTheDocument();
+    expect(screen.getByText('SNAPSHOT LIVE')).toBeInTheDocument();
     expect(screen.getByText('43.2GB / 152GB')).toBeInTheDocument();
-    expect(screen.getByText('Guardian: 74s 脉冲')).toBeInTheDocument();
+    expect(screen.getByText('Guardian: 74s')).toBeInTheDocument();
     expect(screen.getByText('2/2 PASS')).toBeInTheDocument();
     expect(screen.getByText('443 / 443 (100%)')).toBeInTheDocument();
 
@@ -64,6 +66,39 @@ describe('TelemetryPopover component', () => {
     const inboxBtn = screen.getByRole('button', { name: /决策箱/ });
     fireEvent.click(inboxBtn);
     expect(onNavigate).toHaveBeenCalledWith('/decision-inbox');
+  });
+
+  it.each(['UNKNOWN', 'STALE'] as const)('withholds success counts and progress for a %s snapshot', (snapshotState) => {
+    render(
+      <TelemetryPopover
+        isOpen
+        onClose={vi.fn()}
+        telemetry={{ ...mockTelemetry, snapshotState, connected: true }}
+        onNavigate={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText(`SNAPSHOT ${snapshotState}`)).toBeInTheDocument();
+    expect(screen.getAllByText('UNKNOWN').length).toBeGreaterThan(0);
+    expect(screen.getByText('门禁快照不可用，当前状态未知')).toBeInTheDocument();
+    expect(screen.getByText('快照不可用，完成率未验证')).toBeInTheDocument();
+    expect(screen.queryByText(/443 \/ 443/)).not.toBeInTheDocument();
+    expect(screen.queryByText('2/2 PASS')).not.toBeInTheDocument();
+    expect(document.querySelector('.bg-indigo-500.h-full')).toBeNull();
+  });
+
+  it('shows BFF CONNECTING while the shared Panorama query is loading', () => {
+    render(
+      <TelemetryPopover
+        isOpen
+        onClose={vi.fn()}
+        telemetry={{ ...mockTelemetry, isLoading: true, connected: false, snapshotState: 'UNKNOWN' }}
+        onNavigate={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('BFF CONNECTING')).toBeInTheDocument();
+    expect(screen.queryByText('BFF UNAVAILABLE')).not.toBeInTheDocument();
   });
 
   it('triggers onOpenGuardianInspection when inspection button is clicked', () => {
@@ -80,7 +115,7 @@ describe('TelemetryPopover component', () => {
       />
     );
 
-    const inspectionBtn = screen.getByRole('button', { name: /展开 74s 哨兵巡检视窗/ });
+    const inspectionBtn = screen.getByRole('button', { name: /展开系统巡检视窗/ });
     fireEvent.click(inspectionBtn);
 
     expect(onOpenGuardianInspection).toHaveBeenCalledTimes(1);

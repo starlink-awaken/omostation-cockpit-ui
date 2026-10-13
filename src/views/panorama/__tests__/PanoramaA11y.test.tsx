@@ -102,7 +102,7 @@ describe('PanoramaMasterView Accessibility (A11y)', () => {
     expect(gatesTab).toHaveAttribute('aria-controls', 'tabpanel-gates');
 
     // Guardian tab should not be selected initially
-    const guardianTab = screen.getByRole('tab', { name: /74s 哨兵大屏/i });
+    const guardianTab = screen.getByRole('tab', { name: /哨兵观测/i });
     expect(guardianTab).toHaveAttribute('aria-selected', 'false');
 
     // Tabpanel should be labeled by the selected tab
@@ -114,7 +114,7 @@ describe('PanoramaMasterView Accessibility (A11y)', () => {
   it('updates aria-selected and tabpanel aria-labelledby upon tab click', () => {
     renderA11yTest();
 
-    const guardianTab = screen.getByRole('tab', { name: /74s 哨兵大屏/i });
+    const guardianTab = screen.getByRole('tab', { name: /哨兵观测/i });
     fireEvent.click(guardianTab);
 
     expect(guardianTab).toHaveAttribute('aria-selected', 'true');

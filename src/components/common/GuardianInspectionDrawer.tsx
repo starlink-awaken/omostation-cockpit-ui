@@ -1,9 +1,9 @@
 /**
- * GuardianInspectionDrawer.tsx — 知行 74s 哨兵巡检全息视窗
- * 
- * 原生呈现 43191 知行守护进程 (Resident Guardian) 的 74s 周期巡检证据、
- * 四大正交回路健康态、11 大全局门禁判定详情与实时审计流水。
- * 免除跳出 Cockpit 访问外部网页的体验割裂。
+ * GuardianInspectionDrawer.tsx — Cockpit 治理投影巡检视窗
+ *
+ * All observations come from the Cockpit BFF query cache. Runtime streams,
+ * audit timelines, and compliance summaries remain UNKNOWN until the BFF
+ * provides provenance-bound fields for them.
  */
 
 import React, { useState, useEffect } from 'react';
@@ -17,12 +17,10 @@ import {
   Terminal,
   Scale,
   Workflow,
-  AlertTriangle,
-  ExternalLink,
   CheckCircle2,
   FileText,
 } from 'lucide-react';
-import { useLiveTelemetry, type GateReport } from '../../api/liveTelemetry';
+import { useGovernancePanorama, type DisplayGateItem } from '../../api/hooks/useGovernancePanorama';
 
 interface GuardianInspectionDrawerProps {
   isOpen: boolean;
@@ -32,13 +30,33 @@ interface GuardianInspectionDrawerProps {
 
 type DrawerTab = 'sentinel' | 'harness' | 'ssot';
 
-interface InspectionLogEntry {
-  id: string;
-  time: string;
-  source: string;
-  level: 'INFO' | 'SUCCESS' | 'WARN';
-  message: string;
-  evidencePath?: string;
+function gateVerdictBadgeClass(verdict: DisplayGateItem['verdict']): string {
+  switch (verdict) {
+    case 'PASS':
+      return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+    case 'FAIL':
+    case 'BLOCKED':
+      return 'bg-rose-500/10 text-rose-300 border-rose-500/20';
+    case 'WARN':
+    case 'PENDING':
+      return 'bg-amber-500/10 text-amber-300 border-amber-500/20';
+    default:
+      return 'bg-slate-700/50 text-slate-300 border-slate-600/60';
+  }
+}
+
+function bffStatusBadgeClass(status: 'CONNECTING' | 'LIVE' | 'PARTIAL' | 'STALE' | 'UNKNOWN'): string {
+  if (status === 'LIVE') return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+  if (status === 'PARTIAL' || status === 'STALE') return 'bg-amber-500/10 text-amber-300 border-amber-500/20';
+  return 'bg-slate-700/50 text-slate-300 border-slate-600/60';
+}
+
+function guardianStatusBadgeClass(sourceState: string, guardianStatus: string): string {
+  if (sourceState === 'STALE') return bffStatusBadgeClass('STALE');
+  if (sourceState !== 'LIVE') return bffStatusBadgeClass('UNKNOWN');
+  if (guardianStatus === 'active') return bffStatusBadgeClass('LIVE');
+  if (guardianStatus === 'degraded') return bffStatusBadgeClass('PARTIAL');
+  return 'bg-rose-500/10 text-rose-300 border-rose-500/20';
 }
 
 export function GuardianInspectionDrawer({
@@ -46,20 +64,23 @@ export function GuardianInspectionDrawer({
   onClose,
   onNavigate,
 }: GuardianInspectionDrawerProps) {
-  const telemetry = useLiveTelemetry();
-  const [selectedGate, setSelectedGate] = useState<GateReport | null>(null);
+  const panorama = useGovernancePanorama();
+  const snapshotState = panorama.isFallback ? 'UNKNOWN' : panorama.sourceState;
+  const gatesVerified = snapshotState !== 'UNKNOWN' && !panorama.partialFacets.includes('gates');
+  const guardianVerified = snapshotState !== 'UNKNOWN' && !panorama.partialFacets.includes('guardian');
+  const guardianCadence = guardianVerified && panorama.data.guardian.interval_seconds > 0
+    ? panorama.data.guardian.interval_seconds
+    : 0;
+  const bffStatus = panorama.isLoading ? 'CONNECTING' : snapshotState;
+  const guardianStatus = snapshotState === 'LIVE' && guardianVerified
+    ? panorama.data.guardian.status.toUpperCase()
+    : snapshotState === 'STALE' && guardianVerified
+      ? 'STALE · HISTORY'
+      : 'UNKNOWN';
+  const gates = gatesVerified ? panorama.data.gates : [];
+  const [selectedGate, setSelectedGate] = useState<DisplayGateItem | null>(null);
   const [activeTab, setActiveTab] = useState<DrawerTab>('sentinel');
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [cycleTime, setCycleTime] = useState(74);
-
-  // 模拟当前巡检周期倒计时
-  useEffect(() => {
-    if (!isOpen) return;
-    const timer = setInterval(() => {
-      setCycleTime((prev) => (prev > 1 ? prev - 1 : telemetry.guardianCadence));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [isOpen, telemetry.guardianCadence]);
 
   // ESC 键关闭
   useEffect(() => {
@@ -72,56 +93,9 @@ export function GuardianInspectionDrawer({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  // 真实巡检流水
-  const mockInspectionLogs: InspectionLogEntry[] = [
-    {
-      id: 'log-1',
-      time: '10:09:42',
-      source: 'resident_heartbeats',
-      level: 'SUCCESS',
-      message: 'Resident Agent 74s 自愈心跳正常，已同步至 .omo/state/resident-heartbeat.jsonl',
-      evidencePath: '.omo/state/resident-heartbeat.jsonl',
-    },
-    {
-      id: 'log-2',
-      time: '10:08:28',
-      source: 'rule_vitality',
-      level: 'SUCCESS',
-      message: '7720+ 条法规规则活性检验完成，0 条幽灵衰退规则',
-      evidencePath: '.omo/state/rule-vitality.jsonl',
-    },
-    {
-      id: 'log-3',
-      time: '10:07:14',
-      source: 'worktree_isolation',
-      level: 'INFO',
-      message: '检测到当前分支处于隔离 Worktree，未发现根仓污染行为 (PASW)',
-      evidencePath: 'projects/cockpit-ui',
-    },
-    {
-      id: 'log-4',
-      time: '10:06:00',
-      source: 'adjudications',
-      level: 'SUCCESS',
-      message: '全景裁决就绪度 100%，三年台账 443 条 BET 全部闭环',
-      evidencePath: '.omo/_delivery/outcomes/adjudications.jsonl',
-    },
-    {
-      id: 'log-5',
-      time: '10:04:46',
-      source: 'signal_poller',
-      level: 'INFO',
-      message: '外部信号探针轮询完毕，0 未捕获异常信号',
-      evidencePath: '.omo/state/signal-poller-state.json',
-    },
-  ];
-
   const handleManualRecheck = () => {
     setIsRefreshing(true);
-    setTimeout(() => {
-      setIsRefreshing(false);
-      setCycleTime(telemetry.guardianCadence);
-    }, 800);
+    void panorama.refetch().finally(() => setIsRefreshing(false));
   };
 
   if (!isOpen) return null;
@@ -131,7 +105,7 @@ export function GuardianInspectionDrawer({
       className="fixed inset-0 z-50 overflow-hidden bg-black/60 backdrop-blur-sm animate-fade-in"
       role="dialog"
       aria-modal="true"
-      aria-label="知行 74s 哨兵巡检全息视窗"
+      aria-label="系统治理巡检视窗"
     >
       <div 
         className="absolute inset-y-0 right-0 max-w-full flex pl-10"
@@ -147,14 +121,14 @@ export function GuardianInspectionDrawer({
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className="text-base font-bold text-white tracking-wide">
-                    知行 74s 哨兵巡检视窗
+                    Cockpit 治理巡检视窗
                   </h2>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                    43191 {telemetry.connected ? 'LIVE' : 'SYNC'}
+                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${bffStatusBadgeClass(bffStatus)}`}>
+                    BFF {bffStatus}
                   </span>
                 </div>
                 <p className="text-xs text-slate-400">
-                  Resident Guardian 实时守护 · 74s 证据流脉冲
+                  Cockpit BFF 投影 · 仅展示已验证的治理字段
                 </p>
               </div>
             </div>
@@ -193,7 +167,7 @@ export function GuardianInspectionDrawer({
               }`}
             >
               <Activity className="w-3.5 h-3.5" />
-              74s 哨兵门禁
+              哨兵门禁
             </button>
             <button
               type="button"
@@ -232,28 +206,28 @@ export function GuardianInspectionDrawer({
                       <Activity className="w-4 h-4 text-emerald-400" />
                       当前巡检状态
                     </span>
-                    <span className="font-mono text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                      {telemetry.lastPulse?.status || 'ARMED_HEALTHY'}
+                    <span className={`font-mono font-bold px-2 py-0.5 rounded border ${guardianStatusBadgeClass(snapshotState, panorama.data.guardian.status)}`}>
+                      {guardianStatus}
                     </span>
                   </div>
 
                   <div className="grid grid-cols-3 gap-2 pt-1 text-xs">
                     <div className="p-2.5 rounded-lg bg-slate-950/70 border border-slate-800/80">
-                      <span className="text-slate-400 block text-[11px]">巡检周期</span>
+                      <span className="text-slate-400 block text-[11px]">{snapshotState === 'STALE' ? '历史巡检周期' : '巡检周期'}</span>
                       <span className="text-white font-mono font-bold text-sm">
-                        {telemetry.guardianCadence}s
+                        {guardianVerified && guardianCadence > 0 ? `${guardianCadence}s` : 'UNKNOWN'}
                       </span>
                     </div>
                     <div className="p-2.5 rounded-lg bg-slate-950/70 border border-slate-800/80">
-                      <span className="text-slate-400 block text-[11px]">下次脉冲</span>
-                      <span className="text-blue-400 font-mono font-bold text-sm">
-                        ~{cycleTime}s
+                      <span className="text-slate-400 block text-[11px]">最后心跳观测</span>
+                      <span className="text-blue-400 font-mono font-bold text-xs">
+                        {guardianVerified && panorama.data.guardian.last_heartbeat ? panorama.data.guardian.last_heartbeat : 'UNKNOWN'}
                       </span>
                     </div>
                     <div className="p-2.5 rounded-lg bg-slate-950/70 border border-slate-800/80">
                       <span className="text-slate-400 block text-[11px]">主权显存</span>
                       <span className="text-indigo-400 font-mono font-bold text-sm truncate">
-                        {telemetry.vramUsage.split('/')[0].trim()}
+                        UNKNOWN
                       </span>
                     </div>
                   </div>
@@ -266,27 +240,9 @@ export function GuardianInspectionDrawer({
                     四大正交闭环回路
                   </h3>
                   <div className="grid grid-cols-2 gap-2 text-xs">
-                    {telemetry.lastPulse?.circuit_pulses.map((pulse) => (
-                      <div 
-                        key={pulse.loop}
-                        className="p-3 rounded-lg bg-slate-900/60 border border-slate-800/80 flex flex-col justify-between"
-                      >
-                        <div className="flex items-center justify-between mb-1.5">
-                          <span className="font-semibold text-slate-200 capitalize">
-                            {pulse.loop.replace('_', ' ')}
-                          </span>
-                          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400">
-                            {pulse.status}
-                          </span>
-                        </div>
-                        <div className="text-[11px] text-slate-400 font-mono">
-                          {pulse.adherence && `依从度: ${pulse.adherence}`}
-                          {pulse.compliance && `合规度: ${pulse.compliance}`}
-                          {pulse.rules && `生效规则: ${pulse.rules}`}
-                          {pulse.mode && `运行模式: ${pulse.mode}`}
-                        </div>
-                      </div>
-                    ))}
+                    <p className="col-span-2 rounded-lg border border-amber-500/30 bg-amber-950/20 p-3 text-amber-200">
+                      BFF 当前契约未提供回路脉冲；状态为 UNKNOWN。
+                    </p>
                   </div>
                 </div>
 
@@ -298,12 +254,17 @@ export function GuardianInspectionDrawer({
                       11 大门禁巡检结果
                     </h3>
                     <span className="text-xs font-mono text-emerald-400">
-                      {telemetry.gates.filter((g) => g.verdict === 'PASS').length} / {telemetry.gates.length} PASS
+                      {snapshotState === 'LIVE' && gatesVerified ? `${gates.filter((g) => g.verdict === 'PASS').length} / ${gates.length} PASS` : 'UNKNOWN'}
                     </span>
                   </div>
 
                   <div className="space-y-1.5">
-                    {telemetry.gates.map((gate) => {
+                    {gates.length === 0 && (
+                      <p className="rounded-lg border border-amber-500/30 bg-amber-950/20 p-3 text-xs text-amber-200">
+                        门禁字段未获当前验证，状态为 UNKNOWN。
+                      </p>
+                    )}
+                    {gates.map((gate) => {
                       const isExpanded = selectedGate?.id === gate.id;
                       return (
                         <div
@@ -322,7 +283,7 @@ export function GuardianInspectionDrawer({
                               <span className="text-slate-200 font-medium">{gate.title}</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
+                              <span data-testid={`gate-${gate.id}-badge`} className={`font-mono text-[10px] px-1.5 py-0.5 rounded border font-bold ${gateVerdictBadgeClass(gate.verdict)}`}>
                                 {gate.verdict}
                               </span>
                               {isExpanded ? (
@@ -363,31 +324,9 @@ export function GuardianInspectionDrawer({
                     <FileText className="w-3.5 h-3.5 text-indigo-400" />
                     最新巡检证据流水
                   </h3>
-                  <div className="space-y-2 font-mono text-[11px]">
-                    {mockInspectionLogs.map((log) => (
-                      <div
-                        key={log.id}
-                        className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800/80 flex items-start gap-2.5"
-                      >
-                        <span className="text-slate-500 text-[10px] whitespace-nowrap mt-0.5">
-                          {log.time}
-                        </span>
-                        <div className="flex-1 space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="px-1.5 py-0.2 rounded bg-blue-500/10 text-blue-400 text-[10px]">
-                              {log.source}
-                            </span>
-                            <span className="text-slate-300">{log.message}</span>
-                          </div>
-                          {log.evidencePath && (
-                            <div className="text-slate-500 text-[10px]">
-                              证据源: <code className="text-slate-400">{log.evidencePath}</code>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <p className="rounded-lg border border-amber-500/30 bg-amber-950/20 p-3 text-xs text-amber-200">
+                    BFF 当前契约未提供可审计的巡检时间线；无法展示证据流水。
+                  </p>
                 </div>
               </>
             )}
@@ -401,12 +340,12 @@ export function GuardianInspectionDrawer({
                       <Workflow className="w-4 h-4 text-indigo-400" />
                       Harness 8 阶段 DAG 全生命周期图谱
                     </span>
-                    <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono font-bold">
-                      100% COMPLIANT
+                    <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20 font-mono font-bold">
+                      UNKNOWN
                     </span>
                   </div>
                   <p className="text-slate-400 text-[11.5px] leading-relaxed">
-                    工程交付准入至最终验收的全流程形式化约束。任何工程变更均受 8 阶段 DAG 与 12 章节合规守卫。
+                    BFF 当前契约没有 Harness 合规字段，不能从界面默认值推断全流程状态。
                   </p>
                 </div>
 
@@ -416,24 +355,7 @@ export function GuardianInspectionDrawer({
                     8 阶段状态机回路
                   </h4>
                   <div className="grid grid-cols-4 gap-2">
-                    {[
-                      { stage: '准入 (Admission)', status: 'PASS', code: '01' },
-                      { stage: '规格 (Spec)', status: 'PASS', code: '02' },
-                      { stage: '执行 (Execution)', status: 'PASS', code: '03' },
-                      { stage: '校验 (Verify)', status: 'PASS', code: '04' },
-                      { stage: '审计 (Audit)', status: 'PASS', code: '05' },
-                      { stage: '验收 (Accept)', status: 'PASS', code: '06' },
-                      { stage: '探针 (Probes)', status: 'PASS', code: '07' },
-                      { stage: '演进 (Rollout)', status: 'PASS', code: '08' },
-                    ].map((step) => (
-                      <div key={step.code} className="p-2.5 rounded-lg bg-slate-900/60 border border-slate-800 flex flex-col justify-between">
-                        <span className="text-[10px] font-mono text-slate-500">PHASE {step.code}</span>
-                        <span className="font-medium text-slate-200 text-[11px] my-1 truncate">{step.stage}</span>
-                        <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-1 py-0.5 rounded w-fit">
-                          {step.status}
-                        </span>
-                      </div>
-                    ))}
+                    <p className="col-span-4 rounded-lg border border-amber-500/30 bg-amber-950/20 p-3 text-amber-200">Harness 阶段状态 UNKNOWN。</p>
                   </div>
                 </div>
 
@@ -441,16 +363,16 @@ export function GuardianInspectionDrawer({
                 <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-slate-200">12 章节合规扫描</span>
-                    <span className="font-mono text-slate-400">12 / 12 PASS · 0 Errors</span>
+                    <span className="font-mono text-amber-300">UNKNOWN</span>
                   </div>
                   <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-                    <div className="bg-emerald-500 h-full rounded-full" style={{ width: '100%' }} />
+                    <div className="bg-slate-600 h-full rounded-full" style={{ width: '0%' }} />
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-400 font-mono pt-1">
-                    <div>✓ 准入安全与环境检查: PASS</div>
-                    <div>✓ 规格完整性与契约: PASS</div>
-                    <div>✓ 代码单测与边界审计: PASS</div>
-                    <div>✓ 工作树隔离与污染防范: PASS</div>
+                    <div>准入安全与环境检查: UNKNOWN</div>
+                    <div>规格完整性与契约: UNKNOWN</div>
+                    <div>代码单测与边界审计: UNKNOWN</div>
+                    <div>工作树隔离与污染防范: UNKNOWN</div>
                   </div>
                 </div>
               </div>
@@ -465,12 +387,12 @@ export function GuardianInspectionDrawer({
                       <Scale className="w-4 h-4 text-amber-400" />
                       SSOT 真值与法规活性状态
                     </span>
-                    <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono font-bold">
-                      7720+ ACTIVE
+                    <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20 font-mono font-bold">
+                      UNKNOWN
                     </span>
                   </div>
                   <p className="text-slate-400 text-[11.5px] leading-relaxed">
-                    工作区真值注册表实时同步，包括 agent-workflows、ci-surfaces、runtime-projections 与 governance-checks。
+                    BFF 当前契约没有 SSOT 活性与违规诊断字段，不能从静态描述推断状态。
                   </p>
                 </div>
 
@@ -478,13 +400,11 @@ export function GuardianInspectionDrawer({
                 <div className="space-y-2">
                   <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                    当前违规诊断：0 阻断性异常
+                    当前违规诊断：UNKNOWN
                   </h4>
-                  <div className="p-3.5 rounded-lg bg-emerald-950/20 border border-emerald-800/40 text-emerald-300 space-y-1">
-                    <div className="font-semibold text-emerald-200">全域真值对齐通过</div>
-                    <div className="text-[11px] text-emerald-400/80">
-                      所有注册表物理边界已校验，未发现行盲插或模式漂移。底层已完全通过 43191 守护进程持续闭环守护。
-                    </div>
+                  <div className="p-3.5 rounded-lg bg-amber-950/20 border border-amber-800/40 text-amber-200 space-y-1">
+                    <div className="font-semibold">尚无可验证的 SSOT 诊断</div>
+                    <div className="text-[11px] text-amber-300/80">需要 BFF 将带来源和新鲜度的诊断字段纳入统一契约。</div>
                   </div>
                 </div>
               </div>
@@ -494,18 +414,9 @@ export function GuardianInspectionDrawer({
           {/* Footer Actions */}
           <div className="p-4 border-t border-slate-800 bg-slate-900/60 flex items-center justify-between text-xs">
             <span className="text-slate-500 text-[11px]">
-              数据源: 43191 /api/v1/events/stream & SSOT 静态证据池
+              数据源: Cockpit BFF /api/governance/panorama
             </span>
             <div className="flex items-center gap-2">
-              <a
-                href="http://localhost:43191"
-                target="_blank"
-                rel="noreferrer"
-                className="px-3 py-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 transition-colors flex items-center gap-1 text-decoration-none"
-              >
-                <span>知行控制台</span>
-                <ExternalLink className="w-3 h-3" />
-              </a>
               {onNavigate && (
                 <button
                   type="button"

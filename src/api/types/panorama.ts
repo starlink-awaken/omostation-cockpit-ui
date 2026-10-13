@@ -3,7 +3,7 @@
  * Aligned with ADR-0428, ADR-0450 and GOAL-DASHBOARD-SOVEREIGN-CONVERGENCE.
  */
 
-export type GateVerdict = 'PASS' | 'FAIL' | 'WARN' | 'UNKNOWN';
+export type GateVerdict = 'PASS' | 'FAIL' | 'WARN' | 'UNKNOWN' | 'BLOCKED' | 'PENDING';
 
 export interface GateItem {
   id: string; // e.g. 'A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'A9', 'RF0', 'RC-DL'
@@ -24,6 +24,23 @@ export interface GuardianPulse {
   danger_count: number;
   active_jobs?: number;
   failed_jobs?: number;
+}
+
+/** Explicit absence is different from an observed zero or offline status. */
+export interface UnknownPostureMetrics {
+  health_score: null;
+  compliance_rate: null;
+  active_agents_count: null;
+}
+
+/** Used only when the BFF reports that Guardian has no verified observation. */
+export interface UnknownGuardianPulse {
+  interval_seconds: null;
+  status: 'UNKNOWN';
+  last_heartbeat: null;
+  healthy_count: null;
+  warning_count: null;
+  danger_count: null;
 }
 
 export interface GovernanceAlert {
@@ -58,6 +75,12 @@ export interface BcosEvolutionRecord {
   status: 'proven' | 'pending' | 'rejected' | string;
 }
 
+export interface EvolutionProposalObservation {
+  total: number;
+  proposal_paths: string[];
+  recent_proposals: string[];
+}
+
 export interface PostureMetrics {
   health_score: number; // 0 - 100
   compliance_rate: number; // 0.0 - 1.0
@@ -87,9 +110,8 @@ export interface ExperienceGraphData {
 export interface WorkspaceHygieneData {
   total_worktrees: number;
   worktrees?: Array<{ path: string; branch?: string }>;
-  total_locks: number;
-  orphan_locks?: string[];
-  remote_canonical?: boolean;
+  total_lock_files: number;
+  lock_files: string[];
 }
 
 export interface LaunchdJobItem {
@@ -99,14 +121,14 @@ export interface LaunchdJobItem {
   loaded: boolean;
   state?: string;
   pid?: number | null;
-  last_exit_code?: number | null;
+  last_exit_code?: string | null;
   last_exit_ok?: boolean;
-  verdict: 'PASS' | 'FAILED';
+  verdict: 'PASS' | 'FAILED' | 'UNKNOWN';
 }
 
 export interface LaunchdHealthData {
   available: boolean;
-  verdict: 'PASS' | 'FAILED' | 'EMPTY';
+  verdict: 'PASS' | 'DEGRADED' | 'FAILED' | 'EMPTY';
   loaded: number;
   failed: number;
   jobs: LaunchdJobItem[];
@@ -144,12 +166,34 @@ export interface AgentBriefData {
 export interface PanoramaOverviewPayload {
   generated_at: string;
   mode: string;
-  posture: PostureMetrics;
+  data_state?: 'LIVE' | 'PARTIAL' | 'STALE' | 'UNKNOWN';
+  source?: {
+    kind: string;
+    url: string;
+    status: 'LIVE' | 'PARTIAL' | 'STALE' | 'UNKNOWN';
+    fetched_at: string;
+    observed_at?: string;
+    error?: string | null;
+    generation_id?: string | null;
+    projection_fresh_until?: string;
+    source_states?: Array<Record<string, unknown>>;
+    /** Facets whose current values must not be presented as verified. */
+    partial_facets?: string[];
+    revision_id?: string;
+    field_provenance?: Record<string, {
+      revision_id: string;
+      observed_at: string;
+      source_digest: string;
+      source_ref: string;
+    }>;
+    facet_observations?: Record<string, PanoramaFacetObservation>;
+  };
+  posture: PostureMetrics | UnknownPostureMetrics;
   gates: GateItem[];
-  guardian: GuardianPulse;
+  guardian: GuardianPulse | UnknownGuardianPulse;
   alerts: GovernanceAlert[];
-  topology: TopologyNode[];
-  evolution: BcosEvolutionRecord[];
+  topology: TopologyNode[] | null;
+  evolution: BcosEvolutionRecord[] | EvolutionProposalObservation | null;
   bets_summary?: {
     total: number;
     done: number;
@@ -165,3 +209,20 @@ export interface PanoramaOverviewPayload {
   agent_visibility?: AgentBriefData;
 }
 
+export interface PanoramaFacetObservation {
+  state: 'LIVE' | 'PARTIAL' | 'STALE' | 'UNKNOWN';
+  observed_at: string | null;
+  age_ms?: number | null;
+  last_attempt_at: string;
+  last_success_at: string | null;
+  error_class: string | null;
+  /** Null only for projection-derived values that have no collector duration. */
+  duration_ms: number | null;
+  overrun: boolean;
+  source_digest: string | null;
+  observation_status: 'OBSERVED' | 'STALE' | 'UNKNOWN';
+  value?: Record<string, unknown>;
+  source_generation_id: string | null;
+  source_revision_id: string | null;
+  provenance: { kind: string; source_ref: string; collector_sha256: string; source_digest?: string; registry_sha256?: string };
+}

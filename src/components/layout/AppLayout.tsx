@@ -116,9 +116,9 @@ export function AppLayout() {
       },
       {
         id: 'panorama-guardian',
-        label: '治理全景: 74s 哨兵大屏巡检',
-        description: '四维健康度评分、74s 倒计时心跳脉冲与自愈工作流',
-        keywords: ['panorama', '全景', '哨兵', '74s', 'guardian', '倒计时', '自愈', '健康度'],
+        label: '治理全景: 哨兵观测',
+        description: '查看来源可验证的 Guardian 状态、观测时间与告警证据',
+        keywords: ['panorama', '全景', '哨兵', 'guardian', '观测时间', '告警', '健康度'],
         group: 'govern',
         action: () => navigate('/panorama?tab=guardian'),
       },

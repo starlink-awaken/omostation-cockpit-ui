@@ -301,7 +301,7 @@ export default function HomePage({ onTabChange }: HomePageProps) {
         onViewAll={() => openCockpitNavigationTarget({ tab: 'TaskCenter' })}
       />
 
-      {/* 知行 43191 监造底座协同条（底层治理全面下沉，保持秒级视窗呼出） */}
+      {/* 统一平台入口 */}
       <section
         className="guardian-bottom-strip animate-fade-in"
         style={{
@@ -337,24 +337,24 @@ export default function HomePage({ onTabChange }: HomePageProps) {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
               <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text-primary, #f8fafc)' }}>
-                知行 43191 监造底座实时在线
+                织星统一控制台
               </span>
               <span
                 style={{
                   fontSize: '10px',
                   padding: '1px 6px',
                   borderRadius: '999px',
-                  background: 'rgba(16, 185, 129, 0.15)',
-                  color: '#10b981',
-                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  background: 'rgba(99, 102, 241, 0.15)',
+                  color: '#a5b4fc',
+                  border: '1px solid rgba(99, 102, 241, 0.3)',
                   fontWeight: 600,
                 }}
               >
-                74s 哨兵巡检中
+                统一入口 · 来源可查
               </span>
             </div>
             <p style={{ margin: 0, fontSize: '12px', color: 'var(--color-text-secondary, #94a3b8)' }}>
-              底层工程治理、SSOT 校验与门禁裁决已下沉至底座，双向证据链保持全天候闭环守卫。
+              在同一工作台查看治理、运行和业务闭环；状态会标明来源、新鲜度与缺失原因。
             </p>
           </div>
         </div>
@@ -369,13 +369,11 @@ export default function HomePage({ onTabChange }: HomePageProps) {
             🔍 巡检视窗
           </button>
           <a
-            href="http://localhost:43191"
-            target="_blank"
-            rel="noreferrer"
+            href="/panorama"
             className="antd-btn"
             style={{ fontSize: '12px', height: '30px', textDecoration: 'none' }}
           >
-            监造控制台 ↗
+            进入体系全景 →
           </a>
         </div>
       </section>

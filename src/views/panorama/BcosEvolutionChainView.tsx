@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   Sparkles,
   GitCommit,
@@ -13,7 +13,7 @@ import { SkeletonCard } from '../../components/ui/Skeleton';
 import { useToast } from '../../components/common/Toast';
 
 export function BcosEvolutionChainView() {
-  const { bcos, isLoading, isFallback, refetch } = useBcosEvolution();
+  const { bcos, isLoading, sourceState, sourceFailure, partialFacets, refetch } = useBcosEvolution();
   const { showToast } = useToast();
 
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -21,8 +21,8 @@ export function BcosEvolutionChainView() {
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      await refetch();
-      showToast('BCOS 进化图谱与自蒸馏记忆已同步', 'success');
+      const result = await refetch();
+      showToast(result.sourceState === 'LIVE' ? 'BCOS 进化图谱已同步。' : `BCOS 来源 ${result.sourceState}：${result.sourceFailure ?? '未获得可验证状态。'}`, result.sourceState === 'LIVE' ? 'success' : 'warning');
     } catch {
       showToast('进化数据刷新失败，已使用快照', 'warning');
     } finally {
@@ -30,10 +30,12 @@ export function BcosEvolutionChainView() {
     }
   };
 
-  const records = bcos?.recentRecords ?? [];
-  const epoch = bcos?.epoch ?? 24;
-  const healthScore = bcos?.healthScore ?? 98.7;
-  const distillationCount = bcos?.selfDistillationCount ?? 142;
+  const sourceUnavailable = sourceState === 'UNKNOWN' || sourceState === 'STALE';
+  const evolutionUnavailable = sourceUnavailable || partialFacets?.includes('evolution');
+  const records = evolutionUnavailable ? [] : bcos?.recentRecords ?? [];
+  const epoch = bcos?.epoch;
+  const healthScore = bcos?.healthScore;
+  const distillationCount = bcos?.selfDistillationCount;
 
   return (
     <div className="space-y-4 font-sans text-slate-100">
@@ -45,9 +47,9 @@ export function BcosEvolutionChainView() {
             <h2 className="text-base font-bold tracking-tight text-white flex items-center gap-2">
               BCOS 主权进化链与学习图谱
             </h2>
-            {isFallback && (
+            {sourceState !== 'LIVE' && (
               <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono">
-                静态容灾快照
+                来源 {sourceState} · {sourceFailure ?? '当前进化状态未获验证'}
               </span>
             )}
           </div>
@@ -87,12 +89,12 @@ export function BcosEvolutionChainView() {
             </div>
             <div className="mt-2.5 flex items-baseline gap-2">
               <span className="text-2xl font-black tracking-tight text-white font-mono">
-                Epoch {epoch}
+                {evolutionUnavailable || typeof epoch !== 'number' ? 'UNKNOWN' : `Epoch ${epoch}`}
               </span>
               <span className="text-xs text-purple-400 font-medium">当前代</span>
             </div>
             <div className="mt-2 text-[11px] text-slate-400">
-              知识自净化与行为决策策略已稳固
+              {evolutionUnavailable ? '来源不含已验证的进化观测，无法验证进化世代' : '知识自净化与行为决策策略已稳固'}
             </div>
           </div>
 
@@ -104,12 +106,12 @@ export function BcosEvolutionChainView() {
             </div>
             <div className="mt-3 flex items-baseline gap-2">
               <span className="text-3xl font-black tracking-tight text-white font-mono">
-                {distillationCount}
+                {evolutionUnavailable || typeof distillationCount !== 'number' ? 'UNKNOWN' : distillationCount}
               </span>
               <span className="text-xs text-cyan-400 font-medium">条结晶记忆</span>
             </div>
             <div className="mt-3 text-[11px] text-slate-500">
-              包含 12 章节 Harness 与踩坑护栏
+              {evolutionUnavailable ? '来源不含已验证的进化观测，无法验证结晶条目' : '包含 12 章节 Harness 与踩坑护栏'}
             </div>
           </div>
 
@@ -121,12 +123,14 @@ export function BcosEvolutionChainView() {
             </div>
             <div className="mt-3 flex items-baseline gap-2">
               <span className="text-3xl font-black tracking-tight text-white font-mono">
-                {healthScore.toFixed(1)}%
+                {evolutionUnavailable || typeof healthScore !== 'number' ? 'UNKNOWN' : `${healthScore.toFixed(1)}%`}
               </span>
-              <span className="text-xs text-emerald-400 font-medium">高抗干扰</span>
+              <span className={`text-xs font-medium ${evolutionUnavailable ? 'text-amber-300' : 'text-emerald-400'}`}>
+                {evolutionUnavailable ? '未获验证' : '高抗干扰'}
+              </span>
             </div>
             <div className="mt-3 text-[11px] text-slate-500">
-              学习率: <code className="text-slate-400 font-mono">{bcos?.learningRate ?? 0.001}</code>
+              学习率: <code className="text-slate-400 font-mono">{evolutionUnavailable ? 'UNKNOWN' : bcos?.learningRate ?? 'UNKNOWN'}</code>
             </div>
           </div>
         </div>
@@ -140,13 +144,13 @@ export function BcosEvolutionChainView() {
             历史进化里程碑时间轴
           </h3>
           <span className="text-xs text-slate-500 font-mono">
-            共记录 {records.length} 个核心世代
+            {evolutionUnavailable ? '进化记录 UNKNOWN' : `共记录 ${records.length} 个核心世代`}
           </span>
         </div>
 
         {records.length === 0 ? (
           <div className="p-8 text-center text-slate-500 text-xs">
-            暂无历史进化记录
+            {evolutionUnavailable ? '进化记录未验证' : '暂无历史进化记录'}
           </div>
         ) : (
           <div className="relative pl-6 space-y-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-800">

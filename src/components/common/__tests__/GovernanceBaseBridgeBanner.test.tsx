@@ -7,11 +7,8 @@ describe('GovernanceBaseBridgeBanner', () => {
   it('renders workbench title and default text', () => {
     render(<GovernanceBaseBridgeBanner workbenchName="测试控制工作台" />);
     expect(screen.getByText('测试控制工作台')).toBeInTheDocument();
-    expect(screen.getByText('已下沉至知行 43191 底座')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /进入知行监造台/i })).toHaveAttribute(
-      'href',
-      'http://localhost:43191/',
-    );
+    expect(screen.getByText('织星统一控制台')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /打开统一全景/i })).toHaveAttribute('href', '/panorama');
   });
 
   it('renders deep link with custom targetSection and actionText', () => {
@@ -24,7 +21,7 @@ describe('GovernanceBaseBridgeBanner', () => {
     );
     const link = screen.getByRole('link', { name: /直达门禁矩阵/i });
     expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute('href', 'http://localhost:43191/#gov');
+    expect(link).toHaveAttribute('href', '/panorama');
   });
 
   it('dispatches open-guardian-inspection custom event when button clicked without onOpenDrawer', () => {
@@ -32,7 +29,7 @@ describe('GovernanceBaseBridgeBanner', () => {
     window.addEventListener('open-guardian-inspection', eventSpy);
 
     render(<GovernanceBaseBridgeBanner workbenchName="保障工作台" />);
-    fireEvent.click(screen.getByText('查看 74s 哨兵巡检'));
+    fireEvent.click(screen.getByText('查看系统巡检'));
 
     expect(eventSpy).toHaveBeenCalledTimes(1);
     window.removeEventListener('open-guardian-inspection', eventSpy);
@@ -46,7 +43,7 @@ describe('GovernanceBaseBridgeBanner', () => {
         onOpenDrawer={handleDrawer}
       />,
     );
-    fireEvent.click(screen.getByText('查看 74s 哨兵巡检'));
+    fireEvent.click(screen.getByText('查看系统巡检'));
     expect(handleDrawer).toHaveBeenCalledTimes(1);
   });
 });

@@ -183,7 +183,7 @@ export interface RouteConfig {
 
 export const ROUTES: RouteConfig[] = [
   // ── 态势感知 (Situation Awareness) ──
-  { id: 'Panorama', path: '/panorama', label: '体系全景', subtitle: '单一人类总控入口：11大系统门禁、74s哨兵巡航、道法术器拓扑与BCOS认知进化。', group: '态势感知', domain: 'overview', component: PanoramaMasterView, icon: 'Sparkles', purpose: '单一人类总控入口，门禁矩阵与全屏大屏。', whenToUse: '体系全局巡检、门禁与哨兵实时管控。' },
+  { id: 'Panorama', path: '/panorama', label: '体系全景', subtitle: '统一呈现系统门禁、运行拓扑、治理和业务价值，并标注状态来源与新鲜度。', group: '态势感知', domain: 'overview', component: PanoramaMasterView, icon: 'Sparkles', purpose: '单一人类总控入口，门禁矩阵与全屏大屏。', whenToUse: '查看全局状态、门禁证据和需要处理的事项。' },
   { id: 'Home', path: '/', label: '首页', subtitle: '系统健康总览、实时告警、关键指标趋势。', group: '态势感知', domain: 'overview', component: HomePage, icon: 'LayoutDashboard', purpose: '健康、告警、任务、指标趋势的日常总览。', whenToUse: '每天先看这里。' },
   { id: 'Overview', path: '/overview', label: '概览中心', subtitle: '实时监控 eCOS v6 微服务环境，掌握集群全貌。', group: '态势感知', domain: 'overview', component: OverviewPage, icon: 'LayoutDashboard', purpose: '查看服务节点、运行状态和集群概貌。', whenToUse: '每天巡检、出问题先看。' },
   { id: 'Topology', path: '/topology', label: '全局拓扑', subtitle: '可视化服务间的调用流向与网格状态。', group: '态势感知', domain: 'system', component: TopologyView, icon: 'Network', purpose: '查看服务调用流向与拓扑结构。', whenToUse: '排查影响范围时。' },
@@ -224,7 +224,7 @@ export const ROUTES: RouteConfig[] = [
   { id: 'Kems', path: '/kems', label: 'KEMS 质量治理', subtitle: '以质量指标、哈希和证据引用驱动 OCR 复核与知识准入。', group: '业务闭环', domain: 'registry', component: KemsWorkbench, icon: 'FileText', purpose: '以质量指标、哈希和证据引用驱动 OCR 复核与知识准入。', whenToUse: '做知识质量治理时。' },
   { id: 'ExternalResources', path: '/external-resources', label: '外部能力目录', subtitle: '查看外部知识、数据、方法、工具和渠道的动态发现与健康状态。', group: '业务闭环', domain: 'registry', component: ExternalResourceCatalogView, icon: 'Database', purpose: '查看动态发现的外部知识、数据、方法、工具和渠道。', whenToUse: '判断外部能力是否存在、健康和可触达时。' },
 
-  // ── 治理与合规 (Security & Governance Domain) —— 已全面下沉至知行 43191 底座监造台 ──
+  // ── 治理与合规 (Security & Governance Domain) ──
   { id: 'GovernanceDomain', path: '/governance-domain', label: '治理域', subtitle: '治理工作台：域治理、合规检查、SSOT 巡检。', group: '治理与合规', domain: 'security', component: GovernanceDomainWorkbench, icon: 'Shield', purpose: '统一治理工作台，覆盖域治理、合规检查与 SSOT 巡检。', whenToUse: '做治理巡检或合规审查时。', hidden: true },
   { id: 'AlertCenter', path: '/alerts', label: '告警中心', subtitle: '统一告警管理、规则配置、告警历史。', group: '治理与合规', domain: 'security', component: AlertCenterPage, icon: 'Bell', purpose: '统一管理告警、规则和历史。', whenToUse: 'P0/P1 先从这里落点。' },
   { id: 'L4Health', path: '/l4-health', label: 'L4 域健康', subtitle: '实时监控 L4 域健康状态、趋势分析和风险评估。', group: '治理与合规', domain: 'security', component: L4HealthView, icon: 'Heart', purpose: '查看 L4 域健康状态与风险。', whenToUse: '比单页看得更全时。', hidden: true },
@@ -302,4 +302,3 @@ export function getVisibleRoutes(): RouteConfig[] {
 export function getRoutesByDomain(domain: SurfaceDomainType): RouteConfig[] {
   return ROUTES.filter((r) => r.domain === domain);
 }
-
