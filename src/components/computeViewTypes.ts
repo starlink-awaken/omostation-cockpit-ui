@@ -33,6 +33,27 @@ export interface GenerateResult {
   detail?: string;
 }
 
+export interface StrictComputeRound {
+  id: number;
+  model: string;
+  input: string;
+  output?: string;
+  status: 'pending' | 'success' | 'rejected' | 'unknown';
+  notice: string;
+}
+
+export interface StrictComputeRequest {
+  prompt: string;
+  model: string;
+  max_tokens: number;
+  timeout: number;
+  strict_model: true;
+}
+
+export type StrictComputeOutcome =
+  | { status: 'success'; content: string }
+  | { status: 'rejected' | 'unknown'; notice: string };
+
 export interface LocalModel {
   model_id: string;
   display_name?: string;
