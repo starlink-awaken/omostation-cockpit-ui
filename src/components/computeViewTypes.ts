@@ -56,6 +56,7 @@ export type StrictComputeOutcome =
 
 export interface LocalModel {
   model_id: string;
+  residency?: 'loaded' | 'unloaded' | 'unknown';
   display_name?: string;
   capabilities?: string[];
   runs_on?: string;
