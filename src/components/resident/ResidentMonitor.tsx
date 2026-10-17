@@ -17,6 +17,9 @@ import {
   HeartPulse,
   AlertTriangle,
   RefreshCw,
+  Wrench,
+  ShieldAlert,
+  Cpu,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '../../api/client';
@@ -27,6 +30,10 @@ import StatusBadge from '../ui/StatusBadge';
 import RoleCard from './RoleCard';
 import EventStream from './EventStream';
 import type { ResidentEvent } from './EventStream';
+import TriagePanel from './TriagePanel';
+import PitfallRadarPanel from './PitfallRadarPanel';
+import SwarmClusterPanel from './SwarmClusterPanel';
+
 // ── Types ──
 
 interface ResidentDaemon {
@@ -47,7 +54,7 @@ interface ResidentData {
   error?: string;
 }
 
-type PanelKey = 'daemon' | 'events' | 'sediment' | 'alert' | 'ledger';
+type PanelKey = 'triage' | 'pitfalls' | 'swarm' | 'daemon' | 'events' | 'sediment' | 'alert' | 'ledger';
 
 interface PanelDef {
   key: PanelKey;
@@ -66,6 +73,9 @@ const ROLE_DEFS: { key: string; label: string }[] = [
 ];
 
 const PANELS: PanelDef[] = [
+  { key: 'triage', label: '现场排障', icon: Wrench },
+  { key: 'pitfalls', label: '踩坑雷达', icon: ShieldAlert },
+  { key: 'swarm', label: '双机算力', icon: Cpu },
   { key: 'daemon', label: '守护进程', icon: Bot },
   { key: 'events', label: '事件流', icon: Activity },
   { key: 'sediment', label: '沉淀', icon: Database },
@@ -283,6 +293,9 @@ export default function ResidentMonitor() {
         </div>
 
         <div className="min-h-[200px]">
+          {activePanel === 'triage' && <TriagePanel />}
+          {activePanel === 'pitfalls' && <PitfallRadarPanel />}
+          {activePanel === 'swarm' && <SwarmClusterPanel />}
           {activePanel === 'daemon' && <DaemonPanel daemon={data.daemon} />}
           {activePanel === 'events' && <EventStream events={events} />}
           {activePanel === 'sediment' && (
