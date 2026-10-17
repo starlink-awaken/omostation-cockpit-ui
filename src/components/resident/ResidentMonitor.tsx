@@ -21,6 +21,8 @@ import {
   ShieldAlert,
   Cpu,
   ShieldCheck,
+  Sun,
+  Sparkles,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '../../api/client';
@@ -35,6 +37,8 @@ import TriagePanel from './TriagePanel';
 import PitfallRadarPanel from './PitfallRadarPanel';
 import SwarmClusterPanel from './SwarmClusterPanel';
 import PatrolPanel from './PatrolPanel';
+import MorningBriefingCard from './MorningBriefingCard';
+import MemoryEvolutionPanel from './MemoryEvolutionPanel';
 
 // ── Types ──
 
@@ -56,7 +60,7 @@ interface ResidentData {
   error?: string;
 }
 
-type PanelKey = 'triage' | 'patrol' | 'pitfalls' | 'swarm' | 'daemon' | 'events' | 'sediment' | 'alert' | 'ledger';
+type PanelKey = 'briefing' | 'memory' | 'triage' | 'patrol' | 'pitfalls' | 'swarm' | 'daemon' | 'events' | 'sediment' | 'alert' | 'ledger';
 
 interface PanelDef {
   key: PanelKey;
@@ -75,6 +79,8 @@ const ROLE_DEFS: { key: string; label: string }[] = [
 ];
 
 const PANELS: PanelDef[] = [
+  { key: 'briefing', label: '晨间简报', icon: Sun },
+  { key: 'memory', label: '认知进化', icon: Sparkles },
   { key: 'triage', label: '现场排障', icon: Wrench },
   { key: 'patrol', label: '自治巡检', icon: ShieldCheck },
   { key: 'pitfalls', label: '踩坑雷达', icon: ShieldAlert },
@@ -296,6 +302,8 @@ export default function ResidentMonitor() {
         </div>
 
         <div className="min-h-[200px]">
+          {activePanel === 'briefing' && <MorningBriefingCard />}
+          {activePanel === 'memory' && <MemoryEvolutionPanel />}
           {activePanel === 'triage' && <TriagePanel />}
           {activePanel === 'patrol' && <PatrolPanel />}
           {activePanel === 'pitfalls' && <PitfallRadarPanel />}
