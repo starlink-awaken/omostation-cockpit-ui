@@ -23,6 +23,7 @@ import {
   ShieldCheck,
   Sun,
   Sparkles,
+  MessageSquare,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '../../api/client';
@@ -40,6 +41,7 @@ import PatrolPanel from './PatrolPanel';
 import MorningBriefingCard from './MorningBriefingCard';
 import MemoryEvolutionPanel from './MemoryEvolutionPanel';
 import HostServiceAndInferencePanel from './HostServiceAndInferencePanel';
+import ResidentChatPanel from './ResidentChatPanel';
 
 // ── Types ──
 
@@ -61,7 +63,7 @@ interface ResidentData {
   error?: string;
 }
 
-type PanelKey = 'briefing' | 'memory' | 'triage' | 'patrol' | 'pitfalls' | 'swarm' | 'daemon' | 'events' | 'sediment' | 'alert' | 'ledger';
+type PanelKey = 'chat' | 'briefing' | 'memory' | 'triage' | 'patrol' | 'pitfalls' | 'swarm' | 'daemon' | 'events' | 'sediment' | 'alert' | 'ledger';
 
 interface PanelDef {
   key: PanelKey;
@@ -80,6 +82,7 @@ const ROLE_DEFS: { key: string; label: string }[] = [
 ];
 
 const PANELS: PanelDef[] = [
+  { key: 'chat', label: '对话交互', icon: MessageSquare },
   { key: 'briefing', label: '晨间简报', icon: Sun },
   { key: 'memory', label: '认知进化', icon: Sparkles },
   { key: 'triage', label: '现场排障', icon: Wrench },
@@ -303,6 +306,7 @@ export default function ResidentMonitor() {
         </div>
 
         <div className="min-h-[200px]">
+          {activePanel === 'chat' && <ResidentChatPanel />}
           {activePanel === 'briefing' && <MorningBriefingCard />}
           {activePanel === 'memory' && <MemoryEvolutionPanel />}
           {activePanel === 'triage' && <TriagePanel />}
