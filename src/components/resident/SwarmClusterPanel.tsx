@@ -17,6 +17,7 @@ import { useQuery } from '@tanstack/react-query';
 import { apiFetch, apiPost, apiDelete } from '../../api/client';
 import StatusBadge from '../ui/StatusBadge';
 import { SkeletonLines } from '../ui/LoadingSkeleton';
+import HostServiceAndInferencePanel from './HostServiceAndInferencePanel';
 
 export interface SwarmNode {
   id: string;
@@ -462,6 +463,9 @@ export default function SwarmClusterPanel() {
           );
         })}
       </div>
+
+      {/* 操作系统宿主守护服务与推断网关实时终端 (Phase 9) */}
+      <HostServiceAndInferencePanel />
 
       {/* 接入新节点弹窗 */}
       {showAddModal && (
