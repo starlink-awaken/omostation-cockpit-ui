@@ -39,6 +39,7 @@ import SwarmClusterPanel from './SwarmClusterPanel';
 import PatrolPanel from './PatrolPanel';
 import MorningBriefingCard from './MorningBriefingCard';
 import MemoryEvolutionPanel from './MemoryEvolutionPanel';
+import HostServiceAndInferencePanel from './HostServiceAndInferencePanel';
 
 // ── Types ──
 
@@ -308,7 +309,7 @@ export default function ResidentMonitor() {
           {activePanel === 'patrol' && <PatrolPanel />}
           {activePanel === 'pitfalls' && <PitfallRadarPanel />}
           {activePanel === 'swarm' && <SwarmClusterPanel />}
-          {activePanel === 'daemon' && <DaemonPanel daemon={data.daemon} />}
+          {activePanel === 'daemon' && <HostServiceAndInferencePanel />}
           {activePanel === 'events' && <EventStream events={events} />}
           {activePanel === 'sediment' && (
             <GenericListPanel items={sediment} emptyLabel="暂无沉淀数据" />
